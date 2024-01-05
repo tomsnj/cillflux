@@ -1,0 +1,29 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: pv-website
+  namespace: default
+spec:
+  storageClassName: gsks0
+  capacity:
+    storage: 1Mi # Size does not matter
+  accessModes: ["ReadWriteMany"]
+  persistentVolumeReclaimPolicy: Retain
+  nfs:
+    server: 10.10.10.110
+    path: /mnt/storage1/home_nfs/nginx/www/gs-farm
+  # Note: The first two options are strictly for NFSv4.2
+  #mountOptions: ["nfsvers=4.2", "nconnect=8", "hard", "noatime"]
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: pvc-website
+  namespace: default
+spec:
+  accessModes: ["ReadWriteMany"]
+  storageClassName: gsks0
+  volumeName:  pv-website
+  resources:
+    requests:
+      storage: 1Mi # Size does not matter
