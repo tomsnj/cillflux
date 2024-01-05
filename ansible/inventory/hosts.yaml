@@ -1,0 +1,13 @@
+---
+kubernetes:
+  children:
+    master:
+      hosts:
+        gskm0:
+          ansible_user: gs-ans
+          ansible_host: 10.10.1.110
+    worker:
+      hosts:
+        gskw0:
+          ansible_user: gs-ans
+          ansible_host: 10.10.1.120

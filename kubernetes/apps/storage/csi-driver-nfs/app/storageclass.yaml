@@ -1,0 +1,12 @@
+---
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: gsks0
+provisioner: nfs.csi.k8s.io
+parameters:
+  server: 10.10.10.110
+  share: /mnt/storage1/home_nfs
+reclaimPolicy: Delete
+volumeBindingMode: Immediate
+mountOptions: ["hard", "noatime"]
