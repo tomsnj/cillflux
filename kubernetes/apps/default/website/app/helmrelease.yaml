@@ -36,11 +36,11 @@ spec:
     updateStrategy:
       type: RollingUpdate
       rollingUpdate: {}
-    serverBlock: |-
-      server {
-        listen 80;
-        server_name www.${SECRET_DOMAIN};
-      }
+        #    serverBlock: |-
+        #      server {
+        #        listen 80;
+        #        server_name www.${SECRET_DOMAIN};
+        #      }
     extraVolumes:
       - name: nginx-www
         persistentVolumeClaim:
