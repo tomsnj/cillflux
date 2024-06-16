@@ -9,11 +9,7 @@ spec:
   chart:
     spec:
       chart: ingress-nginx
-<<<<<<< HEAD
       version: 4.10.1
-=======
-      version: 4.7.1
->>>>>>> 44125dc (Cilium upgrade recovery)
       sourceRef:
         kind: HelmRepository
         name: ingress-nginx
