@@ -30,18 +30,6 @@ spec:
   values:
     deploymentStrategy:
       type: Recreate
-        #    auth:
-        #      existingPasswordSecret: rabbitmq-password
-    ingress:
-      enabled: true
-      ingressClassName: internal
-      annotations:
-        hajimari.io/icon: simple-icons:rabbitmq
-      hostname:
-        - &host "rabbitmq.${SECRET_DOMAIN}"
-          #      tls:
-          #        - hosts:
-          #            - *host
     persistence:
       enabled: true
       storageClassName: local-hostpath
