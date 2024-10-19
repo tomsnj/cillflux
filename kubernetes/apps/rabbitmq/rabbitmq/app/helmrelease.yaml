@@ -32,7 +32,7 @@ spec:
       type: Recreate
     persistence:
       enabled: true
-      storageClass: local-hostpath
+      storageClassName: local-hostpath
       selector:
         matchLabels:
           app: rabbitmq
