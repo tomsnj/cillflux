@@ -33,5 +33,6 @@ spec:
     persistence:
       enabled: true
       storageClass: local-hostpath
+      storageClassName: local-hostpath
     testFramework:
       enabled: false
