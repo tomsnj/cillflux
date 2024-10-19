@@ -32,6 +32,6 @@ spec:
       type: Recreate
     persistence:
       enabled: true
-      storageClassName: local-hostpath
+      storageClass: local-hostpath
     testFramework:
       enabled: false
