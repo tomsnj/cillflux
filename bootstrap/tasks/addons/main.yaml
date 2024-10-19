@@ -12,6 +12,10 @@
   when: grafana.enabled | default(false)
   ansible.builtin.include_tasks: grafana.yaml
 
+- name: Process addon rabbitmq
+  when: rabbitmq.enabled | default(false)
+  ansible.builtin.include_tasks: rabbitmq.yaml
+
 - name: Process addon kubernetes-dashboard
   when: kubernetes_dashboard.enabled | default(false)
   ansible.builtin.include_tasks: kubernetes_dashboard.yaml

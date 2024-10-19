@@ -1,0 +1,48 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: rabbitmq
+spec:
+  interval: 30m
+  chart:
+    spec:
+      chart: rabbitmq
+      version: 11.12.0
+      sourceRef:
+        kind: HelmRepository
+        name: rabbitmq
+        namespace: flux-system
+  maxHistory: 2
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    cleanupOnFail: true
+    remediation:
+      retries: 3
+  uninstall:
+    keepHistory: false
+  dependsOn:
+    - name: local-path-provisioner
+      namespace: storage
+  values:
+    deploymentStrategy:
+      type: Recreate
+    auth:
+      existingPasswordSecret: rabbitmq-password
+    ingress:
+      enabled: true
+      ingressClassName: internal
+      annotations:
+        hajimari.io/icon: simple-icons:rabbitmq
+      hostname:
+        - &host "rabbitmq.${SECRET_DOMAIN}"
+      tls:
+        - hosts:
+            - *host
+    persistence:
+      enabled: true
+      storageClassName: local-hostpath
+    testFramework:
+      enabled: false
