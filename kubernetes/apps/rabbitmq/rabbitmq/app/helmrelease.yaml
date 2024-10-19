@@ -25,13 +25,13 @@ spec:
   uninstall:
     keepHistory: false
   dependsOn:
-    - name: local-path-provisioner
+    - name: nfs.csi.k8s.io
       namespace: storage
   values:
     deploymentStrategy:
       type: Recreate
     persistence:
       enabled: true
-      storageClass: local-hostpath
+      storageClass: gsks0
     testFramework:
       enabled: false
