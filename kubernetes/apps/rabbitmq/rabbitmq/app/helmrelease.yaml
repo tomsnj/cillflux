@@ -30,8 +30,8 @@ spec:
   values:
     deploymentStrategy:
       type: Recreate
-    auth:
-      existingPasswordSecret: rabbitmq-password
+        #    auth:
+        #      existingPasswordSecret: rabbitmq-password
     ingress:
       enabled: true
       ingressClassName: internal
