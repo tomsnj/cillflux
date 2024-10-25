@@ -27,7 +27,6 @@ spec:
   dependsOn:
     - name: local-path-provisioner
       namespace: storage
-  defaultStorageClass: local-hostpath
   values:
     deploymentStrategy:
       type: Recreate
