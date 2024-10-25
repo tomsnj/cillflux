@@ -7,6 +7,5 @@ spec:
   issuerRef:
     name: vernemq-letsencrypt-iss
     kind: ClusterIssuer
-  commonName: "${SECRET_DOMAIN}"
   dnsNames:
     - "mqtt.${SECRET_DOMAIN}"
