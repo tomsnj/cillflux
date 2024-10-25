@@ -7,11 +7,10 @@ spec:
     server: https://acme-staging-v02.api.letsencrypt.org/directory
     email: "${SECRET_ACME_EMAIL}"
     privateKeySecretRef:
-      name: vernemq-letsencrypt-iss-key
+      name: vernemq-letsencrypt-issy
     solvers:
       - dns01:
           cloudflare:
-            email: "${SECRET_ACME_EMAIL}"
             apiTokenSecretRef:
               name: cert-manager-secret
               key: api-token
