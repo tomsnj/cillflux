@@ -16,6 +16,10 @@
   when: rabbitmq.enabled | default(false)
   ansible.builtin.include_tasks: rabbitmq.yaml
 
+- name: Process addon vernemq
+  when: vernemq.enabled | default(false)
+  ansible.builtin.include_tasks: vernemq.yaml
+
 - name: Process addon kubernetes-dashboard
   when: kubernetes_dashboard.enabled | default(false)
   ansible.builtin.include_tasks: kubernetes_dashboard.yaml
