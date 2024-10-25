@@ -11,8 +11,7 @@ spec:
     solvers:
       - dns01:
           cloudflare:
-            email: "${SECRET_ACME_EMAIL}"
-            apiTokenSecretRef:
+            apiKeySecretRef:
               name: cloudflare-api-key-secret
               key: api-key
         selector: {}

@@ -49,4 +49,4 @@ spec:
         path: /etc/ssl/vernemq
     additionalEnv:
       - name: DOCKER_VERNEMQ_USER_GSUSER
-        value: ${VERNEMQ_SECRET}
+        value: ghp_cn1OLGqDS75yg9bAVel9xcIBj4MHrZ4QKGrK

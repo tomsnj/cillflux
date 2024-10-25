@@ -4,14 +4,14 @@ metadata:
   name: vernemq-letsencrypt-iss
 spec:
   acme:
-    server: https://acme-staging-v02.api.letsencrypt.org/directory
+    server: https://acme-v02.api.letsencrypt.org/directory
     email: "${SECRET_ACME_EMAIL}"
     privateKeySecretRef:
-      name: vernemq-letsencrypt-iss
+      name: vernemq-letsencrypt-iss-key
     solvers:
       - dns01:
           cloudflare:
-            apiTokenSecretRef:
-              name: cert-manager-secret
-              key: api-token
+            apiKeySecretRef:
+              name: cloudflare-api-key-secret
+              key: api-key
         selector: {}
