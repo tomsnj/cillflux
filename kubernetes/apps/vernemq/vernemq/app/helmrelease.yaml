@@ -45,6 +45,7 @@ spec:
         - path: /
           pathType: ImplementationSpecific
       tls:
+        secretName: vernemq-tls
         - hosts:
             - "mqtt.${SECRET_DOMAIN}"
     secretMounts:
