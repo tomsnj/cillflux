@@ -32,8 +32,13 @@ spec:
       type: LoadBalancer
       mqtts:
         enabled: true
+      ws:
+        enabled: true
+      wss:
+        enabled: true
     ingress:
       className: external
+      enabled: true
       hosts:
         - host: &host "mqtt.${SECRET_DOMAIN}"
           paths:
