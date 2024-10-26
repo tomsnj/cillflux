@@ -40,7 +40,7 @@ spec:
       className: external
       enabled: true
       hosts:
-        - host: "mqtt.${SECRET_DOMAIN}"
+        - host: mqtt.${SECRET_DOMAIN}
       paths:
         - path: /
           pathType: ImplementationSpecific
