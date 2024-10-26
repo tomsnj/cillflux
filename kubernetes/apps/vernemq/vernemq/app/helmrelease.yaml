@@ -52,3 +52,4 @@ spec:
     additionalEnv:
       - name: DOCKER_VERNEMQ_USER_GSUSER
         value: ${SECRET_DOMAIN}
+    vmqConfig: 'accept_eula=yes'
