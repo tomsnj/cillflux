@@ -47,7 +47,7 @@ spec:
       tls:
         secretName: vernemq-tls
         - hosts:
-            - "mqtt.${SECRET_DOMAIN}"
+            - mqtt.${SECRET_DOMAIN}
     secretMounts:
       - name: vernemq-certificates
         secretName: vernemq-certificates-secret
