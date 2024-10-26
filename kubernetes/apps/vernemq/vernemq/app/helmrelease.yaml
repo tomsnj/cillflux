@@ -49,7 +49,4 @@ spec:
       - name: vernemq-certificates
         secretName: vernemq-certificates-secret
         path: /etc/ssl/vernemq
-    additionalEnv:
-      - name: DOCKER_VERNEMQ_USER_GSUSER
-        value: ${SECRET_DOMAIN}
     vmqConfig: 'accept_eula=yes'
