@@ -8,12 +8,5 @@ spec:
   issuerRef:
     name: letsencrypt-staging
     kind: ClusterIssuer
-  commonName: mqtt.${SECRET_DOMAIN}
   dnsNames:
     - "mqtt.${SECRET_DOMAIN}"
-  acme:
-    config: 
-    - dns01:
-        provider: cloudflare
-      domains:
-        - mqtt.{SECRET_DOMAIN}
