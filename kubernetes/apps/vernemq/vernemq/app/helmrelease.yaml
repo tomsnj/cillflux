@@ -39,11 +39,10 @@ spec:
     ingress:
       className: external
       enabled: true
-      hosts:
-        - "mqtt.${SECRET_DOMAIN}"
-          paths:
-            - path: /
-              pathType: ImplementationSpecific
+      hosts: mqtt.${SECRET_DOMAIN}
+      paths:
+        - path: /
+          pathType: ImplementationSpecific
       tls:
         - hosts:
           - "mqtt.${SECRET_DOMAIN}"
