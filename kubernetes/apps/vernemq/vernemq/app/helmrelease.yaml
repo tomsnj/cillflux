@@ -40,13 +40,13 @@ spec:
       className: external
       enabled: true
       hosts:
-        - host: mqtt.${SECRET_DOMAIN}
+        - host: "mqtt.${SECRET_DOMAIN}"
       paths:
         - path: /
           pathType: ImplementationSpecific
       tls:
         - hosts:
-          - "mqtt.${SECRET_DOMAIN}"
+          - host: "mqtt.${SECRET_DOMAIN}"
     secretMounts:
       - name: vernemq-certificates
         secretName: vernemq-certificates-secret
