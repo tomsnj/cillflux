@@ -29,9 +29,8 @@ spec:
       type: Recreate
     service:
       enabled: true
-      type: LoadBalancer
       loadBalancerIP: 10.10.1.151
-      externalTrafficPolicy: Cluster
+      type: LoadBalancer
       mqtts:
         enabled: true
       ws:
