@@ -30,7 +30,6 @@ spec:
     service:
       enabled: true
       type: ClusterIP
-      clusterIP: 10.10.1.151
       mqtts:
         enabled: true
       ws:
