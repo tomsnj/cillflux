@@ -29,8 +29,8 @@ spec:
       type: Recreate
     service:
       enabled: true
-      type: ClusterIP
-      clusterIP: 10.10.1.151
+      loadBalancerIP: 10.10.1.151
+      type: LoadBalancer
       mqtts:
         enabled: true
       ws:
