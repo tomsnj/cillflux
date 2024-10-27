@@ -30,6 +30,8 @@ spec:
     service:
       enabled: true
       type: LoadBalancer
+      loadBalancerIP: 10.10.1.151
+      externalTrafficPolicy: Cluster
       mqtts:
         enabled: true
       ws:
