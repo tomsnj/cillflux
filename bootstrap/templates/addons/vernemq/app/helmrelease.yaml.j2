@@ -24,31 +24,33 @@ spec:
       retries: 3
   uninstall:
     keepHistory: false
-  dependsOn:
-    - name: local-path-provisioner
-      namespace: storage
   values:
     deploymentStrategy:
       type: Recreate
     service:
       enabled: true
-      type: LoadBalancer
+      type: ClusterIP
       mqtts:
+        enabled: true
+      ws:
+        enabled: true
+      wss:
         enabled: true
     ingress:
       className: external
+      enabled: false
       hosts:
-        - host: &host "mqtt.${SECRET_DOMAIN}"
-          paths:
-            - path: /
-              pathType: ImplementationSpecific
+        - "mqtt.${SECRET_DOMAIN}"
+      paths:
+        - path: /
+          pathType: ImplementationSpecific
       tls:
         - hosts:
-            - *host
+            - mqtt.${SECRET_DOMAIN}
     secretMounts:
       - name: vernemq-certificates
         secretName: vernemq-certificates-secret
         path: /etc/ssl/vernemq
     additionalEnv:
-      - name: {{ vernemq.username }}
-        value: ${SECRET_DOMAIN}
+      - name: DOCKER_VERNEMQ_ACCEPT_EULA
+        value: "yes"
