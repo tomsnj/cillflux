@@ -29,7 +29,8 @@ spec:
       type: Recreate
     service:
       enabled: true
-      type: ClusterIP
+      loadBalancerIP: 10.10.1.151
+      type: LoadBalancer
       mqtts:
         enabled: true
       ws:
@@ -38,19 +39,25 @@ spec:
         enabled: true
     ingress:
       className: external
-      enabled: false
+      enabled: true
       hosts:
         - "mqtt.${SECRET_DOMAIN}"
       paths:
         - path: /
           pathType: ImplementationSpecific
       tls:
+        secretName: vernemq-tls
         - hosts:
             - mqtt.${SECRET_DOMAIN}
     secretMounts:
       - name: vernemq-certificates
         secretName: vernemq-certificates-secret
         path: /etc/ssl/vernemq
+    vmqConfig: 'accept_eula=yes'
     additionalEnv:
-      - name: DOCKER_VERNEMQ_ACCEPT_EULA
-        value: "yes"
+      - name: DOCKER_VERNEMQ_LISTENER__SSL__CAFILE
+        value: "/etc/ssl/vernemq/tls.crt"
+      - name: DOCKER_VERNEMQ_LISTENER__SSL__CERTFILE
+        value: "/etc/ssl/vernemq/tls.crt"
+      - name: DOCKER_VERNEMQ_LISTENER__SSL__KEYFILE
+        value: "/etc/ssl/vernemq/tls.key"
