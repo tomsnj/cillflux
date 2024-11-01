@@ -16,6 +16,10 @@
   when: rabbitmq.enabled | default(false)
   ansible.builtin.include_tasks: rabbitmq.yaml
 
+- name: Process addon mongodb
+  when: mongodb.enabled | default(false)
+  ansible.builtin.include_tasks: mongodb.yaml
+
 - name: Process addon vernemq
   when: vernemq.enabled | default(false)
   ansible.builtin.include_tasks: vernemq.yaml
