@@ -38,13 +38,6 @@ spec:
     testFramework:
       enabled: false
     auth:
-      rootUser:
-        valueFrom:
-          secretKeyRef:
-            name: mongo-secret
-            key: MONGO_USERNAME
-      rootPassword: 
-        valueFrom:
-          secretKeyRef:
-            name: mongo-secret
-            key: MONGO_PASSWORD
+      rootUser: ${rootUser}
+      rootPassword: ${rootPassword}
+      existingPasswordSecret: mongo-secret
