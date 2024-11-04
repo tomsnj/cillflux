@@ -12,6 +12,10 @@
   when: grafana.enabled | default(false)
   ansible.builtin.include_tasks: grafana.yaml
 
+- name: Process addon kerberos
+  when: kerberos.enabled | default(false)
+  ansible.builtin.include_tasks: kerberos.yaml
+
 - name: Process addon rabbitmq
   when: rabbitmq.enabled | default(false)
   ansible.builtin.include_tasks: rabbitmq.yaml
