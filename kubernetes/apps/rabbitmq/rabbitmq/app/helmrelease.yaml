@@ -42,5 +42,5 @@ spec:
       password: $(rabbitmq-password)
       securePassword: false
     envFrom:
-      - secretRef:
-          name: rabbitmq-secret
+    - secretRef:
+        name: rabbitmq-secret
