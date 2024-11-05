@@ -37,3 +37,10 @@ spec:
       storageClassName: local-hostpath
     testFramework:
       enabled: false
+    auth:
+      username: $(rabbitmq-user)
+      password: $(rabbitmq-password)
+      securePassword: false
+    envFrom:
+      - secretRef:
+          name: rabbitmq-secret

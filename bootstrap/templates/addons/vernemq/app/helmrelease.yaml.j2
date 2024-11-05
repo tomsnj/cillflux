@@ -55,8 +55,7 @@ spec:
       - name: DOCKER_VERNEMQ_ACCEPT_EULA
         value: "yes"
       - name: DOCKER_VERNEMQ_USER_VERNEMQ
-        value:
-          valueFrom:
-            secretKeyRef:
-              name: vernemq-secret
-              key: vernemq-password
+        value: $(vernemq-password)
+    envFrom:
+      - secretRef:
+          name: vernemq-secret

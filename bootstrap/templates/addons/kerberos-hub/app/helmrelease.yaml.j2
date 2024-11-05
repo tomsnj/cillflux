@@ -28,30 +28,40 @@ spec:
     deploymentStrategy:
       type: Recreate
     environment: "staging"
-    service:
-      enabled: true
-      type: ClusterIP
-      mqtts:
-        enabled: true
-      ws:
-        enabled: true
-      wss:
-        enabled: true
-    ingress:
-      className: external
-      enabled: false
-      hosts:
-        - "mqtt.${SECRET_DOMAIN}"
-      paths:
-        - path: /
-          pathType: ImplementationSpecific
-      tls:
-        - hosts:
-            - mqtt.${SECRET_DOMAIN}
-    secretMounts:
-      - name: kerberos-certificates
-        secretName: kerberos-certificates-secret
-        path: /etc/ssl/kerberos
-    additionalEnv:
-      - name: DOCKER_VERNEMQ_ACCEPT_EULA
-        value: "yes"
+    ingress: nginx
+    mongodb:
+      host: mongodb.mongodb
+      adminDatabase: admin
+      username: rootUser
+      password:
+        valueFrom:
+          secretKeyRef:
+            name: mongo
+            namespace: mongodb
+            key: mongodb-root-password
+    mqtt:
+      host: "mqtt.gs-farm.net"
+      port: "8443"
+      protocol: "wss"
+      username: vernemq 
+      password:
+        valueFrom:
+          secretKeyRef:
+            name: vernemq-secret
+            namespace: vernemq
+            key: vernemq-passwor
+    rabbitmq:
+      username: 
+        valueFrom:
+          secretKeyRef:
+            name: rabbitmq-secret
+            namespace: rabbitmq
+            key: rabbitmq-user
+      password:
+        valueFrom:
+          secretKeyRef:
+            name: rabbitmq-secret
+            namespace: rabbitmq
+            key: rabbitmq-password
+    turn:
+      host: "turn:turn.gs-farm.net:8443"
