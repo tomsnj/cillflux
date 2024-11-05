@@ -38,7 +38,7 @@ spec:
     testFramework:
       enabled: false
     auth:
-      username: $(rabbitmq-user)
+      username: "rabbitmq-user"
       password: $(rabbitmq-password)
       securePassword: false
     envFrom:
