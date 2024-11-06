@@ -46,3 +46,12 @@ spec:
         name: rabbitmq-secret
     service:
       externalTrafficControlPolicy: Cluster
+    resourcesPreset: "none"
+    pdb:
+      create: false
+      minAvailable: 1
+    serviceMonitor:
+      enabled: false
+      interval: 30s
+    volumePermisions:
+      resourcesPreset: "none"
