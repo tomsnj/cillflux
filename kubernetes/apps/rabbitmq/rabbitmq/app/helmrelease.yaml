@@ -38,9 +38,9 @@ spec:
     testFramework:
       enabled: false
     auth:
-      ## username: "rabbitmq-user"
-      ## password: $(rabbitmq-password)
-      securePassword: false
+      username: "rabbitmq-user"
+      password: "bitnami-pass"
+      securePassword: true
     envFrom:
     - secretRef:
         name: rabbitmq-secret
