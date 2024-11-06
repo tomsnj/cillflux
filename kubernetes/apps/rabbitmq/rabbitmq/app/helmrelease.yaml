@@ -44,3 +44,5 @@ spec:
     envFrom:
     - secretRef:
         name: rabbitmq-secret
+    service:
+      externalTrafficControlPolicy: Cluster
