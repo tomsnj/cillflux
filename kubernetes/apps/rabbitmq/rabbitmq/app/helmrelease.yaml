@@ -39,7 +39,7 @@ spec:
       enabled: false
     #auth:
       #username: "rabbitmq-user"
-      password: "XqBcOrLwHopbnIwe"
+      #password: "XqBcOrLwHopbnIwe"
       #securePassword: true
     #envFrom:
     #- secretRef:
