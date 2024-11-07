@@ -38,8 +38,8 @@ spec:
     testFramework:
       enabled: false
     auth:
-      username: "rabbitmq-user"
-      password: "bitnami-pass"
+      #username: "rabbitmq-user"
+      #password: "bitnami-pass"
       securePassword: true
     envFrom:
     - secretRef:
