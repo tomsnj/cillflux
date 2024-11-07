@@ -41,9 +41,9 @@ spec:
       #username: "rabbitmq-user"
       password: "XqBcOrLwHopbnIwe"
       #securePassword: true
-    envFrom:
-    - secretRef:
-        name: rabbitmq-secret
+    #envFrom:
+    #- secretRef:
+        #name: rabbitmq-secret
     service:
       externalTrafficControlPolicy: Cluster
     resourcesPreset: "none"
