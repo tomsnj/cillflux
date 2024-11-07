@@ -39,7 +39,7 @@ spec:
       enabled: false
     #auth:
       #username: "rabbitmq-user"
-      #password: "bitnami-pass"
+      password: "XqBcOrLwHopbnIwe"
       #securePassword: true
     envFrom:
     - secretRef:
