@@ -8,11 +8,11 @@ spec:
   interval: 30m
   chart:
     spec:
-      chart: kerberos
+      chart: hub
       version: 0.71.0
       sourceRef:
         kind: HelmRepository
-        name: kerberos
+        name: hub
         namespace: flux-system
   maxHistory: 2
   install:
@@ -65,3 +65,16 @@ spec:
             key: rabbitmq-password
     turn:
       host: "turn:turn.gs-farm.net:8443"
+    kerberoshub:
+      api:
+        jwtSecret: "tempjwtsecret_thingy"
+        url: "api.gs-farm.net"
+        mfaissuer: "gs-farm.net"
+        apiKey: "somesillykeythingy"
+        tls:
+          - hosts:
+              - "api.gs-farm.net"
+          secretName: kerberoshub-api
+          - hosts:
+              - "admin.api.gs-farm.net"
+          secretName: kerberoshub-admin
