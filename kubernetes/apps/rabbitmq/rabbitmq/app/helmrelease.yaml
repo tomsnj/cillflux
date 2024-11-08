@@ -37,21 +37,10 @@ spec:
       storageClassName: local-hostpath
     testFramework:
       enabled: false
-    #auth:
-      #username: "rabbitmq-user"
-      #password: "XqBcOrLwHopbnIwe"
-      #securePassword: true
-    #envFrom:
-    #- secretRef:
-        #name: rabbitmq-secret
-    service:
-      externalTrafficControlPolicy: Cluster
-    resourcesPreset: "none"
     pdb:
       create: false
       minAvailable: 1
     serviceMonitor:
       enabled: false
       interval: 30s
-    volumePermisions:
-      resourcesPreset: "none"
+

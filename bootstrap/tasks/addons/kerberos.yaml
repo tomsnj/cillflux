@@ -2,7 +2,7 @@
 - name: Set addon facts
   ansible.builtin.set_fact:
     addon_name: kerberos
-    addon_namespace: kerberos-hub
+    addon_namespace: kerberos
 
 - name: Ensure directories exist for {{ addon_namespace }}/{{ addon_name }}
   when: item.state == 'directory'
