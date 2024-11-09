@@ -81,3 +81,9 @@ spec:
           - hosts:
               - "admin.api.gs-farm.net"
             secretName: kerberoshub-admin
+    frontend:
+      url: "gs-farm.net"
+      tls:
+        - hosts:
+            - "gs-farm.net"
+          secretName: kerberoshub
