@@ -28,7 +28,16 @@ spec:
     deploymentStrategy:
       type: Recreate
     environment: "staging"
-    ingress: nginx
+    #ingress: nginx
+    ingress:
+      className: external
+      enabled: true
+      paths:
+        - path: /
+          pathType: ImplementationSpecific
+      #tls:
+        #- hosts:
+          #- mqtt.${SECRET_DOMAIN}
     mongodb:
       host: mongodb.mongodb
       adminDatabase: admin
