@@ -69,7 +69,7 @@ spec:
       api:
         jwtSecret: "tempjwtsecret_thingy"
         url: "api.gs-farm.net"
-        mfaissuer: "gs-farm.net"
+        mfaIssuer: "gs-farm.net"
         apiKey: "somesillykeythingy"
         tls:
           - hosts:
