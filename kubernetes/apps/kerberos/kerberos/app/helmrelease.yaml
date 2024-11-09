@@ -8,7 +8,7 @@ spec:
   interval: 30m
   chart:
     spec:
-      chart: kerberos/hub
+      chart: kerberos
       version: 0.71.0
       sourceRef:
         kind: HelmRepository
