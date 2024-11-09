@@ -8,11 +8,11 @@ spec:
   interval: 30m
   chart:
     spec:
-      chart: kerberos
+      chart: kerberos/hub
       version: 0.71.0
       sourceRef:
         kind: HelmRepository
-        name: kerberos/hub
+        name: hub
         namespace: flux-system
   maxHistory: 2
   install:
