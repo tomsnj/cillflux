@@ -68,6 +68,7 @@ spec:
     kerberoshub:
       api:
         jwtSecret: "tempjwtsecret_thingy2"
+        schema: "https"
         url: "api.gs-farm.net"
         mfaIssuer: "gs-farm.net"
         apiKey: "somesillykeythingy"
