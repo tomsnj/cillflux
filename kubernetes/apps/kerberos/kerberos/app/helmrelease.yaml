@@ -43,7 +43,7 @@ spec:
       host: "mqtt.gs-farm.net"
       port: "8443"
       protocol: "wss"
-      username: "vernemq" 
+      username: "vernemq"
       password: "vernemqpass"
         #valueFrom:
           #secretKeyRef:
