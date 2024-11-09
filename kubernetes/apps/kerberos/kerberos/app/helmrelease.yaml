@@ -67,7 +67,7 @@ spec:
       host: "turn:turn.gs-farm.net:8443"
     kerberoshub:
       api:
-        jwtSecret: "tempjwtsecret_thingy"
+        jwtSecret: "tempjwtsecret_thingy2"
         url: "api.gs-farm.net"
         mfaIssuer: "gs-farm.net"
         apiKey: "somesillykeythingy"
