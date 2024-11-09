@@ -73,7 +73,7 @@ spec:
         schema: "https"
         url: "api.gs-farm.net"
         mfaIssuer: "gs-farm.net"
-        apiKey: "somesillykeythingy"
+        apiKey: cloudkey-api-key-secret
         tls:
           - hosts:
               - "api.gs-farm.net"
@@ -83,6 +83,9 @@ spec:
             secretName: kerberoshub-admin
     frontend:
       url: "gs-farm.net"
+      metadata:
+        annotations:
+          cert-manager.io/cluster-issuer: "letsencrypt-production"
       tls:
         - hosts:
             - "gs-farm.net"
