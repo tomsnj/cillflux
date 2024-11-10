@@ -72,6 +72,10 @@ spec:
         jwtSecret: "tempjwtsecret_thingy2"
         schema: "https"
         url: "api.gs-farm.net"
+        resources:
+          requests:
+            memory: 10Mi
+            cpu: 25m
         mfaIssuer: "gs-farm.net"
         apiKey: cloudkey-api-key-secret
         tls:
