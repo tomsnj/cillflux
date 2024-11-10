@@ -24,11 +24,12 @@ spec:
       retries: 3
   uninstall:
     keepHistory: false
+  ingressClassName: external
   values:
     deploymentStrategy:
       type: Recreate
     environment: "production"
-    ingress: external
+    ingress: nginx
     mongodb:
       host: mongodb.mongodb
       adminDatabase: admin
@@ -93,4 +94,4 @@ spec:
         tls:
           - hosts:
               - "kerberos.gs-farm.net"
-            secretName: kerberoshub
+            secretName: kerberoshub-secret
