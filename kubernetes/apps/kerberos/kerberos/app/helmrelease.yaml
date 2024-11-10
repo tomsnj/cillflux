@@ -53,7 +53,7 @@ spec:
     rabbitmq:
       host: "rabbitmq-0.rabbitmq-headless.rabbitmq.svc.cluster.local"
       username: "user"
-      password: $(rabbitmq-password)
+      password: "ghp_cn1OLGqDS75yg9bAVel9xcIBj4MHrZ4QKGrK"
     turn:
       host: "turn:turn.gs-farm.net:8443"
     kerberosvault:
