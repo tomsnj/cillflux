@@ -52,18 +52,18 @@ spec:
             #key: vernemq-passwor
     rabbitmq:
       host: "rabbitmq-0.rabbitmq-headless.rabbitmq.svc.cluster.local"
-      #username: "user"
+      username: "user"
         #valueFrom:
           #secretKeyRef:
             #name: rabbitmq-secret
             #namespace: rabbitmq
             #key: rabbitmq-user
-      #password: "rabbitmqpass"
-        #valueFrom:
-          #secretKeyRef:
-            #name: rabbitmq-secret
-            #namespace: rabbitmq
-            #key: rabbitmq-password
+      password: "rabbitmqpass"
+        valueFrom:
+          secretKeyRef:
+            name: rabbitmq-secret
+            namespace: rabbitmq
+            key: rabbitmq-password
     turn:
       host: "turn:turn.gs-farm.net:8443"
     kerberosvault:
