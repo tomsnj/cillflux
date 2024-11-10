@@ -1,0 +1,326 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: hub-frontend-svc
+  labels:
+    app: hub-frontend-svc
+spec:
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 80
+    name: http
+  selector:
+    app: hub-frontend
+---
+{{- if .Capabilities.APIVersions.Has "networking.k8s.io/v1" }}
+apiVersion: networking.k8s.io/v1
+{{- else }}
+apiVersion: networking.k8s.io/v1beta1
+{{- end }}
+kind: Ingress
+metadata:
+  name: hub-frontend-ingress
+  annotations:
+    kubernetes.io/ingress.class: {{ .Values.ingress }}
+    {{- if eq .Values.kerberoshub.oauth2Proxy.enabled true  }}
+    nginx.ingress.kubernetes.io/auth-url: "https://$host/oauth2/auth"
+    nginx.ingress.kubernetes.io/auth-signin: "https://$host/oauth2/start?rd=$escaped_request_uri"
+    {{- end }}
+    {{- if eq .Values.ingress "nginx" }}
+    kubernetes.io/tls-acme: "true"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    cert-manager.io/cluster-issuer: "letsencrypt-production"
+    {{- end }}
+spec:
+
+  {{- with .Values.kerberoshub.frontend.tls }}
+  tls:
+    {{- toYaml . | nindent 8 }}
+  {{- end }}
+  {{- if .Capabilities.APIVersions.Has "networking.k8s.io/v1" }}
+  rules:
+    - host: "{{ .Values.kerberoshub.frontend.url }}"
+      http:
+        paths:
+        - path: /
+          pathType: Prefix
+          backend:
+            service:
+              name: hub-frontend-svc
+              port:
+                number: 80
+    {{- if .Values.kerberoshub.frontend.legacyUrl }}
+    - host: "{{ .Values.kerberoshub.frontend.legacyUrl }}"
+      http:
+        paths:
+        - path: /
+          pathType: Prefix
+          backend:
+            service:
+              name: hub-frontend-svc
+              port:
+                number: 80
+    {{- end }}
+    {{- range .Values.kerberoshub.frontend.domains }}
+    - host: "{{ . }}"
+      http:
+        paths:
+        - path: /
+          pathType: Prefix
+          backend:
+            service:
+              name: hub-frontend-svc
+              port:
+                number: 80
+    {{- end }}
+  
+  {{- else }}
+  rules:
+    - host: "{{ .Values.kerberoshub.frontend.url }}"
+      http:
+        paths:
+          - path: /
+            backend:
+              serviceName: hub-frontend-svc
+              servicePort: 80
+    {{- if .Values.kerberoshub.frontend.legacyUrl }}
+    - host: "{{ .Values.kerberoshub.frontend.legacyUrl }}"
+      http:
+        paths:
+          - path: /
+            backend:
+              serviceName: hub-frontend-svc
+              servicePort: 80
+    {{- end }}
+    {{- range .Values.kerberoshub.frontend.domains }}
+    - host: "{{ . }}"
+      http:
+        paths:
+          - path: /
+            backend:
+              serviceName: hub-frontend-svc
+              servicePort: 80
+    {{- end }}
+  {{- end }}
+{{- if eq .Values.kerberoshub.oauth2Proxy.enabled true  }}
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: oauth2-proxy-frontend
+  namespace: kube-system
+  annotations:
+    kubernetes.io/ingress.class: {{ .Values.ingress }}
+    {{- if eq .Values.ingress "nginx" }}
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    kubernetes.io/tls-acme: "true"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/enable-cors: "true"
+    {{- end }}
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: "{{ .Values.kerberoshub.frontend.url }}"
+      http:
+        paths:
+          - path: /oauth2
+            pathType: Prefix
+            backend:
+              service:
+                name: oauth2-proxy
+                port:
+                  number: 4180
+  tls:
+    - hosts:
+        - "{{ .Values.kerberoshub.frontend.url }}"
+      secretName: 
+{{- end }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hub-frontend
+spec:
+  replicas: {{ .Values.kerberoshub.frontend.replicas }}
+  selector:
+    matchLabels:
+      app: hub-frontend
+  minReadySeconds: 10
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 1
+  template:
+    metadata:
+      labels:
+        app: hub-frontend
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.kerberoshub.frontend.volumes }}
+      volumes:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+      - name: hub-frontend
+        image: "{{ .Values.kerberoshub.frontend.repository }}:{{ .Values.kerberoshub.frontend.tag }}"
+        imagePullPolicy: {{ .Values.kerberoshub.frontend.pullPolicy }}
+        {{- with .Values.kerberoshub.frontend.resources }}
+        resources:
+          {{- toYaml . | nindent 12 }}
+        {{- end }}
+        ports:
+        - containerPort: 80
+          name: http
+        {{- with .Values.kerberoshub.frontend.volumeMounts}}
+        volumeMounts:
+          {{- toYaml . | nindent 8 }}
+        {{- end }}
+        env:
+        - name: SSO_DOMAINS
+          # get the domain attribute from the list of sso domains
+          value: "{{- range .Values.kerberoshub.api.sso }}{{ .domain }};{{- end }}"
+        - name: SSO_FORCE_DOMAINS
+          # get the domain attribute from the list of sso domains
+          value: "{{- range .Values.kerberoshub.api.sso }}{{ .forceSSO }};{{- end }}"
+        - name: TITLE
+          value: "{{ .Values.kerberoshub.frontend.title }}"
+        - name: LOGO_NAME
+          value: "{{ .Values.kerberoshub.frontend.logo }}"
+        - name: ENVIRONMENT
+          value: "{{ .Values.environment }}"
+        - name: API_URL
+          value: "" # legacy
+        - name: NEW_API_URL
+          value: "{{ .Values.kerberoshub.api.schema }}://{{ .Values.kerberoshub.api.url }}"
+        {{ if .Values.isPrivate }}
+        - name: PRIVATE_EDITION
+          value: "true"
+        {{ else }}
+        - name: PRIVATE_EDITION
+          value: "false"
+        {{ end }}
+        - name: PRODUCTION
+          value: "true"
+        - name: DEMO
+          value: "false"
+        - name: MULTI_TENANT
+          value: "{{ .Values.kerberoshub.frontend.multiTenant }}"
+        - name: TENANT_BASE_DOMAIN
+          value: "{{ .Values.kerberoshub.frontend.tenantBaseDomain }}"
+
+        # Mqtt (VERNEMQ)
+        - name: MQTT_PROTOCOL
+          value: "{{ .Values.mqtt.protocol }}"
+        - name: MQTT_SERVER
+          value: "{{ .Values.mqtt.host }}"
+        - name: MQTT_PORT
+          value: "{{ .Values.mqtt.port }}"
+        - name: MQTT_USERNAME
+          value: "{{ .Values.mqtt.username }}"
+        - name: MQTT_PASSWORD
+          value: "{{ .Values.mqtt.password }}"
+        - name: MQTT_LEGACY_SERVER
+          value: "{{ .Values.mqtt.legacy.host }}"
+        - name: MQTT_LEGACY_PORT
+          value: "{{ .Values.mqtt.legacy.port }}"
+
+        # OpenAI
+        - name: OPENAI_ENABLED
+          value: "{{ .Values.openai.enabled }}"
+
+        # Turn (Pion)
+        - name: TURN_SERVER
+          value: "{{ .Values.turn.host }}"
+        - name: TURN_USERNAME
+          value: "{{ .Values.turn.username }}"
+        - name: TURN_PASSWORD
+          value: "{{ .Values.turn.password }}"
+
+        # Mixpanel for monitoring
+        - name: MIXPANEL_KEY
+          value: "{{ .Values.kerberoshub.frontend.mixpanel.apikey }}"
+
+        # Sentry for fetching client side issues.
+        - name: SENTRY_URL
+          value: "{{ .Values.kerberoshub.frontend.sentry.url }}"
+
+        # PostHog credentials
+        - name: POSTHOG_KEY
+          value: "{{ .Values.kerberoshub.frontend.posthog.key }}"
+        - name: POSTHOG_URL
+          value: "{{ .Values.kerberoshub.frontend.posthog.url }}"
+
+        # Stripe for billing
+        - name: STRIPE_KEY
+          value: "{{ .Values.kerberoshub.frontend.stripe.publicKey }}"
+
+        # Google maps for using and displaying cameras, sites on a map
+        - name: GOOGLEMAPS_KEY
+          value: "{{ .Values.kerberoshub.frontend.googlemaps.apikey }}"
+
+        # Zendesk for support
+        - name: ZENDESK_URL
+          value: "{{ .Values.kerberoshub.frontend.zendesk.url }}"
+
+        # Titles and descriptions on pages
+        - name: LOGIN_DESCRIPTION
+          value: "{{ .Values.kerberoshub.frontend.loginDescription }}"
+        - name: LOGIN_COPYRIGHT
+          value: "{{ .Values.kerberoshub.frontend.loginCopyright }}"
+        - name: PAGE_DASHBOARD_TITLE
+          value: "{{ .Values.kerberoshub.frontend.dashboardTitle }}"
+        - name: PAGE_DASHBOARD_SUB_TITLE
+          value: "{{ .Values.kerberoshub.frontend.dashboardSubTitle }}"
+        - name: PAGE_LATESTEVENTS_TITLE
+          value: "{{ .Values.kerberoshub.frontend.latestEventsTitle }}"
+        - name: PAGE_LATESTEVENTS_SUB_TITLE
+          value: "{{ .Values.kerberoshub.frontend.latestEventsSubTitle }}"
+        - name: PAGE_LIVESTREAM_TITLE
+          value: "{{ .Values.kerberoshub.frontend.livestreamTitle }}"
+        - name: PAGE_LIVESTREAM_SUB_TITLE
+          value: "{{ .Values.kerberoshub.frontend.livestreamSubTitle }}"
+        - name: PAGE_MEDIA_TITLE
+          value: "{{ .Values.kerberoshub.frontend.mediaTitle }}"
+        - name: PAGE_MEDIA_SUB_TITLE
+          value: "{{ .Values.kerberoshub.frontend.mediaSubTitle }}"
+        - name: PAGE_DAY_TITLE
+          value: "{{ .Values.kerberoshub.frontend.dayTitle }}"
+        - name: PAGE_DAY_SUB_TITLE
+          value: "{{ .Values.kerberoshub.frontend.daySubTitle }}"
+        - name: PAGE_DASHBOARD_CPU_USAGE
+          value: "{{ .Values.kerberoshub.frontend.cpuUsageDescription }}"
+        - name: PAGE_DASHBOARD_FPS
+          value: "{{ .Values.kerberoshub.frontend.framesPerSecondDescription }}"
+        - name: PAGE_DASHBOARD_MLA
+          value: "{{ .Values.kerberoshub.frontend.mlaUtilizationDescription }}"
+        - name: PAGE_DASHBOARD_OBJECTS
+          value: "{{ .Values.kerberoshub.frontend.objectsDetectedDescription }}"
+        - name: HIDE_ADD_AGENT
+          value: "{{ .Values.kerberoshub.frontend.hideAddAgent }}"
+
+        # Navigation links
+        - name: NAVIGATION_LINK_TITLE_1
+          value: "{{ .Values.kerberoshub.frontend.navigationLinkTitle1 }}"
+        - name: NAVIGATION_LINK_URL_1
+          value: "{{ .Values.kerberoshub.frontend.navigationLinkUrl1 }}"
+        - name: NAVIGATION_LINK_TITLE_2
+          value: "{{ .Values.kerberoshub.frontend.navigationLinkTitle2 }}"
+        - name: NAVIGATION_LINK_URL_2
+          value: "{{ .Values.kerberoshub.frontend.navigationLinkUrl2 }}"
+        - name: NAVIGATION_LINK_TITLE_3
+          value: "{{ .Values.kerberoshub.frontend.navigationLinkTitle3 }}"
+        - name: NAVIGATION_LINK_URL_3
+          value: "{{ .Values.kerberoshub.frontend.navigationLinkUrl3 }}"
+        - name: NAVIGATION_LINK_TITLE_4
+          value: "{{ .Values.kerberoshub.frontend.navigationLinkTitle4 }}"
+        - name: NAVIGATION_LINK_URL_4
+          value: "{{ .Values.kerberoshub.frontend.navigationLinkUrl4 }}"
+        - name: NAVIGATION_LINK_TITLE_5
+          value: "{{ .Values.kerberoshub.frontend.navigationLinkTitle5 }}"
+        - name: NAVIGATION_LINK_URL_5 
+          value: "{{ .Values.kerberoshub.frontend.navigationLinkUrl5 }}"
