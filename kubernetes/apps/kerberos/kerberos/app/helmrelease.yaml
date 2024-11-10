@@ -85,12 +85,12 @@ spec:
           - hosts:
               - "admin.api.gs-farm.net"
             secretName: kerberoshub-admin
-    frontend:
-      url: "gs-farm.net"
-      metadata:
-        annotations:
-          cert-manager.io/cluster-issuer: "letsencrypt-production"
-      tls:
-        - hosts:
-            - "gs-farm.net"
-          secretName: kerberoshub
+  frontend:
+    url: "gs-farm.net"
+    metadata:
+      annotations:
+        cert-manager.io/cluster-issuer: "letsencrypt-production"
+    tls:
+      - hosts:
+          - "gs-farm.net"
+        secretName: kerberoshub
