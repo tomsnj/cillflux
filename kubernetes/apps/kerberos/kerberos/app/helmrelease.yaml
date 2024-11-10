@@ -4,7 +4,6 @@ kind: HelmRelease
 metadata:
   name: kerberos
   namespace: kerberos
-  ingressClassName: external
 spec:
   interval: 30m
   chart:
