@@ -28,7 +28,7 @@ spec:
     - name: local-path-provisioner
       namespace: storage
   values:
-    resourcesPreset: "micro"
+    resourcesPreset: "nano"
     defaultStorageClass: local-hostpath
     deploymentStrategy:
       type: Recreate
