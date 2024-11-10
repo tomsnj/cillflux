@@ -27,7 +27,7 @@ spec:
   values:
     deploymentStrategy:
       type: Recreate
-    environment: "staging"
+    environment: "production"
     ingress: nginx
     mongodb:
       host: mongodb.mongodb
