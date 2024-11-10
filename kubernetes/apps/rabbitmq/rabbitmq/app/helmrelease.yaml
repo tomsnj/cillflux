@@ -28,7 +28,13 @@ spec:
     - name: local-path-provisioner
       namespace: storage
   values:
-    resourcesPreset: "nano"
+    resources:
+      requests:
+        cpu: 1
+        memory: 512Mi
+      limits:
+        cpu: 2
+        memory: 1024Mi
     defaultStorageClass: local-hostpath
     deploymentStrategy:
       type: Recreate
