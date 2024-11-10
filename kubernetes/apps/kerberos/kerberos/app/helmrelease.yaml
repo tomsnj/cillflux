@@ -53,17 +53,7 @@ spec:
     rabbitmq:
       host: "rabbitmq-0.rabbitmq-headless.rabbitmq.svc.cluster.local"
       username: "user"
-        #valueFrom:
-          #secretKeyRef:
-            #name: rabbitmq-secret
-            #namespace: rabbitmq
-            #key: rabbitmq-user
-      password:
-        valueFrom:
-          secretKeyRef:
-            name: rabbitmq-secret
-            namespace: rabbitmq
-            key: rabbitmq-password
+      password: $(rabbitmq-password)
     turn:
       host: "turn:turn.gs-farm.net:8443"
     kerberosvault:
@@ -95,3 +85,7 @@ spec:
           - hosts:
               - "kerberos.gs-farm.net"
             secretName: kerberoshub-secret
+      envFrom:
+        - secretRef:
+            name: rabbitmq-secret
+            namespace: rabbitmq
