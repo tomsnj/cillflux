@@ -43,4 +43,6 @@ spec:
     serviceMonitor:
       enabled: false
       interval: 30s
+    auth:
+      username: user
 
