@@ -28,7 +28,7 @@ spec:
     deploymentStrategy:
       type: Recreate
     environment: "production"
-    ingress: nginx
+    ingress: external
     mongodb:
       host: mongodb.mongodb
       adminDatabase: admin
