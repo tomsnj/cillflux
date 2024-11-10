@@ -12,7 +12,7 @@ spec:
       version: 0.71.0
       sourceRef:
         kind: HelmRepository
-        name: hub
+        name: kerberos
         namespace: flux-system
   maxHistory: 2
   install:
@@ -27,54 +27,70 @@ spec:
   values:
     deploymentStrategy:
       type: Recreate
-    environment: "staging"
-    ingress: nginx
+    environment: "production"
+    ingress: external
     mongodb:
       host: mongodb.mongodb
       adminDatabase: admin
-      username: rootUser
-      password:
-        valueFrom:
-          secretKeyRef:
-            name: mongo
-            namespace: mongodb
-            key: mongodb-root-password
+      username: "rootUser"
+      password: "mongopass"
+        #valueFrom:
+          #secretKeyRef:
+            #name: mongo
+            #namespace: mongodb
+            #key: mongodb-root-password
     mqtt:
       host: "mqtt.gs-farm.net"
       port: "8443"
       protocol: "wss"
-      username: vernemq 
-      password:
-        valueFrom:
-          secretKeyRef:
-            name: vernemq-secret
-            namespace: vernemq
-            key: vernemq-passwor
+      username: "vernemq"
+      password: "vernemqpass"
+        #valueFrom:
+          #secretKeyRef:
+            #name: vernemq-secret
+            #namespace: vernemq
+            #key: vernemq-passwor
     rabbitmq:
-      username: 
-        valueFrom:
-          secretKeyRef:
-            name: rabbitmq-secret
-            namespace: rabbitmq
-            key: rabbitmq-user
-      password:
-        valueFrom:
-          secretKeyRef:
-            name: rabbitmq-secret
-            namespace: rabbitmq
-            key: rabbitmq-password
+      username: "rabbitmq-user"
+        #valueFrom:
+          #secretKeyRef:
+            #name: rabbitmq-secret
+            #namespace: rabbitmq
+            #key: rabbitmq-user
+      password: "rabbitmqpass"
+        #valueFrom:
+          #secretKeyRef:
+            #name: rabbitmq-secret
+            #namespace: rabbitmq
+            #key: rabbitmq-password
     turn:
       host: "turn:turn.gs-farm.net:8443"
+    kerberosvault:
+      uri: "https://api.vault.gs-farm.net"
     kerberoshub:
       api:
-        jwtSecret: "tempjwtsecret_thingy"
+        jwtSecret: "tempjwtsecret_thingy2"
+        schema: "https"
         url: "api.gs-farm.net"
-        mfaissuer: "gs-farm.net"
-        apiKey: "somesillykeythingy"
+        resources:
+          requests:
+            memory: 10Mi
+            cpu: 25m
+        mfaIssuer: "gs-farm.net"
+        apiKey: cloudkey-api-key-secret
         tls:
           - hosts:
               - "api.gs-farm.net"
-          secretName: kerberoshub-api
+            secretName: kerberoshub-api
           - hosts:
               - "admin.api.gs-farm.net"
-          secretName: kerberoshub-admin
+            secretName: kerberoshub-admin
+      frontend:
+        url: "kerberos.gs-farm.net"
+        metadata:
+          annotations:
+            cert-manager.io/cluster-issuer: "letsencrypt-production"
+        tls:
+          - hosts:
+              - "kerberos.gs-farm.net"
+            secretName: kerberoshub
