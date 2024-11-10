@@ -51,8 +51,8 @@ spec:
             #namespace: vernemq
             #key: vernemq-passwor
     rabbitmq:
-      host: "rabbitmq.rabbitmq-headless.rabbitmq.svc.cluster.local"
-      username: "rabbitmq-user"
+      host: "rabbitmq-0.rabbitmq-headless.rabbitmq.svc.cluster.local"
+      username: "user"
         #valueFrom:
           #secretKeyRef:
             #name: rabbitmq-secret
