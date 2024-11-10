@@ -32,8 +32,8 @@ spec:
     mongodb:
       host: mongodb.mongodb
       adminDatabase: admin
-      username: "rootUser"
-      password: "mongopass"
+      username: ""
+      password: "o1yCpsfM0E"
         #valueFrom:
           #secretKeyRef:
             #name: mongo
