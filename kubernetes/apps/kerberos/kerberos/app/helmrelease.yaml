@@ -32,7 +32,7 @@ spec:
     mongodb:
       host: mongodb.mongodb
       adminDatabase: admin
-      username: ""
+      username: "root"
       password: "o1yCpsfM0E"
         #valueFrom:
           #secretKeyRef:
