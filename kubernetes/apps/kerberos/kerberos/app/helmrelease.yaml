@@ -30,7 +30,7 @@ spec:
     environment: "production"
     ingress: nginx
     mongodb:
-      host: mongodb.mongodb
+      host: mongodb.mongodb.svc.cluster.local
       adminDatabase: admin
       username: "root"
       password: "o1yCpsfM0E"
