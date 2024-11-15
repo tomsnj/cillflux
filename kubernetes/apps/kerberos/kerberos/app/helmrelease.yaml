@@ -33,13 +33,6 @@ spec:
       #name: kerberoshub-secret
       #key: mongodb-password
   values:
-    extraDeploy:
-      env:
-      - name: MONGODB_PASS
-        valueFrom:
-          secretKeyRef:
-            name: kerberoshub-secret
-            key: mongodb-password
     deploymentStongrategy:
       type: Recreate
     environmentm: "production"
@@ -51,6 +44,13 @@ spec:
       #envFrom:
         #- secretRef:
              #name: kerberoshub-secret
+      extraDeploy:
+        env:
+        - name: MONGODB_PASS
+          valueFrom:
+            secretKeyRef:
+              name: kerberoshub-secret
+              key: mongodb-password
       password: "$(MONGODB_PASS)"
       #password: "o1yCpsfM0E"
         #valueFrom:
