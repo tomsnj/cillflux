@@ -33,10 +33,11 @@ spec:
       host: mongodb.mongodb.svc.cluster.local
       adminDatabase: admin
       username: "root"
-      #password: "o1yCpsfM0E"
       envFrom:
         - secretRef:
             name: kerberoshub-secret
+      password: $(mongodb-password)
+      #password: "o1yCpsfM0E"
         #valueFrom:
           #secretKeyRef:
             #name: mongo
