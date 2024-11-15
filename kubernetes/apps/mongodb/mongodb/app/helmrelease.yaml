@@ -41,13 +41,3 @@ spec:
       envFrom:
         - secretKeyRef:
             name: mongo-secret
-      MONGO_INITDB_ROOT_USERNAME:
-        valueFrom:
-          secretKeyRef:
-            name: mongo-secret
-            key: rootUser
-      MONGO_INITDB_ROOT_PASSWORD:
-        valueFrom:
-          secretKeyRef:
-            name: mongo-password
-            key: rootPassword
