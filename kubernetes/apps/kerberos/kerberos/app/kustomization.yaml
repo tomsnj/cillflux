@@ -4,3 +4,9 @@ kind: Kustomization
 resources:
   - ./secret.sops.yaml
   - ./helmrelease.yaml
+secretGenerator:
+  - name: kerberos-secrets
+    files:
+      - secrets.yaml=secrets.sops.yaml
+configurations:
+  - kustomizeconfig.yaml
