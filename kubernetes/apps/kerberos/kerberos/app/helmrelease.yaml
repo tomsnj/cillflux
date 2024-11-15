@@ -36,7 +36,7 @@ spec:
       envFrom:
         - secretRef:
             name: kerberoshub-secret
-      password: "${mongodb-password)}"
+      password: "${mongodb-password}"
       #password: "o1yCpsfM0E"
         #valueFrom:
           #secretKeyRef:
