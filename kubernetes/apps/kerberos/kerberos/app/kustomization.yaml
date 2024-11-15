@@ -3,9 +3,4 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
   - ./helmrelease.yaml
-secretGenerator:
-  - name: kerberos-secrets
-    files:
-      - secret.yaml=secret.sops.yaml
-configurations:
-  - kustomizeconfig.yaml
+  - ./secret.sops.yaml
