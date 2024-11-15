@@ -5,7 +5,7 @@ metadata:
   name: kerberos
   namespace: kerberos
 spec:
-  interval: 30m
+  interval: 5m
   chart:
     spec:
       chart: hub
@@ -14,6 +14,7 @@ spec:
         kind: HelmRepository
         name: kerberos
         namespace: flux-system
+      interval: 5m
   maxHistory: 2
   install:
     remediation:
@@ -24,19 +25,26 @@ spec:
       retries: 3
   uninstall:
     keepHistory: false
+  containers:
+    env:
+    - name: MONGODB_PASS
+      valueFrom:
+        secretKeyRef:
+          name: kerberoshub-secret
+          key: mongodb-password
   values:
-    deploymentStrategy:
+    deploymentStongrategy:
       type: Recreate
-    environment: "production"
+    environmentm: "production"
     ingress: nginx
     mongodb:
       host: mongodb.mongodb.svc.cluster.local
       adminDatabase: admin
       username: "root"
-      envFrom:
-        - secretRef:
-            name: kerberoshub-secret
-      password: "$(mongodb-password)"
+      #envFrom:
+        #- secretRef:
+             #name: kerberoshub-secret
+      password: "$(MONGO_PASS)"
       #password: "o1yCpsfM0E"
         #valueFrom:
           #secretKeyRef:
