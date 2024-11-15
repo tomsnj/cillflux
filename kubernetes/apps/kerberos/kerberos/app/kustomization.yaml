@@ -7,6 +7,6 @@ resources:
 secretGenerator:
   - name: kerberos-secrets
     files:
-      - secrets.yaml=secrets.sops.yaml
+      - secret.yaml=secret.sops.yaml
 configurations:
   - kustomizeconfig.yaml
