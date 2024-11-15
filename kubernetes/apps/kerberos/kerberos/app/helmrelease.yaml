@@ -15,6 +15,9 @@ spec:
         name: kerberos
         namespace: flux-system
       interval: 5m
+  valuesFrom:
+    - kind: Secret
+      name: kerberos-secrets
   maxHistory: 2
   install:
     remediation:
@@ -25,13 +28,13 @@ spec:
       retries: 3
   uninstall:
     keepHistory: false
-  containers:
-    env:
-    - name: MONGODB_PASS
-      valueFrom:
-        secretKeyRef:
-          name: kerberoshub-secret
-          key: mongodb-password
+      #containers:
+      #env:
+      #- name: MONGODB_PASS
+      #valueFrom:
+      #secretKeyRef:
+      #name: kerberoshub-secret
+      #key: mongodb-password
   values:
     deploymentStongrategy:
       type: Recreate
@@ -44,7 +47,7 @@ spec:
       #envFrom:
         #- secretRef:
              #name: kerberoshub-secret
-      password: "$(MONGO_PASS)"
+      password: "$(mongodb-password)"
       #password: "o1yCpsfM0E"
         #valueFrom:
           #secretKeyRef:
