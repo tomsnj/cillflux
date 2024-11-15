@@ -38,20 +38,16 @@ spec:
     testFramework:
       enabled: false
     auth:
+      envFrom:
+        - secretKeyRef:
+            name: mongo-secret
       MONGO_INITDB_ROOT_USERNAME:
         valueFrom:
           secretKeyRef:
             name: mongo-secret
             key: rootUser
-      rootPassword: $(ROOT_PASSWORD)
       MONGO_INITDB_ROOT_PASSWORD:
         valueFrom:
           secretKeyRef:
-            name: mongo-secret
+            name: mongo-password
             key: rootPassword
-env:
-- name: ROOT_PASSWORD
-  valueFrom:
-    secretKeyRef:
-      name: mongo-secret
-      key: rootPassword
