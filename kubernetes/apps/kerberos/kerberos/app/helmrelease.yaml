@@ -34,8 +34,8 @@ spec:
       adminDatabase: admin
       username: "root"
       envFrom:
-      - secretRef:
-          name: kerberoshub-secret
+        - secretRef:
+            name: kerberoshub-secret
       password: "$(mongodb-password)"
       #password: "o1yCpsfM0E"
         #valueFrom:
