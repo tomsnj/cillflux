@@ -5,7 +5,7 @@ metadata:
   name: kerberos
   namespace: kerberos
 spec:
-  interval: 5m
+  interval: 30m
   chart:
     spec:
       chart: hub
@@ -14,10 +14,6 @@ spec:
         kind: HelmRepository
         name: kerberos
         namespace: flux-system
-      interval: 5m
-      valuesFiles:
-        - values.yaml
-        - secret.sops.yaml
   maxHistory: 2
   install:
     remediation:
@@ -28,34 +24,16 @@ spec:
       retries: 3
   uninstall:
     keepHistory: false
-      #containers:
-      #env:
-      #- name: MONGODB_PASS
-      #valueFrom:
-      #secretKeyRef:
-      #name: kerberoshub-secret
-      #key: mongodb-password
   values:
-    deploymentStongrategy:
+    deploymentStrategy:
       type: Recreate
-    environmentm: "production"
-    ingress: nginx
+    environment: "production"
+    ingress: external
     mongodb:
-      host: mongodb.mongodb.svc.cluster.local
+      host: mongodb.mongodb
       adminDatabase: admin
-      username: "root"
-      #envFrom:
-        #- secretRef:
-             #name: kerberoshub-secret
-      extraDeploy:
-        env:
-        - name: MONGODB_PASS
-          valueFrom:
-            secretKeyRef:
-              name: kerberoshub-secret
-              key: mongodb-password
-      password: "$(MONGODB_PASS)"
-      #password: "o1yCpsfM0E"
+      username: "rootUser"
+      password: "mongopass"
         #valueFrom:
           #secretKeyRef:
             #name: mongo
@@ -73,9 +51,18 @@ spec:
             #namespace: vernemq
             #key: vernemq-passwor
     rabbitmq:
-      host: "rabbitmq-0.rabbitmq-headless.rabbitmq.svc.cluster.local"
-      username: "user"
-      password: "a4Oq1MneP76tiagN"
+      username: "rabbitmq-user"
+        #valueFrom:
+          #secretKeyRef:
+            #name: rabbitmq-secret
+            #namespace: rabbitmq
+            #key: rabbitmq-user
+      password: "rabbitmqpass"
+        #valueFrom:
+          #secretKeyRef:
+            #name: rabbitmq-secret
+            #namespace: rabbitmq
+            #key: rabbitmq-password
     turn:
       host: "turn:turn.gs-farm.net:8443"
     kerberosvault:
@@ -106,8 +93,4 @@ spec:
         tls:
           - hosts:
               - "kerberos.gs-farm.net"
-            secretName: kerberoshub-secret
-      envFrom:
-        - secretRef:
-            name: rabbitmq-secret
-            namespace: rabbitmq
+            secretName: kerberoshub

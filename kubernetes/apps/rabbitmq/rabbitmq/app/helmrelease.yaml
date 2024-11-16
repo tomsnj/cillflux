@@ -28,13 +28,6 @@ spec:
     - name: local-path-provisioner
       namespace: storage
   values:
-    resources:
-      requests:
-        cpu: 50m
-        memory: 512Mi
-      limits:
-        cpu: 250m
-        memory: 1024Mi
     defaultStorageClass: local-hostpath
     deploymentStrategy:
       type: Recreate
@@ -50,6 +43,4 @@ spec:
     serviceMonitor:
       enabled: false
       interval: 30s
-    auth:
-      username: user
 
