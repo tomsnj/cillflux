@@ -15,6 +15,9 @@ spec:
         name: kerberos
         namespace: flux-system
       interval: 5m
+      valuesFiles:
+        values.yaml
+        secret.sops.yaml
   maxHistory: 2
   install:
     remediation:
