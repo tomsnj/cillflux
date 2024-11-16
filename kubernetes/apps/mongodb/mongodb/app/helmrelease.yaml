@@ -38,7 +38,7 @@ spec:
     testFramework:
       enabled: false
     auth:
-      rootPassword: ${MONGODB_FLUX_PASSWORD}
+      rootPassword: ${MONGODB_FLUX_PASSOWORD}
       MONGO_INITDB_ROOT_USERNAME: "root"
         #valueFrom:
         #secretKeyRef:
