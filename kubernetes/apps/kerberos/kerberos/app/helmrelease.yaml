@@ -32,13 +32,8 @@ spec:
     mongodb:
       host: mongodb.mongodb
       adminDatabase: admin
-      username: "rootUser"
-      password: "mongopass"
-        #valueFrom:
-          #secretKeyRef:
-            #name: mongo
-            #namespace: mongodb
-            #key: mongodb-root-password
+      username: "root"
+      password: ${MONGODB_ROOT_PASSOWORD}
     mqtt:
       host: "mqtt.gs-farm.net"
       port: "8443"

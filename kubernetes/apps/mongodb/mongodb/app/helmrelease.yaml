@@ -40,12 +40,4 @@ spec:
     auth:
       rootPassword: ${MONGODB_FLUX_PASSOWORD}
       MONGO_INITDB_ROOT_USERNAME: "root"
-        #valueFrom:
-        #secretKeyRef:
-        #name: mongo-secret
-        #key: rootUser
       MONGO_INITDB_ROOT_PASSWORD: ${MONGODB_FLUX_PASSOWORD}
-        #valueFrom:
-        #secretKeyRef:
-        #name: mongo-secret
-        #key: rootPassword
