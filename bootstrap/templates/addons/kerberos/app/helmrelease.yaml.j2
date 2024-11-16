@@ -32,44 +32,24 @@ spec:
     mongodb:
       host: mongodb.mongodb
       adminDatabase: admin
-      username: "rootUser"
-      password: "mongopass"
-        #valueFrom:
-          #secretKeyRef:
-            #name: mongo
-            #namespace: mongodb
-            #key: mongodb-root-password
+      username: "root"
+      password: ${MONGODB_FLUX_PASSOWORD}
     mqtt:
       host: "mqtt.gs-farm.net"
       port: "8443"
       protocol: "wss"
       username: "vernemq"
       password: "vernemqpass"
-        #valueFrom:
-          #secretKeyRef:
-            #name: vernemq-secret
-            #namespace: vernemq
-            #key: vernemq-passwor
     rabbitmq:
       username: "rabbitmq-user"
-        #valueFrom:
-          #secretKeyRef:
-            #name: rabbitmq-secret
-            #namespace: rabbitmq
-            #key: rabbitmq-user
-      password: "rabbitmqpass"
-        #valueFrom:
-          #secretKeyRef:
-            #name: rabbitmq-secret
-            #namespace: rabbitmq
-            #key: rabbitmq-password
+      password: ${RABBITMQ_FLUX_PASSWORD}
     turn:
       host: "turn:turn.gs-farm.net:8443"
     kerberosvault:
       uri: "https://api.vault.gs-farm.net"
     kerberoshub:
       api:
-        jwtSecret: "tempjwtsecret_thingy2"
+        jwtSecret: ${KERBEROS_JWT_SECRET}
         schema: "https"
         url: "api.gs-farm.net"
         resources:

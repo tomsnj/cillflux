@@ -5,7 +5,7 @@ metadata:
   name: mongodb
   namespace: mongodb
 spec:
-  interval: 5m
+  interval: 30m
   chart:
     spec:
       chart: mongodb
@@ -38,6 +38,4 @@ spec:
     testFramework:
       enabled: false
     auth:
-      rootPassword: ${MONGODB_FLUX_PASSOWORD}
-      MONGO_INITDB_ROOT_USERNAME: "root"
-      MONGO_INITDB_ROOT_PASSWORD: ${MONGODB_FLUX_PASSOWORD}
+      password: ${MONGODB_FLUX_PASSOWORD}

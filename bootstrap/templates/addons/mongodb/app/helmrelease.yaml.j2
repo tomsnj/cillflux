@@ -38,13 +38,4 @@ spec:
     testFramework:
       enabled: false
     auth:
-      MONGO_INITDB_ROOT_USERNAME:
-        valueFrom:
-          secretKeyRef:
-            name: mongo-secret
-            key: rootUser
-      MONGO_INITDB_ROOT_PASSWORD:
-        valueFrom:
-          secretKeyRef:
-            name: mongo-secret
-            key: rootPassword
+      password: ${MONGODB_FLUX_PASSOWORD}
