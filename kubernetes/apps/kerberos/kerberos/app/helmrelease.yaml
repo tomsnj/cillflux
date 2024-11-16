@@ -33,7 +33,7 @@ spec:
       host: mongodb.mongodb
       adminDatabase: admin
       username: "root"
-      password: ${MONGODB_ROOT_PASSOWORD}
+      password: ${MONGODB_FLUX_PASSOWORD}
     mqtt:
       host: "mqtt.gs-farm.net"
       port: "8443"
