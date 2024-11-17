@@ -39,7 +39,8 @@ spec:
       port: "8443"
       protocol: "wss"
       username: "vernemq"
-      password: "vernemqpass"
+      #password: "vernemqpass"
+      password: ${VERNEMQ_FLUX_PASSWORD}
     rabbitmq:
       host: "rabbitmq-0.rabbitmq-headless.rabbitmq.svc.cluster.local"
       username: "rabbitmq-user"
