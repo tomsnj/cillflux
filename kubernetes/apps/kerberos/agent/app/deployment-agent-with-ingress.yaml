@@ -66,7 +66,7 @@ metadata:
 spec:
   tls:
     - hosts:
-        - "demo.kerberos.io"
+        - "agent1.gs-farm.net"
       secretName: agent-secret
   rules:
   - host: agent1.gs-farm.net
