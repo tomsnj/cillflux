@@ -59,11 +59,13 @@ metadata:
   labels:
     name: agent-ingress
   annotations:
-    kubernetes.io/ingress.class: nginx
+    external-dns.alpha.kubernetes.io/target: external.gs-farm.net
+    kubernetes.io/ingress.class: external.gs-farm.net
     kubernetes.io/tls-acme: "true"
     nginx.ingress.kubernetes.io/ssl-redirect: "true"
     cert-manager.io/cluster-issuer: "letsencrypt-prod"
 spec:
+  ingressClassName: external
   tls:
     - hosts:
         - "agent1.gs-farm.net"
