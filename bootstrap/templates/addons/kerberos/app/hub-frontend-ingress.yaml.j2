@@ -1,0 +1,39 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  annotations:
+    external-dns.alpha.kubernetes.io/target: external.gs-farm.net
+    kubernetes.io/ingress.class: external
+    meta.helm.sh/release-name: kerberos
+    meta.helm.sh/release-namespace: kerberos
+  creationTimestamp: "2024-11-16T22:30:54Z"
+  generation: 2
+  labels:
+    app.kubernetes.io/managed-by: Helm
+    helm.toolkit.fluxcd.io/name: kerberos
+    helm.toolkit.fluxcd.io/namespace: kerberos
+  name: hub-frontend-ingress
+  namespace: kerberos
+  resourceVersion: "86565215"
+  uid: c19b8007-2e74-4689-aaf3-82cd750adb5f
+spec:
+  ingressClassName: external
+  rules:
+  - host: kerberos.gs-farm.net
+    http:
+      paths:
+      - backend:
+          service:
+            name: hub-frontend-svc
+            port:
+              number: 80
+        path: /
+        pathType: Prefix
+  tls:
+  - hosts:
+    - kerberos.gs-farm.net
+    secretName: kerberoshub
+status:
+  loadBalancer:
+    ingress:
+    - ip: 10.10.1.152
