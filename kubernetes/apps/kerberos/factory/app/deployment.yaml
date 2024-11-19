@@ -18,6 +18,7 @@ spec:
       labels:
         app: factory
     spec:
+      replicas: 1
       containers:
       - name: factory
         image: "uugai/factory:v1.0.4" # or you can use "uugai/factory:latest"
