@@ -16,12 +16,12 @@
   when: kerberos.enabled | default(false)
   ansible.builtin.include_tasks: kerberos.yaml
 
-- name: Process addon kerberos-agent
-  when: kerberos-agent.enabled | default(false)
+- name: Process addon agent
+  when: agent.enabled | default(false)
   ansible.builtin.include_tasks: kerberos-agent.yaml
 
-- name: Process addon kerberos-factory
-  when: kerberos-factory.enabled | default(false)
+- name: Process addon factory
+  when: factory.enabled | default(false)
   ansible.builtin.include_tasks: kerberos-factory.yaml
 
 - name: Process addon rabbitmq

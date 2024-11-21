@@ -50,7 +50,7 @@ spec:
         - name: KERBEROS_LOGIN_USERNAME
           value: "root"
         - name: KERBEROS_LOGIN_PASSWORD
-          value: "kerberos"
+          value: ${FACTORY_FLUX_PASSWORD}
 
         - name: KERBEROS_AGENT_IMAGE
           value: "kerberos/agent:latest"
