@@ -31,7 +31,7 @@ spec:
             - name: AGENT_NAME
               value: Tapo310_GSfarm1
             - name: AGENT_CAPTURE_IPCAMERA_RTSP
-              value: rtsp://${TAPO_FLUX_USERNAME}:${TAPO_FLUX_PASSWORD}@10.0.0.115:554/stream1
+              value: rtsp://${TAPO310_FLUX_USERNAME}:${TAPO310_FLUX_PASSWORD}@10.0.0.115:554/stream1
             - name: AGENT_HUB_KEY
               value: yyy
             - name: AGENT_HUB_PRIVATE_KEY
