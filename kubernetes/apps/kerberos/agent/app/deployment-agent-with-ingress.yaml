@@ -37,7 +37,7 @@ spec:
             - name: AGENT_CAPTURE_IPCAMERA_ONVIF
               value: onvif
             - name: AGENT_CAPTURE_IPCAMERA_ONVIF_XADDR
-              value: 10.0.0.115:2020
+              value: http://10.0.0.115:2020
             - name: AGENT_CAPTURE_IPCAMERA_ONVIF_USERNAME
               value: ${TAPO310_FLUX_USERNAME}
             - name: AGENT_CAPTURE_IPCAMERA_ONVIF_PASSWORD
