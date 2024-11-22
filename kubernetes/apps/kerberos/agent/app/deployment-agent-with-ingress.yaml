@@ -29,13 +29,13 @@ spec:
               memory: 128Mi
           env:
             - name: AGENT_NAME
-              value: Tapo310_GSfarm1
+              value: agent
             - name: AGENT_CAPTURE_IPCAMERA_RTSP
               value: rtsp://${TAPO310_FLUX_USERNAME}:${TAPO310_FLUX_PASSWORD}@10.0.0.115:554/stream1
             - name: AGENT_CAPTURE_IPCAMERA_SUB_RTSP
               value: rtsp://${TAPO310_FLUX_USERNAME}:${TAPO310_FLUX_PASSWORD}@10.0.0.115:554/stream2
             - name: AGENT_CAPTURE_IPCAMERA_ONVIF
-              value: "true"
+              value: onvif
             - name: AGENT_CAPTURE_IPCAMERA_ONVIF_XADDR
               value: 10.0.0.115:2020
             - name: AGENT_CAPTURE_IPCAMERA_ONVIF_USERNAME
@@ -43,15 +43,11 @@ spec:
             - name: AGENT_CAPTURE_IPCAMERA_ONVIF_PASSWORD
               value: ${TAPO310_FLUX_PASSWORD}
             - name: AGENT_TIMEZONE
-              value: America/New_York
-            - name: AGENT_HUB_KEY
-              value: yyy
-            - name: AGENT_HUB_PRIVATE_KEY
-              value: yyy
+              value: "America/New_York"
             - name: AGENT_MQTT_USERNAME
               value: vernemq
             - name: AGENT_MQTT_URI
-              value: tcp://:10.42.0.17:1883
+              value: tcp://10.42.0.17:1883
             - name: AGENT_MQTT_PASSWORD
               value: a4Oq1MneP76tiagP
             - name: AGENT_TURN_PASSWORD
