@@ -1,0 +1,29 @@
+apiVersion: v1
+data:
+    AGENT_CAPTURE_IPCAMERA_ONVIF_PASSWORD: ENC[AES256_GCM,data:wll6M3wmaEYkDw==,iv:BZeeLyuFVnPR/kOyfHpDUBhyc5EVVoafvVwKpt97MyA=,tag:d0gQJg4x5ie4Vm1mu06Ciw==,type:str]
+    AGENT_CAPTURE_IPCAMERA_ONVIF_USERaNAME: ENC[AES256_GCM,data:2M1ThK0cO3ajLL6X6XUn,iv:gH7n1YUS8anDN6oz1VqHpgcaW8qUfTaZk+CmtT+M2bo=,tag:XoMR/NY0KjlFQpaMlvbWXg==,type:str]
+    AGENT_CATPURE_IPCAMERA_RTSP: ENC[AES256_GCM,data:VXzvMMRvAA8MNTLWJ0qog8QqB2UcI+kyhd/x68iwZzL9mStDydin5wcGAniUQzs+Ag==,iv:F9q7ZdQmg9W6tU9oKDShO7qN+3UsSP0hvFZee0hTVww=,tag:0Ktbp5/Qu60kSNqQAxEPvw==,type:str]
+    AGENT_CATPURE_IPCAMERA_SUB_RTSP: ENC[AES256_GCM,data:IxtsHz4uM8CGiEWSoJDkYW+/C626+gR18IXvz9uzTQXKGfeoKg3Pz904V8adgeHVqQ==,iv:wu1gmZeBt2s2cr+YLVBDzkDKDrDvr1dNZaBT4to8a5Y=,tag:0AlOeuJq/Ncb0ROzS+OL0w==,type:str]
+kind: ConfigMap
+metadata:
+    name: agent
+sops:
+    kms: []
+    gcp_kms: []
+    azure_kv: []
+    hc_vault: []
+    age:
+        - recipient: age1puse8jhtwqw87w9qr9j4g8dajqccn0899vpyc0wnn9y2e6wz0cms2g895x
+          enc: |
+            -----BEGIN AGE ENCRYPTED FILE-----
+            YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSBrOTQ0cStiQjlrMlBzZDR3
+            Z1YxTlRmV3VhM0dZRjV1bFdUMEJpVjVUWUZjClJPc25tSXFNeXBpcjdYbDI1UkZm
+            Z0puYS9vVWxtK0NpUGNHTUptbTR0SVEKLS0tIDYyVXZDdzhJR2VYWTVjbzBYbGpO
+            NDk2OWNUcE9WemhhZWNHOWNaL1pjNHMKrIejD0SL33Y0t7DoKk0OnBi3rHdzeH7d
+            LI/jprhcSQcswx7r8HObvMtLPcaqgR3AcdokmsjbIScp/PhEoKWkUQ==
+            -----END AGE ENCRYPTED FILE-----
+    lastmodified: "2024-11-22T21:28:57Z"
+    mac: ENC[AES256_GCM,data:CM/zooxkI6d+gxLTrILvjqV5bjYlpHmpDMwXFnFaZu8ne+4XDuMkuqsvi8yYbEhkINuLvOCCuwfUSlv2Z+5i1wgIgB6sUB9PC0WDM4fl34NiywjEI3vZ3nH4cI8GjlY62S8GG2+9BQ7/XCt9LyXHK0Mnz2ElVpfJ6pllpzGGH7E=,iv:ma5m9CgcJdRbWzm99lTAgUBzHaf9ysdq4X9rgkA8xQw=,tag:w8yUm59WRO+sd9sBu7QSKg==,type:str]
+    pgp: []
+    encrypted_regex: ^(data|stringData)$
+    version: 3.9.1

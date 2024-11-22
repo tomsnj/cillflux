@@ -27,21 +27,16 @@ spec:
             requests:
               cpu: 120m
               memory: 128Mi
+          envFrom:
+            - configMapRef:
+                name: agent
           env:
             - name: AGENT_NAME
               value: agent
-            - name: AGENT_CAPTURE_IPCAMERA_RTSP
-              value: rtsp://${TAPO310_FLUX_USERNAME}:${TAPO310_FLUX_PASSWORD}@10.0.0.115:554/stream1
-            - name: AGENT_CAPTURE_IPCAMERA_SUB_RTSP
-              value: rtsp://${TAPO310_FLUX_USERNAME}:${TAPO310_FLUX_PASSWORD}@10.0.0.115:554/stream2
             - name: AGENT_CAPTURE_IPCAMERA_ONVIF
               value: onvif
             - name: AGENT_CAPTURE_IPCAMERA_ONVIF_XADDR
               value: 10.0.0.115:2020
-            - name: AGENT_CAPTURE_IPCAMERA_ONVIF_USERNAME
-              value: ${TAPO310_FLUX_USERNAME}
-            - name: AGENT_CAPTURE_IPCAMERA_ONVIF_PASSWORD
-              value: ${TAPO310_FLUX_PASSWORD}
             - name: AGENT_TIMEZONE
               value: "America/New_York"
             - name: AGENT_MQTT_USERNAME

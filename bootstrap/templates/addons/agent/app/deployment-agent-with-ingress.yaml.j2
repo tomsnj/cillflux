@@ -25,17 +25,34 @@ spec:
               cpu: 1000m
               memory: 512Mi
             requests:
-              cpu: 100m
+              cpu: 120m
               memory: 128Mi
+          envFrom:
+            - configMapRef:
+                name: agent
           env:
             - name: AGENT_NAME
-              value: demo-agent
-            - name: AGENT_CAPTURE_IPCAMERA_RTSP
-              value: rtsp://fake.kerberos.io/stream
-            - name: AGENT_HUB_KEY
-              value: yyy
-            - name: AGENT_HUB_PRIVATE_KEY
-              value: yyy
+              value: agent
+            - name: AGENT_CAPTURE_IPCAMERA_ONVIF
+              value: onvif
+            - name: AGENT_CAPTURE_IPCAMERA_ONVIF_XADDR
+              value: 10.0.0.115:2020
+            - name: AGENT_TIMEZONE
+              value: "America/New_York"
+            - name: AGENT_MQTT_USERNAME
+              value: vernemq
+            - name: AGENT_MQTT_URI
+              value: tcp://10.42.0.17:1883
+            - name: AGENT_MQTT_PASSWORD
+              value: a4Oq1MneP76tiagP
+            - name: AGENT_TURN_PASSWORD
+              value: CMcDPs0Se3Vv7+rnkksr4vZhnCk=
+            - name: AGENT_STUN_URI
+              value: stun:10.10.0.9:8443
+            - name: AGENT_TURN_URI
+              value: turn:10.10.0.9:8443
+            - name: AGENT_HUB_URI
+              value: https://api.gs-farm.net
             # find full list of environment variables here: https://github.com/kerberos-io/agent#override-with-environment-variables
 ---
 apiVersion: v1
