@@ -31,9 +31,9 @@ spec:
             - name: AGENT_NAME
               value: agent
             - name: AGENT_CAPTURE_IPCAMERA_RTSP
-              value: rtsp://10.0.0.115:554/stream1
+              value: rtsp://${TAPO310_FLUX_USERNAME}:${TAPO310_FLUX_PASSWORD}@10.0.0.115:554/stream1
             - name: AGENT_CAPTURE_IPCAMERA_SUB_RTSP
-              value: rtsp://10.0.0.115:554/stream2
+              value: rtsp://${TAPO310_FLUX_USERNAME}:${TAPO310_FLUX_PASSWORD}@10.0.0.115:554/stream2
             - name: AGENT_CAPTURE_IPCAMERA_ONVIF
               value: onvif
             - name: AGENT_CAPTURE_IPCAMERA_ONVIF_XADDR
