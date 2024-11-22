@@ -32,10 +32,34 @@ spec:
               value: Tapo310_GSfarm1
             - name: AGENT_CAPTURE_IPCAMERA_RTSP
               value: rtsp://${TAPO310_FLUX_USERNAME}:${TAPO310_FLUX_PASSWORD}@10.0.0.115:554/stream1
+            - name: AGENT_CAPTURE_IPCAMERA_SUB_RTSP
+              value: rtsp://${TAPO310_FLUX_USERNAME}:${TAPO310_FLUX_PASSWORD}@10.0.0.115:554/stream2
+            - name: AGENT_CAPTURE_IPCAMERA_ONVIF
+              value: "true"
+            - name: AGENT_CAPTURE_IPCAMERA_ONVIF_XADDR
+              value: 10.0.0.115:2020
+            - name: AGENT_CAPTURE_IPCAMERA_ONVIF_USERNAME
+              value: ${TAPO310_FLUX_USERNAME}
+            - name: AGENT_CAPTURE_IPCAMERA_ONVIF_PASSWORD
+              value: ${TAPO310_FLUX_PASSWORD}
+            - name: AGENT_TIMEZONE
+              value: America/New_York
             - name: AGENT_HUB_KEY
               value: yyy
             - name: AGENT_HUB_PRIVATE_KEY
               value: yyy
+            - name: AGENT_MQTT_USERNAME
+              value: vernemq
+            - name: AGENT_MQTT_URI
+              value: tcp://:10.42.0.17:1883
+            - name: AGENT_MQTT_PASSWORD
+              value: a4Oq1MneP76tiagP
+            - name: AGENT_TURN_PASSWORD
+              value: CMcDPs0Se3Vv7+rnkksr4vZhnCk=
+            - name: AGENT_STUN_URI
+              value: stun:10.10.0.9:8443
+            - name: AGENT_TURN_URI
+              value: turn:10.10.0.9:8443
             # find full list of environment variables here: https://github.com/kerberos-io/agent#override-with-environment-variables
 ---
 apiVersion: v1
