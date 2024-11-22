@@ -58,8 +58,6 @@ spec:
               value: turn:10.10.0.9:8443
             - name: AGENT_HUB_URI
               value: https://api.gs-farm.net
-            - name: AGENT_HUB_KEY
-              value: cloudkey-api-key-secret
             - name: AGENT_PRIVATE_KEY
               value: cloudkey-api-key-secret
             # find full list of environment variables here: https://github.com/kerberos-io/agent#override-with-environment-variables
