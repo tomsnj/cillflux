@@ -37,7 +37,7 @@ spec:
           - containerPort: 80
         envFrom:
           - configMapRef:
-              name: mongodb
+              name: vault-mongodb
           - configMapRef:
               name: vault
 
@@ -52,8 +52,8 @@ spec:
 
         # Mongodb configuration (if you are not using the configmap)
         # This is the mongodb database where data will be stored, you might use a different name if you want.
-        - name: MONGODB_DATABASE_STORAGE
-          value : "Kerberos"
+        #- name: MONGODB_DATABASE_STORAGE
+        #  value : "Kerberos"
 
         # MongoDB URI (for example for a SaaS service like MongoDB Atlas)
         # If uri is set, the below properties are not used (host, adminDatabase, username, password)
