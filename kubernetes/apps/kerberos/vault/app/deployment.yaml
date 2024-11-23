@@ -81,19 +81,19 @@ spec:
       #- name: rootcerts
       #  configMap:
       #    name: rootcerts
-#---
-#apiVersion: v1
-#kind: Service
-#metadata:
-#  name: vault-lb
-#  labels:
-#    app: vault
-#spec:
-#  type: LoadBalancer
-#  ports:
-#  - port: 80
-#    targetPort: 80
-#    name: frontend
-#    protocol: TCP
-#  selector:
-#    app: vault
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: vault-lb
+  labels:
+    app: vault
+spec:
+  type: LoadBalancer
+  ports:
+  - port: 80
+    targetPort: 80
+    name: frontend
+    protocol: TCP
+  selector:
+    app: vault
