@@ -18,8 +18,12 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: vault-ingress
+  namespace: kerberos
   labels:
     name: vault-ingress
+    app.kubernetes.io/name: kerberos-vault
+    kustomize.toolkit.fluxcd.io/name: kerberos-vault
+    kustomize.toolkit.fluxcd.io/namespace: flux-system
   annotations:
     external-dns.alpha.kubernetes.io/target: external.gs-farm.net
     kubernetes.io/ingress.class: external.gs-farm.net
@@ -43,3 +47,7 @@ spec:
                 name: vault
                 port:
                   number: 80
+status:
+  loadBalancer:
+    ingress:
+      - ip: 10.10.1.152
