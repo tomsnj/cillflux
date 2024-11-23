@@ -2,9 +2,9 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: vault
+  name: vault-svc
   labels:
-    app: vault
+    app: vault-svc
 spec:
   ports:
   - port: 80
@@ -13,14 +13,21 @@ spec:
     protocol: TCP
   selector:
     app: vault
+  type: ClusterIP
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: vault
+  name: vault-ingress
+  namespace: kerberos
+  labels:
+    name: vault-ingress
+    app.kubernetes.io/name: kerberos-vault
+    kustomize.toolkit.fluxcd.io/name: kerberos-vault
+    kustomize.toolkit.fluxcd.io/namespace: flux-system
   annotations:
     external-dns.alpha.kubernetes.io/target: external.gs-farm.net
-    kubernetes.io/ingress.class: external.gs-farm.net
+    kubernetes.io/ingress.class: external
     kubernetes.io/tls-acme: "true"
     nginx.ingress.kubernetes.io/ssl-redirect: "true"
     cert-manager.io/cluster-issuer: "letsencrypt-prod"
@@ -34,10 +41,14 @@ spec:
     - host: vault.gs-farm.net
       http:
         paths:
-          - path: /
-            pathType: Prefix
+          - pathType: Prefix
+            path: "/"
             backend:
               service:
-                name: vault
+                name: vault-svc
                 port:
                   number: 80
+status:
+  loadBalancer:
+    ingress:
+      - ip: 10.10.1.152
