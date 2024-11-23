@@ -43,10 +43,10 @@ spec:
               name: vault
 
         # Injecting the ca-certificates inside the container.
-        volumeMounts:
-        - name: rootcerts
-          mountPath: /etc/ssl/certs/ca-certificates.crt
-          subPath: ca-certificates.crt
+        # volumeMounts:
+        #- name: rootcerts
+        #  mountPath: /etc/ssl/certs/ca-certificates.crt
+        #  subPath: ca-certificates.crt
 
         env:
         - name: GIN_MODE
