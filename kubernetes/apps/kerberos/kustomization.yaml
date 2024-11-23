@@ -6,3 +6,4 @@ resources:
   - ./factory/ks.yaml
   - ./kerberos/ks.yaml
   - ./agent/ks.yaml
+  - ./vault/ks.yaml

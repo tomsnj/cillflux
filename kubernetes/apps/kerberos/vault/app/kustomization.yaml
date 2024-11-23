@@ -5,3 +5,4 @@ resources:
   - ./deployment.yaml
   - ./ingress.yaml
   - ./mongodb.config.sops.yaml
+  - ./vault.config.sops.yaml
