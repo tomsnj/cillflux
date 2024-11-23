@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: vault
+data:
+  KERBEROS_LOGIN_USERNAME: {{ vault.username }}
+  KERBEROS_LOGIN_PASSWORD: {{ vault.password }}
+  MQTT_USERNAME: vernemq
+  MQTT_PASSWORD: {{ vault.MQTT_PASSWORD }}
