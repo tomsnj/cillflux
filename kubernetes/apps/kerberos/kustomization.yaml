@@ -7,3 +7,4 @@ resources:
   - ./kerberos/ks.yaml
   - ./agent/ks.yaml
   - ./vault/ks.yaml
+  - ./vault/namespace.yaml
