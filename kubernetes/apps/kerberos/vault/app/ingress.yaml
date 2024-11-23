@@ -17,7 +17,9 @@ spec:
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: vault
+  name: vault-ingress
+  labels:
+    name: vault-ingress
   annotations:
     external-dns.alpha.kubernetes.io/target: external.gs-farm.net
     kubernetes.io/ingress.class: external.gs-farm.net
