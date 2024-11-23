@@ -21,7 +21,7 @@ spec:
       containers:
       - name: vault
         image: uugai/vault:latest
-        #imagePullPolicy: Always
+        imagePullPolicy: Always
         #resources:
         #  limits:
         #    memory: 4096Mi
@@ -48,7 +48,7 @@ spec:
         #  subPath: ca-certificates.crt
         env:
         - name: GIN_MODE
-          value: release
+          value: debug
 
         # Mongodb configuration (if you are not using the configmap)
         # This is the mongodb database where data will be stored, you might use a different name if you want.
