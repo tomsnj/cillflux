@@ -5,7 +5,7 @@ metadata:
   name: &app kerberos-vault
   namespace: flux-system
 spec:
-  targetNamespace: kerberos-vault
+  targetNamespace: kerberos
   commonMetadata:
     labels:
       app.kubernetes.io/name: *app

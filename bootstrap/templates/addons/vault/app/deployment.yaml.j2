@@ -2,6 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: vault
+  namespace: kerberos
 spec:
   replicas: 1
   selector:
@@ -20,8 +21,8 @@ spec:
     spec:
       containers:
       - name: vault
-        image: uugai/vault:v1.0.7
-        #imagePullPolicy: Always
+        image: uugai/vault:latest
+        imagePullPolicy: Always
         #resources:
         #  limits:
         #    memory: 4096Mi
@@ -31,8 +32,8 @@ spec:
             cpu: 1000m
             memory: 512Mi
           requests:
-            cpu: 120m
-            memory: 128Mi
+            cpu: 250m
+            memory: 256Mi
         ports:
           - containerPort: 80
         envFrom:
@@ -42,18 +43,19 @@ spec:
               name: vault
 
         # Injecting the ca-certificates inside the container.
-        #volumeMounts:
-        #- name: rootcerts
-        #  mountPath: /etc/ssl/certs/ca-certificates.crt
-        #  subPath: ca-certificates.crt
+        volumeMounts:
+        - name: rootcerts
+          mountPath: /etc/ssl/certs/ca-certificates.crt
+          subPath: ca-certificates.crt
+
         env:
         - name: GIN_MODE
-          value: release
+          value: debug
 
         # Mongodb configuration (if you are not using the configmap)
         # This is the mongodb database where data will be stored, you might use a different name if you want.
-        #- name: MONGODB_DATABASE_STORAGE
-        #  value : "Kerberos"
+        - name: MONGODB_DATABASE_STORAGE
+          value : "KerberosStorage"
 
         # MongoDB URI (for example for a SaaS service like MongoDB Atlas)
         # If uri is set, the below properties are not used (host, adminDatabase, username, password)
@@ -80,19 +82,19 @@ spec:
       #- name: rootcerts
       #  configMap:
       #    name: rootcerts
-#---
-#apiVersion: v1
-#kind: Service
-#metadata:
-#  name: vault-lb
-#  labels:
-#    app: vault
-#spec:
-#  type: LoadBalancer
-#  ports:
-#  - port: 80
-#    targetPort: 80
-#    name: frontend
-#    protocol: TCP
-#  selector:
-#    app: vault
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: vault-lb
+  labels:
+    app: vault
+spec:
+  type: LoadBalancer
+  ports:
+  - port: 80
+    targetPort: 80
+    name: frontend
+    protocol: TCP
+  selector:
+    app: vault

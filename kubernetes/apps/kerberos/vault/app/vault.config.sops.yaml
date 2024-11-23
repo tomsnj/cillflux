@@ -1,9 +1,9 @@
 apiVersion: v1
 data:
-    KERBEROS_LOGIN_PASSWORD: ENC[AES256_GCM,data:NZodo/I7457xkYzJC3lC4wp72RKb85MW03VE92cXnBrTwkf5zwTY,iv:ItnOcZf2Q+exgbMumOuBazfBXOR3KzVVsdqONzMcKis=,tag:v0SVmgE5xURiKM7AP0fS3A==,type:str]
-    KERBEROS_LOGIN_USERNAME: ENC[AES256_GCM,data:z4+Yrn0IncTz8w==,iv:Lb4c2let6iuuTx18LS6n3JQOa1VRkj2SE0LEyCV0P4U=,tag:qhu2sdmsFXQdl0OapS/Ohg==,type:str]
-    MQTT_PASSWORD: ENC[AES256_GCM,data:xNbh3uHmtLeM1kA+xkvKrQ==,iv:h0siDd0vCNl8acn24IYXDW7xgXcOArNMepfYpEkKqqY=,tag:x7Onax02vmLPNQPcVqjYcg==,type:str]
-    MQTT_USERNAME: ENC[AES256_GCM,data:cQ+T5EDGMQ==,iv:YxD0Ua2GF49E6ub2zggBP6FMu7+6f5wr2k0OnwG72Os=,tag:D2n83wp9JJ/aRXHdanTkXw==,type:str]
+    KERBEROS_LOGIN_PASSWORD: ENC[AES256_GCM,data:c7gSdlsuj+4qq/PEsryMC7BRE7Dl5YfbMXylIR2iHGAKHsXXIjTl,iv:3nJ5Di6jGtlnuSl5i0evPASK5cSFaaz87hfVnN49vzo=,tag:XOfPJIuI492hTYSq8DZruQ==,type:str]
+    KERBEROS_LOGIN_USERNAME: ENC[AES256_GCM,data:/TTQSLl13jsfXQ==,iv:4H9Bea3RNleFWe29Zvan9n/1Vzao1cDrXVgROvR9ZHQ=,tag:t0XCAWEVIBNoFJflPI928g==,type:str]
+    MQTT_PASSWORD: ENC[AES256_GCM,data:q4dbP3xDMyZuBRxKensyzg==,iv:uY4Y+aceZFSDwSDDLoT1VKSDMsK9TmvPs4mlx/oAQgw=,tag:f1r9EnjNMVohOZxhEp8uOw==,type:str]
+    MQTT_USERNAME: ENC[AES256_GCM,data:crD5rX/dWw==,iv:lIIOXIf+oV0J/iSBXIrBRgG6y7aMQP+g8NTJN8AAXOY=,tag:Ie9MRLZqDNTQydZU1P9QNQ==,type:str]
 kind: ConfigMap
 metadata:
     name: vault
@@ -16,14 +16,14 @@ sops:
         - recipient: age1puse8jhtwqw87w9qr9j4g8dajqccn0899vpyc0wnn9y2e6wz0cms2g895x
           enc: |
             -----BEGIN AGE ENCRYPTED FILE-----
-            YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSBDZlpJQTVVbENKdGlHNXA1
-            Y2ljcHRiSWtLeHppb2dGdkNUaGQ1OFYzVmpFCmxhY3RJc3BLOFNqaVVWRzdJc1pn
-            bEFleTBjVmpTOGszcms3eUdEWWxyYVEKLS0tIFcwMi9YQTVJc2loMkpMNUI3T0RG
-            VThxT0RuYjVQVjhMdHFMRkxYdUhua0EKccJxRtJGCA7LArD+FApvR3vfpnL7k6Ev
-            ZY7/k76dmraesjWEv6e3Z6tC9YVijZzQWV3t4ebtLX+xpV0xe7G/YQ==
+            YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSByb043VFhzMU5zVEdJdVcy
+            SlRab2NoWm1CUjN3ejJBb1ROM013MWNkaXcwCm1melQ2dEM5K0FyYldhSGdXY0wy
+            M1hoZnZPcmVoWDRubVdNWmxHVGg1dDQKLS0tIGtuandwNFgrQ2Z4bFpHWThGUXk3
+            UzZ2ZVlqNyszNFJORkFidGtoemk4bmMKFXqkSN0RBSyROQLSemFcW4nc3B28UXdi
+            9+gPdGi8XfPP+0OV9Tx3xlc7bm8/gPFRfbn4cwUVfEcpOiH8m1+mXQ==
             -----END AGE ENCRYPTED FILE-----
-    lastmodified: "2024-11-23T19:07:09Z"
-    mac: ENC[AES256_GCM,data:QN2RUZOXFJXHtcM9Vf7x1TC8+RHrtmG8XC67ok4zRwfLoGoeulKIoufuRjSV0AGGmfsQbIVqKq9l+I2wB69jdamGonznSJiBcroVR0XAGL+InrgnO2SbOPjviEqd1qUJSW1Dah0TaUXh1Jtdyi9dc+gevpSBLVZE/hAtSRWuVLY=,iv:jwcRIBbWIgZib7NY2as4NSpRaRYyKMkK5RZD5wr496k=,tag:Ssyx2lrIkdcgqHOqngxKTA==,type:str]
+    lastmodified: "2024-11-23T22:35:42Z"
+    mac: ENC[AES256_GCM,data:pgC+eN1+i0OmlPUcg83PwPtMLSC102+MzPyqubqI0y8VMXGbuxvPiOfv9IXKpcJxRaegkhSrqAjVMJkM/p0QWxMyjRwQxd93lWdSb66xttnh2QeWJ87MFcoP/FzTi6QA31kR0tq4C0aBqJtuY7C+QB1WyF3RAkDNCL/pNy0DwRI=,iv:SP3kOrtQwvCZt8H2I44RpkOqRbKcoiBz+epNDBPFtAk=,tag:I6hl3Mwx3kOdp9X16qKQ8g==,type:str]
     pgp: []
     encrypted_regex: ^(data|stringData)$
     version: 3.9.1

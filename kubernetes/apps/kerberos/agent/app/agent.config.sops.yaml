@@ -1,13 +1,13 @@
 apiVersion: v1
 data:
-    AGENT_CAPTURE_IPCAMERA_ONVIF_PASSWORD: ENC[AES256_GCM,data:F4uKYrp13Gvzeg==,iv:QrCkklevkYPX8iuZpDILbEygFqa1splwAR7flSuFkUg=,tag:dAl79Wp4tJqK2Vae94Zo0Q==,type:str]
-    AGENT_CAPTURE_IPCAMERA_ONVIF_USERNAME: ENC[AES256_GCM,data:YfiUVOp7Jr4MDCPxLfkG,iv:tOvVQgqpOILgZUJnrYZr0dZVMyFTAmzx/mC1gIl/GuY=,tag:pGEAPntwaHww/DWWnIB/NQ==,type:str]
-    AGENT_CAPTURE_IPCAMERA_RTSP: ENC[AES256_GCM,data:fjeIWxs2LD2BOYJTNAfMgOTsVD71TQLhBHik9kBbx3Iqo2f5wOEJnzGGsytHzjtYk2BYhJkAzgU=,iv:Ee8maFRMSSzl1EXTDhEdeXVAky/a1+S0bJ1I5NcvDB0=,tag:nBUxmy1hfPeYfuUXr9Q5XQ==,type:str]
-    AGENT_CAPTURE_IPCAMERA_SUB_RTSP: ENC[AES256_GCM,data:kWKdo14qYZfiHBtvh2Z/iw4JYh25QslHQCWQEjhvHmZDfigMH8kVr2gCqLSSp3P1tq9duKwDd2Y=,iv:ae3lk4CL+Fczw3dLMK+PFRpe8h7FDUN+8yDdSaXR+l0=,tag:tCS6wgdDRmEyUmyXkP2kyA==,type:str]
-    AGENT_MQTT_PASSWORD: ENC[AES256_GCM,data:GJaCX2iLK1vds/z2JhlfPw==,iv:LIxYn2UWdtv1metywedXpB00oZRaL/6eFoBblOpiiuk=,tag:ywNq4/cxyOjhV++V8+iKow==,type:str]
-    AGENT_PASSWORD: ENC[AES256_GCM,data:LQHQmMUxfvdUxJQAwJlEU1w0/CcXcyNbFnrBEkOpyQF1TYWbuTEPrg==,iv:Kroyyt6YPygPeVO1pS7lVoRddYXr5Mr7v2OygvqnTd0=,tag:XefS44mMu1+cp/KYtDRRcw==,type:str]
-    AGENT_TURN_PASSWORD: ENC[AES256_GCM,data:iB6xwNpLF7owiasCXhc71Xpqa9az1SwsuKO5dQ==,iv:EtpJNt1BfAY82BDRkHH3U+VkSQsol+RwiMpBkzy8WYQ=,tag:B/dDPCdh0+LJT2U74TenxQ==,type:str]
-    AGENT_USERNAME: ENC[AES256_GCM,data:00zoEx0C,iv:chURZ3eJDYCD6CdYEF189+ccIOehuW/wHDoMni+8Ej4=,tag:t4gxOZy49DR/xKSGBhIv3A==,type:str]
+    AGENT_CAPTURE_IPCAMERA_ONVIF_PASSWORD: ENC[AES256_GCM,data:NV4RzkF8Irpj2A==,iv:QLMhQux8M/5FUx212glO5V72bNuAoePc0j8nIis/MLc=,tag:mKQWfeY56K+5MvNKasw19A==,type:str]
+    AGENT_CAPTURE_IPCAMERA_ONVIF_USERNAME: ENC[AES256_GCM,data:zT5aJudADXlSdz4lWKAG,iv:I9zeEJJ3BRXgkILUQYLkOPm7XYMFpdMpbBEN5tfj9Jo=,tag:za3qiBdfVLiJImIa2eSREQ==,type:str]
+    AGENT_CAPTURE_IPCAMERA_RTSP: ENC[AES256_GCM,data:SmpcONwnmuGvHhjl5inoqA8TWtGuz1/8sGd6TRDxf72v3H02WR3nSkYX0HJxeW8jjkWkB9Yil7k=,iv:p5xLHnn/WPLKYjf1M3bPEW3+9ZVbBrzPQ28tfdPS8l0=,tag:l69zhnnlaN4ENOhGL4Q72A==,type:str]
+    AGENT_CAPTURE_IPCAMERA_SUB_RTSP: ENC[AES256_GCM,data:WYXEd+Z7DQAkQCeWvp537w5rqhy4q3l/nnow6k/YKR+Z6jnDhzK+jA47vezJw73+tXtGp+ZFNDs=,iv:naiOdMmaCWolVdv4kpYV8W7VnO4BB+Tvlva1YERocIU=,tag:8vEq+orMioo3Rh3bGsc+kg==,type:str]
+    AGENT_MQTT_PASSWORD: ENC[AES256_GCM,data:PK73S5SFzzaqGNblg06oWw==,iv:Rj1cXS9EiVhUahuIeC2mKQVrLcGK5MM1oH3yLKQ5Qbw=,tag:MCXqkwTA8YxJEcYJWgXouA==,type:str]
+    AGENT_PASSWORD: ENC[AES256_GCM,data:HHIvBhS2EVX/rWe/8YGzTnYOvPNF87w4u5WiQ2L+OABt5Z9PsvHOxQ==,iv:G+5SpEz/QXiSWK3bWhiXZe2Xg8cUc12FYY3AynVVxuw=,tag:1x5coDWQ/2a74c33rb7Zqg==,type:str]
+    AGENT_TURN_PASSWORD: ENC[AES256_GCM,data:iHS25+KU/9sRP7+BCUKleQB6pXn24o+FVUkOog==,iv:mvgPZr4kInCL7eVLy3M/3n8lKMJ+pk1W3g87Md/IK5k=,tag:Ve6/JxiUnl7K0540MRUFag==,type:str]
+    AGENT_USERNAME: ENC[AES256_GCM,data:G2Y1EH9l,iv:R2UhwtyXXTD9PwEr8f4F0vJeG073EpSSZqlnZe0tNKA=,tag:lMtvN9fuGkvPxEqgwftwCw==,type:str]
 kind: ConfigMap
 metadata:
     name: agent
@@ -20,14 +20,14 @@ sops:
         - recipient: age1puse8jhtwqw87w9qr9j4g8dajqccn0899vpyc0wnn9y2e6wz0cms2g895x
           enc: |
             -----BEGIN AGE ENCRYPTED FILE-----
-            YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSBJSy91cDhCSUdQcHpqUTc1
-            eEpSWGRsWHRTU1d5Qkp0VGsvaVFuVGllcGh3CnduWkpuU0VWckUwNUZkYVpiTFJ3
-            M0ZMVzR3bCt4c210Qjl1VzR6bW54eWsKLS0tIHZSV2hkQ1RJeVJHOG0wdjNQVy9N
-            MEg2T2N2c0E4VFVUVHFMVEVJT2tPRjQKF6VcrytGGtH/+vJDn3FKFTZzShgv+5pJ
-            iIc7RXK1KbBCp186muEuQ+tpwNMmCpUwhTlm2sO+O+JW4HgkXUMCMw==
+            YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSBGbGhicVBhN3o1UjJSUStG
+            V1IvVVhHWHRveXNvS2RQb0d4YWVxaE5FMEdNCkdRcEZQOWdqcXpyQlJWS3NGc3RJ
+            bGJFcWNIaWxCTzZKWmdISFJEZUpVSXcKLS0tIGJWUDdzMjZJTmxvamwwV01DRk5r
+            dXU1ZnZKUFRkUUdMSHNzZ25zbEFVL3MKGQnMcGH75NhctmWsO565ovWkXzZZNIKX
+            /OQz8+YPPBbEta4YZTG+9hCCsAWfFWoatNSpvNA91cmvi972zU3OoQ==
             -----END AGE ENCRYPTED FILE-----
-    lastmodified: "2024-11-23T19:07:04Z"
-    mac: ENC[AES256_GCM,data:5x5zNIRfp1D46QPWc33HYg0KnjewjRJZnxSYgyz1XiND08Xxv7/ECwoPfDuz2HzJoSZyKv8jrFmxdReAoyClb+EMZLsSzPEi+0COCSWDa6Z45DvsuLTxDpG1jFlgovRc1llXRuzRt/06rn1NL2mjBLvjZsZtejeeTKnrunmjUJ8=,iv:H4elBPoQTXJcI+vPOLliCp7X2rdMoemybCq7Ob+8GnM=,tag:U2dVORAVnfKLvpPyUx5/mA==,type:str]
+    lastmodified: "2024-11-23T22:35:36Z"
+    mac: ENC[AES256_GCM,data:QDRCqvRkB46n8ytLxn9uJyjHrAGAj2UmC3Tp+NG+83QGRNLoKXUFup99CEmhurkDNpRJr9cDAN3Ri1RddoBXjb8i1ZCAcdfe1wPSWQzijiKyL99+xchgiIwzmYWtSN1fOac3KqkFp1LeIynvm4zJb/gATh6Ud8bbnSL/FiouVWQ=,iv:TGvwgtNM5MJGhdCALV7yvTShxJq20M4ORYkHvHtgvng=,tag:BPlpNxOH404wAvhTR1duhw==,type:str]
     pgp: []
     encrypted_regex: ^(data|stringData)$
     version: 3.9.1
