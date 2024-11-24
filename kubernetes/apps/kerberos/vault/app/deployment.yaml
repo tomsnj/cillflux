@@ -37,8 +37,8 @@ spec:
         ports:
           - containerPort: 80
         envFrom:
-          - configMapRef:
-              name: vault-mongodb
+          #- configMapRef:
+          #    name: vault-mongodb
           - configMapRef:
               name: vault
 
