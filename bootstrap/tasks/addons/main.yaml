@@ -13,7 +13,7 @@
   ansible.builtin.include_tasks: grafana.yaml
 
 - name: Process addon kerberos
-  when: kerberos.enabled | default(false)
+  when: kerberos.disabled | default(false)
   ansible.builtin.include_tasks: kerberos.yaml
 
 - name: Process addon agent
@@ -21,11 +21,11 @@
   ansible.builtin.include_tasks: kerberos-agent.yaml
 
 - name: Process addon factory
-  when: factory.enabled | default(false)
+  when: factory.disabled | default(false)
   ansible.builtin.include_tasks: kerberos-factory.yaml
 
 - name: Process addon vault
-  when: vault.enabled | default(false)
+  when: vault.disabled | default(false)
   ansible.builtin.include_tasks: kerberos-vault.yaml
 
 - name: Process addon rabbitmq
