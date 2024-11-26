@@ -16,7 +16,8 @@ spec:
     spec:
       containers:
         - name: agent
-          image: kerberos/agent:b67a72b
+          #image: kerberos/agent:b67a72b
+          image: kerberos/agent:ca24133
           ports:
             - containerPort: 80
               protocol: TCP
