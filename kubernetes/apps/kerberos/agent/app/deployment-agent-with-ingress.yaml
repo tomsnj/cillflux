@@ -17,7 +17,7 @@ spec:
       containers:
         - name: agent
           #image: kerberos/agent:b67a72b
-          image: kerberos/agent:e0c6375
+          image: kerberos/agent:v3.2.1
           ports:
             - containerPort: 80
               protocol: TCP
