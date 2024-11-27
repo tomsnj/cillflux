@@ -16,7 +16,8 @@ spec:
     spec:
       containers:
         - name: agent
-          image: kerberos/agent:latest
+          #image: kerberos/agent:b67a72b
+          image: kerberos/agent:3.2.3
           ports:
             - containerPort: 80
               protocol: TCP
@@ -73,7 +74,7 @@ metadata:
     name: agent-ingress
   annotations:
     external-dns.alpha.kubernetes.io/target: external.gs-farm.net
-    kubernetes.io/ingress.class: external.gs-farm.net
+    kubernetes.io/ingress.class: external
     kubernetes.io/tls-acme: "true"
     nginx.ingress.kubernetes.io/ssl-redirect: "true"
     cert-manager.io/cluster-issuer: "letsencrypt-production"
