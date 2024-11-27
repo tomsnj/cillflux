@@ -9,15 +9,54 @@ spec:
     matchLabels:
       app: agent
   replicas: 1
+  dependsOn:
+    - name: local-path-provisioner
+      namespace: storage
   template:
     metadata:
       labels:
         app: agent
     spec:
+      defaultStorageClass: local-hostpath
+        persistence:
+          enabled: true
+          storageClass: local-hostpath
+          storageClassName: local-hostpath
+      volumes:
+        - name: kerberos-data
+          persistentVolumeClaim:
+            claimName: kerberos-data
+      init-containers:
+        - name: download-config
+          image: kerberos/agent:3.2.3
+          volumeMounts:
+            - name: kerberos-data
+              mountPath: /home/agent/data/config
+              subPath: config
+          command:
+            [
+              "cp",
+              "/home/agent/data/config.template.json",
+              "/home/agent/data/config/config.json",
+            ]
+
       containers:
         - name: agent
           #image: kerberos/agent:b67a72b
-          image: kerberos/agent:3.2.3
+          image: kerberos/agent:3.2.3 
+          volumeMounts:
+            - name: kerberos-data
+              mountPath: /home/agent/data/config
+              subPath: config
+            - name: kerberos-data
+              mountPath: /home/agent/data/recordings
+              subPath: recordings
+            - name: kerberos-data
+              mountPath: /home/agent/data/snapshots
+              subPath: snapshots
+            - name: kerberos-data
+              mountPath: /home/agent/data/cloud
+              subPath: cloud
           ports:
             - containerPort: 80
               protocol: TCP
