@@ -18,10 +18,10 @@ spec:
         app: agent
     spec:
       defaultStorageClass: local-hostpath
-        persistence:
-          enabled: true
-          storageClass: local-hostpath
-          storageClassName: local-hostpath
+      persistence:
+        enabled: true
+        storageClass: local-hostpath
+        storageClassName: local-hostpath
       volumes:
         - name: kerberos-data
           persistentVolumeClaim:
