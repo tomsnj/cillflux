@@ -23,14 +23,21 @@ spec:
         storageClass: local-hostpath
         storageClassName: local-hostpath
           #volumes:
-          #- name: kerberos-data
+          #- name: local-hostpath
           #persistentVolumeClaim:
-          #  claimName: kerberos-data
+          #  claimName: local-hostpath
+        storageSpec:
+          volumeClaimTemplate:
+            spec:
+              storageClassName: local-hostpath
+              resources:
+                requests:
+                  storage: 10Gi
       init-containers:
         - name: download-config
           image: kerberos/agent:3.2.3
           volumeMounts:
-            - name: kerberos-data
+            - name: local-hostpath
               mountPath: /home/agent/data/config
               subPath: config
           command:
@@ -45,16 +52,16 @@ spec:
           #image: kerberos/agent:b67a72b
           image: kerberos/agent:3.2.3 
           volumeMounts:
-            - name: kerberos-data
+            - name: local-hostpath
               mountPath: /home/agent/data/config
               subPath: config
-            - name: kerberos-data
+            - name: local-hostpath
               mountPath: /home/agent/data/recordings
               subPath: recordings
-            - name: kerberos-data
+            - name: local-hostpath
               mountPath: /home/agent/data/snapshots
               subPath: snapshots
-            - name: kerberos-data
+            - name: local-hostpath
               mountPath: /home/agent/data/cloud
               subPath: cloud
           ports:
