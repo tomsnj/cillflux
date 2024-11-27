@@ -26,13 +26,6 @@ spec:
           #- name: local-hostpath
           #persistentVolumeClaim:
           #  claimName: local-hostpath
-        storageSpec:
-          volumeClaimTemplate:
-            spec:
-              storageClassName: local-hostpath
-              resources:
-                requests:
-                  storage: 10Gi
       init-containers:
         - name: download-config
           image: kerberos/agent:3.2.3
