@@ -22,10 +22,10 @@ spec:
         enabled: true
         storageClass: local-hostpath
         storageClassName: local-hostpath
-          #volumes:
-          #- name: local-hostpath
-          #persistentVolumeClaim:
-          #  claimName: local-hostpath
+        volumes:
+          - name: kerberos-data
+            persistentVolumeClaim:
+              claimName: kerberos-data
       init-containers:
         - name: download-config
           image: kerberos/agent:3.2.3
