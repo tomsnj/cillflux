@@ -36,7 +36,7 @@ spec:
               subPath: config
           securityContext:
             allowPrivlegeEscalation: false
-#          command:
+          command:
 #            [
 #              "cp",
 #              "/home/agent/data/config.template.json",
