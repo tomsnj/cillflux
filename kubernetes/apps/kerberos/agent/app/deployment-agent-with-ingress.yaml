@@ -22,9 +22,16 @@ spec:
           persistentVolumeClaim:
             claimName: kerberos-data
 
-      init-containers:
+      initContainers:
         - name: download-config
           image: kerberos/agent:3.2.3
+          resources:
+            limits:
+              cpu: 1000m
+              memory: 512Mi
+            requests:
+              cpu: 120m
+              memory: 128Mi
           volumeMounts:
             - name: kerberos-data
               mountPath: /home/agent/data/config
