@@ -40,19 +40,19 @@ spec:
         - name: agent
           #image: kerberos/agent:b67a72b
           image: kerberos/agent:3.2.3 
-#          volumeMounts:
-#            - name: local-hostpath
-#              mountPath: /home/agent/data/config
-#              subPath: config
-#            - name: local-hostpath
-#              mountPath: /home/agent/data/recordings
-#              subPath: recordings
-#            - name: local-hostpath
-#              mountPath: /home/agent/data/snapshots
-#              subPath: snapshots
-#            - name: local-hostpath
-#              mountPath: /home/agent/data/cloud
-#              subPath: cloud
+          volumeMounts:
+            - name: kerberos-data
+              mountPath: /home/agent/data/config
+              subPath: config
+            - name: kerberos-data
+              mountPath: /home/agent/data/recordings
+              subPath: recordings
+            - name: kerberos-data
+              mountPath: /home/agent/data/snapshots
+              subPath: snapshots
+            - name: kerberos-data
+              mountPath: /home/agent/data/cloud
+              subPath: cloud
           ports:
             - containerPort: 80
               protocol: TCP
