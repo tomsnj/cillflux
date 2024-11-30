@@ -18,6 +18,7 @@ spec:
         runAsUser: 100
         runAsGroup: 101
         fsGroup: 101
+
       volumes:
         - name: kerberos-data
           persistentVolumeClaim:
@@ -39,7 +40,6 @@ spec:
 
       containers:
         - name: agent
-          #image: kerberos/agent:b67a72b
           image: kerberos/agent:3.2.3 
           volumeMounts:
             - name: kerberos-data
