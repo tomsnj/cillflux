@@ -18,9 +18,11 @@ spec:
         runAsUser: 100
         runAsGroup: 101
         fsGroup: 101
+        supplementalGroups: [27]
 
       volumes:
         - name: kerberos-data
+          emptyDir: {}
           persistentVolumeClaim:
             claimName: kerberos-data
 
@@ -31,6 +33,8 @@ spec:
             - name: kerberos-data
               mountPath: /home/agent/data/config
               subPath: config
+          securityContext:
+            allowPrivlegeEscalation: false
 #          command:
 #            [
 #              "cp",
