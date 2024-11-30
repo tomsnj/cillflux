@@ -15,11 +15,6 @@ spec:
       labels:
         app: agent
     spec:
-      securityContext:
-        runAsUser: 100
-        runAsGroup: 101
-        fsGroup: 101
-        supplementalGroups: [27]
 
       volumes:
         - name: kerberos-data
@@ -34,6 +29,7 @@ spec:
               mountPath: /home/agent/data/config
               subPath: config
           securityContext:
+            runAsUser: 0
             allowPrivlegeEscalation: false
           command:
 #            [
