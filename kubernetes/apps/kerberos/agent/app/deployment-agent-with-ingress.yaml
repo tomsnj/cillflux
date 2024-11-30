@@ -8,6 +8,7 @@ spec:
   selector:
     matchLabels:
       app: agent
+
   replicas: 1
   template:
     metadata:
