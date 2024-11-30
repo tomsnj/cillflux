@@ -8,16 +8,56 @@ spec:
   selector:
     matchLabels:
       app: agent
+
   replicas: 1
   template:
     metadata:
       labels:
         app: agent
     spec:
+      securityContext:
+        runAsUser: 100
+        runAsGroup: 101
+        fsGroup: 101
+        supplementalGroups: [27]
+
+      volumes:
+        - name: kerberos-data
+          persistentVolumeClaim:
+            claimName: kerberos-data
+
+      initContainers:
+        - name: download-config
+          image: kerberos/agent:3.2.3
+          volumeMounts:
+            - name: kerberos-data
+              mountPath: /home/agent/data/config
+              subPath: config
+          securityContext:
+            allowPrivlegeEscalation: false
+          command:
+#            [
+#              "cp",
+#              "/home/agent/data/config.template.json",
+#              "/home/agent/data/config/config.json",
+#            ]
+
       containers:
         - name: agent
-          #image: kerberos/agent:b67a72b
-          image: kerberos/agent:3.2.3
+          image: kerberos/agent:3.2.3 
+          volumeMounts:
+            - name: kerberos-data
+              mountPath: /home/agent/data/config
+              subPath: config
+            - name: kerberos-data
+              mountPath: /home/agent/data/recordings
+              subPath: recordings
+            - name: kerberos-data
+              mountPath: /home/agent/data/snapshots
+              subPath: snapshots
+            - name: kerberos-data
+              mountPath: /home/agent/data/cloud
+              subPath: cloud
           ports:
             - containerPort: 80
               protocol: TCP

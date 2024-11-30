@@ -7,7 +7,18 @@ provisioner: nfs.csi.k8s.io
 parameters:
   server: 10.10.10.110
   share: /mnt/storage1/home_nfs
-  readOnly: "false"
+reclaimPolicy: Delete
+volumeBindingMode: Immediate
+mountOptions: ["hard", "noatime"]
+---
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: gsks1
+provisioner: nfs.csi.k8s.io
+parameters:
+  server: 10.10.10.110
+  share: /mnt/storage1/home_nfs/knfs
 reclaimPolicy: Delete
 volumeBindingMode: Immediate
 mountOptions: ["hard", "noatime"]
