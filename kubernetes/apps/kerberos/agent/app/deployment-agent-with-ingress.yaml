@@ -22,10 +22,10 @@ spec:
       initContainers:
         - name: download-config
           image: kerberos/agent:3.2.3
-#          volumeMounts:
-#            - name: kerberos-data
-#              mountPath: /home/agent/data/config
-#              subPath: config
+          volumeMounts:
+            - name: kerberos-data
+              mountPath: /home/agent/data/config
+              subPath: config
           command:
             [
               "cp",
