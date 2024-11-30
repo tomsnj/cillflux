@@ -9,9 +9,6 @@ spec:
     matchLabels:
       app: agent
   replicas: 1
-    #dependsOn:
-    #- name: local-path-provisioner
-    #  namespace: storage
   template:
     metadata:
       labels:
