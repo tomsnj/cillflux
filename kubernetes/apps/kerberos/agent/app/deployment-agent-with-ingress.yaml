@@ -23,7 +23,6 @@ spec:
 
       volumes:
         - name: kerberos-data
-          emptyDir: {}
           persistentVolumeClaim:
             claimName: kerberos-data
 
