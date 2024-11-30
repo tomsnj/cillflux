@@ -24,8 +24,6 @@ spec:
           image: kerberos/agent:3.2.3
           volumeMounts:
             - name: kerberos-data
-              mountPath: /home/agent/data
-            - name: kerberos-data
               mountPath: /home/agent/data/config
               subPath: config
 #          command:
