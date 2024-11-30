@@ -19,19 +19,19 @@ spec:
           persistentVolumeClaim:
             claimName: kerberos-data
 
-      initContainers:
-        - name: download-config
-          image: kerberos/agent:3.2.3
-          volumeMounts:
-            - name: kerberos-data
-              mountPath: /home/agent/data/config
-              subPath: config
-          command:
-            [
-              "cp",
-              "/home/agent/data/config.template.json",
-              "/home/agent/data/config/config.json",
-            ]
+#      initContainers:
+#        - name: download-config
+#          image: kerberos/agent:3.2.3
+#          volumeMounts:
+#            - name: kerberos-data
+#              mountPath: /home/agent/data/config
+#              subPath: config
+#          command:
+#            [
+#              "cp",
+#              "/home/agent/data/config.template.json",
+#              "/home/agent/data/config/config.json",
+#            ]
 
       containers:
         - name: agent
