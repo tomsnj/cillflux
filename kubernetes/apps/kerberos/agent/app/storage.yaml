@@ -1,0 +1,13 @@
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: kerberos-data
+  annotations:
+    volume.beta.kubernetes.io/storage-class: "gsks0"
+spec:
+  storageClassName: gsks0
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi

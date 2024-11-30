@@ -9,23 +9,19 @@ spec:
     matchLabels:
       app: agent
   replicas: 1
-  dependsOn:
-    - name: local-path-provisioner
-      namespace: storage
+    #dependsOn:
+    #- name: local-path-provisioner
+    #  namespace: storage
   template:
     metadata:
       labels:
         app: agent
     spec:
-      defaultStorageClass: local-hostpath
-      persistence:
-        enabled: true
-        storageClass: local-hostpath
-        storageClassName: local-hostpath
-        volumes:
-          - name: kerberos-data
-            persistentVolumeClaim:
-              claimName: kerberos-data
+      volumes:
+        - name: kerberos-data
+          persistentVolumeClaim:
+            claimName: kerberos-data
+
       init-containers:
         - name: download-config
           image: kerberos/agent:3.2.3
