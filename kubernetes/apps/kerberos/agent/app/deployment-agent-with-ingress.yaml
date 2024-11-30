@@ -32,11 +32,11 @@ spec:
             runAsUser: 0
             allowPrivlegeEscalation: false
           command:
-#            [
-#              "cp",
-#              "/home/agent/data/config.template.json",
-#              "/home/agent/data/config/config.json",
-#            ]
+            [
+              "cp",
+              "/home/agent/data/config.template.json",
+              "/home/agent/data/config/config.json",
+            ]
 
       containers:
         - name: agent
