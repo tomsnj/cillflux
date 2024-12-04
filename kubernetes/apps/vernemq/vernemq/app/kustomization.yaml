@@ -6,3 +6,4 @@ resources:
   - ./secret.sops.yaml
   - ./secret_vernemq.sops.yaml
   - ./helmrelease.yaml
+  - ./vernemq.config.sops.yaml
