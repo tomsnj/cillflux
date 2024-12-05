@@ -14,9 +14,6 @@ spec:
         kind: HelmRepository
         name: vernemq
         namespace: flux-system
-      envFrom:
-        - configMapRef:
-            name: vernemq-map
   maxHistory: 2
   install:
     remediation:
@@ -27,6 +24,9 @@ spec:
       retries: 3
   uninstall:
     keepHistory: false
+  envFrom:
+    - configMapRef:
+        name: vernemq-map
   values:
     deploymentStrategy:
       type: Recreate
