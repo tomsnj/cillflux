@@ -24,9 +24,6 @@ spec:
       retries: 3
   uninstall:
     keepHistory: false
-  envFrom:
-    - configMapRef:
-        name: vernemq-map
   values:
     deploymentStrategy:
       type: Recreate
@@ -57,6 +54,9 @@ spec:
     additionalEnv:
       - name: DOCKER_VERNEMQ_ACCEPT_EULA
         value: "yes"
+    envFrom:
+      - configMapRef:
+          name: vernemq-map
       #- name: DOCKER_VERNEMQ_USER_VERNEMQ
       #  value: ${VERNEMQ_FLUX_PASSWORD}
         #value: $(vernemq-password)
