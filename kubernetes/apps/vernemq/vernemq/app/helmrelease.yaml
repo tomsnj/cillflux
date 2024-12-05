@@ -31,22 +31,22 @@ spec:
       enabled: true
       type: ClusterIP
       mqtts:
-        enabled: true
+        enabled: false
       ws:
         enabled: true
       wss:
         enabled: true
-    ingress:
-      className: external
-      enabled: false
-      hosts:
-        - "mqtt.${SECRET_DOMAIN}"
-      paths:
-        - path: /
-          pathType: ImplementationSpecific
-      tls:
-        - hosts:
-            - mqtt.${SECRET_DOMAIN}
+#    ingress:
+#      className: external
+#      enabled: false
+#      hosts:
+#        - "mqtt.${SECRET_DOMAIN}"
+#      paths:
+#        - path: /
+#          pathType: ImplementationSpecific
+#      tls:
+#        - hosts:
+#            - mqtt.${SECRET_DOMAIN}
     secretMounts:
       - name: vernemq-certificates
         secretName: vernemq-certificates-secret
