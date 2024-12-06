@@ -31,7 +31,7 @@ spec:
       enabled: true
       type: ClusterIP
       mqtts:
-        enabled: false
+        enabled: true
       ws:
         enabled: true
       wss:
