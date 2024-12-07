@@ -100,7 +100,7 @@ spec:
             - name: AGENT_TURN_URI
               value: turn:10.10.0.9:8443
             - name: AGENT_CAPTURE_CONTINUOUS
-              value: true
+              value: "true"
             # find full list of environment variables here: https://github.com/kerberos-io/agent#override-with-environment-variables
 ---
 apiVersion: v1
