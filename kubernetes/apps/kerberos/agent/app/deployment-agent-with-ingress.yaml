@@ -49,7 +49,9 @@ spec:
                 ls -al /home/agent/data &&
                 ls -al /home/agent/data/config &&
                 chmod 777 /home/agent/data/recordings &&
-                chmod 777 /home/agent/data/snapshots
+                chmod 777 /home/agent/data/snapshots &&
+                chmod 777 /home/agent/data/cloud &&
+                chmod 666 /home/agent/data/config/config.json
 
       containers:
         - name: agent
@@ -97,8 +99,8 @@ spec:
               value: stun:10.10.0.9:8443
             - name: AGENT_TURN_URI
               value: turn:10.10.0.9:8443
-            - name: AGENT_HUB_URI
-              value: https://api.gs-farm.net
+            - name: AGENT_CAPTURE_CONTINUOUS
+              value: true
             # find full list of environment variables here: https://github.com/kerberos-io/agent#override-with-environment-variables
 ---
 apiVersion: v1
