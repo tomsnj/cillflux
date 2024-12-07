@@ -43,7 +43,7 @@ spec:
       storageClass: local-hostpath
       storageClassName: local-hostpath
     auth:
-      password: ${RABBITMQ_FLUX_PASSWORD}
+      #     password: ${RABBITMQ_FLUX_PASSWORD}
       securePassword: false
     testFramework:
       enabled: false
