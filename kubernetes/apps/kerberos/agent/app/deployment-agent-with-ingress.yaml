@@ -45,6 +45,8 @@ spec:
             - -c
             - >-
                 cp /home/agent/data/config.template.json /home/agent/data/config/config.json &&
+                whoami &&
+                ls -al /home/agent/data &&
                 chown 100 /home/agent/data/recordings &&
                 chown 100 /home/agent/data/snapshots
 
