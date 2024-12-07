@@ -45,8 +45,8 @@ spec:
             - -c
             - >-
                 cp /home/agent/data/config.template.json /home/agent/data/config/config.json &&
-                chown 100:101 /home/agent/data/recordings &&
-                chown 100:101 /home/agent/data/snapshots
+                chown 100 /home/agent/data/recordings &&
+                chown 100 /home/agent/data/snapshots
 
       containers:
         - name: agent
