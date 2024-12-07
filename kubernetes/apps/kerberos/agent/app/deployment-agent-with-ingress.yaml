@@ -47,8 +47,9 @@ spec:
                 cp /home/agent/data/config.template.json /home/agent/data/config/config.json &&
                 whoami &&
                 ls -al /home/agent/data &&
-                chown 100 /home/agent/data/recordings &&
-                chown 100 /home/agent/data/snapshots
+                ls -al /home/agent/data/config &&
+                chmod 777 /home/agent/data/recordings &&
+                chmod 777 /home/agent/data/snapshots
 
       containers:
         - name: agent
