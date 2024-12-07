@@ -40,24 +40,13 @@ spec:
           securityContext:
             runAsUser: 0
             allowPrivlegeEscalation: false
-          command:
-            [
-              "cp",
-              "/home/agent/data/config.template.json",
-              "/home/agent/data/config/config.json",
-              "&&",
-              "chown",
-              "/home/agent/data/recordings",
-              "agent:kerberos",
-              "&&",
-              "chown",
-              "/home/agent/data/snapshots",
-              "agent:kerberos"
-              "&&"
-              "chown",
-              "/home/agent/data/cloud",
-              "agent:kerberos",
-            ]
+          command: ["/bin/sh"]
+          args:
+            - -c
+            - >-
+                cp /home/agent/data/config.template.json /home/agent/data/config/config.json &&
+                chown agent:kerberos /home/agent/data/recordings &&
+                chown agent:kerberos /home/agent/data/snapshots
 
       containers:
         - name: agent
