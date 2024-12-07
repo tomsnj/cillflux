@@ -50,7 +50,7 @@ spec:
     pdb:
       create: false
       minAvailable: 1
+    extraEnvVarsCM: "rabbitmq-map"
     serviceMonitor:
       enabled: false
       interval: 30s
-
