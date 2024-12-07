@@ -28,6 +28,15 @@ spec:
             - name: kerberos-data
               mountPath: /home/agent/data/config
               subPath: config
+            - name: kerberos-data
+              mountPath: /home/agent/data/recordings
+              subPath: recordings
+            - name: kerberos-data
+              mountPath: /home/agent/data/snapshots
+              subPath: snapshots
+            - name: kerberos-data
+              mountPath: /home/agent/data/cloud
+              subPath: cloud
           securityContext:
             runAsUser: 0
             allowPrivlegeEscalation: false
@@ -36,6 +45,18 @@ spec:
               "cp",
               "/home/agent/data/config.template.json",
               "/home/agent/data/config/config.json",
+              "&&",
+              "chown",
+              "/home/agent/data/recordings",
+              "agent:kerberos",
+              "&&",
+              "chown",
+              "/home/agent/data/snapshots",
+              "agent:kerberos"
+              "&&"
+              "chown",
+              "/home/agent/data/cloud",
+              "agent:kerberos" 
             ]
 
       containers:
