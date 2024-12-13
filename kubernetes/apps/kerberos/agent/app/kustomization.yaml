@@ -4,4 +4,6 @@ kind: Kustomization
 resources:
   - ./storage.yaml
   - ./deployment-agent-with-ingress.yaml
+  - ./deployment-agent2-with-ingress.yaml
   - ./agent.config.sops.yaml
+  - ./agent2.config.sops.yaml

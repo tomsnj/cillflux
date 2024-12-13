@@ -1,0 +1,149 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: agent2
+  labels:
+    name: agent2
+spec:
+  selector:
+    matchLabels:
+      app: agent2
+
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: agent2
+    spec:
+
+      volumes:
+        - name: kerberos-data
+          persistentVolumeClaim:
+            claimName: kerberos-data
+
+      initContainers:
+        - name: download-config
+          image: kerberos/agent:v3.2.6
+          volumeMounts:
+            - name: kerberos-data
+              mountPath: /home/agent/data/config
+              subPath: config
+            - name: kerberos-data
+              mountPath: /home/agent/data/recordings
+              subPath: recordings
+            - name: kerberos-data
+              mountPath: /home/agent/data/snapshots
+              subPath: snapshots
+            - name: kerberos-data
+              mountPath: /home/agent/data/cloud
+              subPath: cloud
+          securityContext:
+            runAsUser: 0
+            allowPrivlegeEscalation: false
+          command: ["/bin/sh"]
+          args:
+            - -c
+            - >-
+                cp /home/agent/data/config.template.json /home/agent/data/config/config.json &&
+                whoami &&
+                ls -al /home/agent/data &&
+                ls -al /home/agent/data/config &&
+                chmod 777 /home/agent/data/recordings &&
+                chmod 777 /home/agent/data/snapshots &&
+                chmod 777 /home/agent/data/cloud &&
+                chmod 666 /home/agent/data/config/config.json
+
+      containers:
+        - name: agent2
+          image: kerberos/agent:v3.2.6 
+          volumeMounts:
+            - name: kerberos-data
+              mountPath: /home/agent/data/config
+              subPath: config
+            - name: kerberos-data
+              mountPath: /home/agent/data/recordings
+              subPath: recordings
+            - name: kerberos-data
+              mountPath: /home/agent/data/snapshots
+              subPath: snapshots
+            - name: kerberos-data
+              mountPath: /home/agent/data/cloud
+              subPath: cloud
+          ports:
+            - containerPort: 80
+              protocol: TCP
+          resources:
+            limits:
+              cpu: 1000m
+              memory: 512Mi
+            requests:
+              cpu: 120m
+              memory: 128Mi
+          envFrom:
+            - configMapRef:
+                name: agent2
+          env:
+            - name: AGENT_NAME
+              value: agent2
+            - name: AGENT_CAPTURE_IPCAMERA_ONVIF
+              value: onvif
+            - name: AGENT_CAPTURE_IPCAMERA_ONVIF_XADDR
+              value: 10.0.0.115:2020
+            - name: AGENT_TIMEZONE
+              value: "America/New_York"
+            - name: AGENT_MQTT_USERNAME
+              value: vernemq
+            - name: AGENT_MQTT_URI
+              value: tcp://vernemq-0.vernemq-headless.vernemq.svc.cluster.local:1883
+            - name: AGENT_STUN_URI
+              value: stun:10.10.0.9:8443
+            - name: AGENT_TURN_URI
+              value: turn:10.10.0.9:8443
+            - name: AGENT_CAPTURE_CONTINUOUS
+              value: "true"
+            # find full list of environment variables here: https://github.com/kerberos-io/agent#override-with-environment-variables
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: agent2-svc
+  labels:
+    name: agent2-svc
+spec:
+  #type: LoadBalancer
+  ports:
+    - port: 80
+      targetPort: 80
+  selector:
+    app: agent2
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: agent-ingress
+  labels:
+    name: agent-ingress
+  annotations:
+    external-dns.alpha.kubernetes.io/target: external.gs-farm.net
+    kubernetes.io/ingress.class: external
+    kubernetes.io/tls-acme: "true"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    cert-manager.io/cluster-issuer: "letsencrypt-production"
+spec:
+  ingressClassName: external
+  tls:
+    - hosts:
+        - "agent2.gs-farm.net"
+      secretName: agent-secret
+  rules:
+  - host: agent2.gs-farm.net
+    http:
+      paths:
+      - pathType: Prefix
+        path: "/"
+        backend:
+          service:
+            name: agent2-svc
+            port: 
+              number: 80
+   
