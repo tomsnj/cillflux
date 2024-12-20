@@ -88,7 +88,7 @@ spec:
             - name: AGENT_CAPTURE_IPCAMERA_ONVIF
               value: onvif
             - name: AGENT_CAPTURE_IPCAMERA_ONVIF_XADDR
-              value: 10.0.0.115:2020
+              value: 10.0.0.97:2020
             - name: AGENT_TIMEZONE
               value: "America/New_York"
             - name: AGENT_MQTT_USERNAME
@@ -120,9 +120,9 @@ spec:
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: agent2-ingress
+  name: agent-ingress
   labels:
-    name: agent2-ingress
+    name: agent-ingress
   annotations:
     external-dns.alpha.kubernetes.io/target: external.gs-farm.net
     kubernetes.io/ingress.class: external
@@ -134,7 +134,7 @@ spec:
   tls:
     - hosts:
         - "agent2.gs-farm.net"
-      secretName: agent2-secret
+      secretName: agent-secret
   rules:
   - host: agent2.gs-farm.net
     http:

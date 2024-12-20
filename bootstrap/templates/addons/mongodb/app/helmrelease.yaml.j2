@@ -28,6 +28,7 @@ spec:
     - name: local-path-provisioner
       namespace: storage
   values:
+    replicaCount: 1
     defaultStorageClass: local-hostpath
     deploymentStrategy:
       type: Recreate
@@ -37,5 +38,6 @@ spec:
       storageClassName: local-hostpath
     testFramework:
       enabled: false
-    auth:
-      password: ${MONGODB_FLUX_PASSOWORD}
+        #    auth:
+        #password: ${MONGODB_FLUX_PASSOWORD}
+    extraEnvVarsSecret: "mongodb-password"
