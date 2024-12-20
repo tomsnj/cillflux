@@ -6,7 +6,7 @@ metadata:
   namespace: mongodb
 spec:
   interval: 30m
-  replicas: 1
+  replicaCount: 1
   chart:
     spec:
       chart: mongodb
