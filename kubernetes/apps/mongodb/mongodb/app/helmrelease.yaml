@@ -40,4 +40,4 @@ spec:
       enabled: false
         #    auth:
         #password: ${MONGODB_FLUX_PASSOWORD}
-    extraEnvVarsSecret: "mongodb-password"
+    #extraEnvVarsSecret: "mongodb-password"
