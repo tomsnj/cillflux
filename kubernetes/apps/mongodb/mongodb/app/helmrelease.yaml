@@ -38,6 +38,7 @@ spec:
       storageClassName: local-hostpath
     testFramework:
       enabled: false
-        #    auth:
+    auth:
+      existingSecret: "mongodb-secret"
         #password: ${MONGODB_FLUX_PASSOWORD}
     #extraEnvVarsSecret: "mongodb-password"
