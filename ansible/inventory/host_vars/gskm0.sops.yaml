@@ -1,21 +1,16 @@
-ansible_become_pass: ENC[AES256_GCM,data:VOewcvE9FSWmBnkjMb5yBmmpAQ==,iv:ynOIJ9lUZLdEYjh+XeyuTwyPNpYlxQ3jDH4fMpKKLds=,tag:RVt6J4orl5gk5ydRVLs3qQ==,type:str]
+ansible_become_pass: ENC[AES256_GCM,data:93p4AVsgARYOpitI5C5V78CivQ==,iv:PQGRnhR3PjvAWuTOgWnl/HhgNPm2mNGL3NP0rCDTaeI=,tag:lxifhRjTRMWQ4/QNFzaYQg==,type:str]
 sops:
-    kms: []
-    gcp_kms: []
-    azure_kv: []
-    hc_vault: []
     age:
         - recipient: age1puse8jhtwqw87w9qr9j4g8dajqccn0899vpyc0wnn9y2e6wz0cms2g895x
           enc: |
             -----BEGIN AGE ENCRYPTED FILE-----
-            YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSBWTXVVaFEzc0QwRFJJQkNG
-            S2w3TW9yRitRalhYQkpxZWdYSWJmWXlDUWprCkNtWTdsN092SS9oeFBRaSsyd0ZP
-            Mm5ya1lyR2NvOXRHU0FzSVBEdlBrOEkKLS0tIGEybkVXSkgyY3FKR3c2RVRpTjl3
-            bTIydGN4RHJ0K2JwaExPcXNYQjd2UU0KWZr1wrs4FDTKE5GrPGgA49chWtTrLeoF
-            RCG7/90fohBvHug/fFiCS+/B3riiAWrQwjZT0zs/HsLptPzrFh2yOA==
+            YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSA5cTV4eGdkKzJmSEQzNHQr
+            QzA5ZThIRDBwOXRJR0svaXUxYUN1UzhRcWtVCkRpUi9UZnV4QysvWHpTY2NJa1NF
+            aXBtOHRtYlpuRFhKRE85UDVxellkb1UKLS0tIFpyeCtBWTc4c2JkY0g0TzdBWlNz
+            bnVaMzE5RnNxN3VOZmoxOTJVUysvYTAK8a2zZeo7tj13azZig3DT9SlvmdhHQ19R
+            dot42XlcXQV7xt8wG7rmmjqKKhamsnZJsCnki8Zgo9lhTXbMKpCe2w==
             -----END AGE ENCRYPTED FILE-----
-    lastmodified: "2024-12-21T18:33:53Z"
-    mac: ENC[AES256_GCM,data:CS/gWoZg9CpxfWlS3n+Ef29leuZy6/j3Z4Ikr502IRGVJHz5L1XB70hcuP5drG7ep6PjKPjv4l3iakc8J++mNMAvAbyTXzo0/ItgBnqxkYAPvr8SZiYYNtGQZvcVGJ/NUXbuqTUwZWp6UJCTWjZBFXHzDlwuEiAFjyfAmRComh0=,iv:DMEeZIyKXVLuMwhNP3DkdegOoGM9IjIs5qDCYtuGi1Y=,tag:9wrNoTNqT9z5fJFAiz9/dQ==,type:str]
-    pgp: []
+    lastmodified: "2025-08-08T13:05:28Z"
+    mac: ENC[AES256_GCM,data:mr06D3ayjustYAjIS2sjUotyv3V9fI4k0xo5jrgT02d6OdMf6EIQ5HySJQsbKz3XHbgALzfHj3Cwc7mnBY/xzOBo+3MUcksxc8r+uyiwJY6sHSyo9KMzTlrCCvptkbSC+T8A7XZRK6L47YTu8dceVvOLOD+BSt/i+Zy9JHwz3jo=,iv:dxdQYVwMv/xXB8Zs28PXitbwImCdsyWEjTnAihwkz6I=,tag:KtoETvun8jBd+NG1UFglNA==,type:str]
     unencrypted_suffix: _unencrypted
-    version: 3.9.1
+    version: 3.10.2

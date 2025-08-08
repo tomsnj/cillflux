@@ -1,0 +1,88 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: banzaicloud-stable
+  namespace: banzaicloud
+spec:
+  interval: 30m
+  chart:
+    spec:
+      chart: nodejs
+      version: 0.1.1
+      sourceRef:
+        kind: HelmRepository
+        name: banzaicloud-stable
+        namespace: flux-system
+  maxHistory: 2
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    cleanupOnFail: true
+    remediation:
+      retries: 3
+  uninstall:
+    keepHistory: false
+  dependsOn:
+    - name: local-path-provisioner
+      namespace: storage
+  values:
+    resources:
+      requests:
+        cpu: 50m
+        memory: 512Mi
+      limits:
+        cpu: 250m
+        memory: 1024Mi
+    defaultStorageClass: local-hostpath
+    deploymentStrategy:
+      type: Recreate
+    persistence:
+      enabled: true
+      storageClass: local-hostpath
+      storageClassName: local-hostpath
+    #auth:
+    #  password: ${BANZAICFLUX_PASSWORD}
+    #  securePassword: false
+    testFramework:
+      enabled: false
+    pdb:
+      create: false
+      minAvailable: 1
+    extraEnvVarsCM: "banzaic-map"
+    serviceMonitor:
+      enabled: false
+      interval: 30s
+    env: []
+      - name: MONGODB_USERNAME
+        value: root
+      - name: MONGODB_URI
+        value: "mongodb://mongodb.mongodb.svc.cluster.local"
+    secret: {}
+      - secretRef:
+          name: mongodb-secret
+    service:
+      type: clusterIP
+      internalPort: 3001
+      externalPort: 80
+#      main:
+#        ports:
+#          http:
+#            port: *port
+    ingress:
+      enabled: true
+      className: external
+      annotations:
+        external-dns.alpha.kubernetes.io/target: "external.${SECRET_DOMAIN}"
+        hajimari.io/icon: video-input-antenna
+      hosts:
+        - host: &host "{{ .Release.Name }}.${SECRET_DOMAIN}"
+          paths:
+            - path: /
+              service:
+                name: main
+                port: http
+      tls:
+        - hosts:
+            - *host
