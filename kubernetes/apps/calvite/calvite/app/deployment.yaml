@@ -20,4 +20,3 @@ spec:
         imagePullPolicy: Never
         ports:
         - containerPort: 80 # Replace with the port your app listens on
-```
