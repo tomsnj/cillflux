@@ -2,14 +2,14 @@
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
 metadata:
-  name: &app calzite
+  name: &app calvite
   namespace: flux-system
 spec:
-  targetNamespace: calzite
+  targetNamespace: calvite
   commonMetadata:
     labels:
       app.kubernetes.io/name: *app
-  path: ./kubernetes/apps/calzite/calzite/app
+  path: ./kubernetes/apps/calvite/calvite/app
   prune: true
   sourceRef:
     kind: GitRepository
