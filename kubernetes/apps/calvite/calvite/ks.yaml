@@ -2,14 +2,14 @@
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
 metadata:
-  name: &app banzaic-stable
+  name: &app calzite
   namespace: flux-system
 spec:
-  targetNamespace: banzaic-stable
+  targetNamespace: calzite
   commonMetadata:
     labels:
       app.kubernetes.io/name: *app
-  path: ./kubernetes/apps/banzaic/banzaic/app
+  path: ./kubernetes/apps/calzite/calzite/app
   prune: true
   sourceRef:
     kind: GitRepository
