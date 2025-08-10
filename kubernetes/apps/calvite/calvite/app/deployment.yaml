@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
       - name: calvite 
-        image: https://github.com/tntredstone/calvinsteckphoto-admin:latest  # Replace with your image name and tag
+        image: calvinsteckphoto-admin:latest  # Replace with your image name and tag
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 80 # Replace with the port your app listens on
