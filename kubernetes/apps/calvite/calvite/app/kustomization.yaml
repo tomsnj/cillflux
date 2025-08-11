@@ -5,5 +5,5 @@ resources:
   - ./deployment.yaml
 images:
   - name: calvinsteckphoto-admin
-    newName: ghcr.io/tntredstone/calvinsteckphoto-admin/calvinsteckphoto-admin
+    newName: ghcr.io/tntredstone/calvinsteckphoto-admin
     newTag: latest
