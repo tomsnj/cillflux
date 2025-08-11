@@ -1,6 +1,6 @@
 ---
 apiVersion: source.toolkit.fluxcd.io/v1
-kind: OciRepository
+kind: OCIRepository
 metadata:
   name: calvite
   namespace: flux-system
@@ -8,3 +8,5 @@ spec:
   type: oci
   interval: 1h
   url: oci://ghcr.io/tntredstone/calvinsteckphoto-admin
+  ref:
+    tag: latest
