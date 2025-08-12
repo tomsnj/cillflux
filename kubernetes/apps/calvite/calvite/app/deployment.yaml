@@ -14,6 +14,33 @@ spec:
       labels:
         app: calvite
     spec:
+      initContainers:
+      - name: download-config
+        image: calvinsteckphoto-admin:latest
+        imagePullPolicy: IfNotPresent
+#          volumeMounts:
+#            - name: kerberos-data
+#              mountPath: /home/agent/data/config
+#              subPath: config
+#            - name: kerberos-data
+#              mountPath: /home/agent/data/recordings
+#              subPath: recordings
+#            - name: kerberos-data
+#              mountPath: /home/agent/data/snapshots
+#              subPath: snapshots
+#            - name: kerberos-data
+#              mountPath: /home/agent/data/cloud
+#              subPath: cloud
+        securityContext:
+          runAsUser: 0
+          allowPrivlegeEscalation: false
+        command: ["/bin/sh"]
+        args:
+          - -c
+          - >-
+              whoami &&
+              env &&
+              ls -al
       containers:
       - name: calvite 
         image: calvinsteckphoto-admin:latest  # Replace with your image name and tag
