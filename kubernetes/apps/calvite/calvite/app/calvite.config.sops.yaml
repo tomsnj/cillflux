@@ -1,0 +1,27 @@
+apiVersion: v1
+data:
+    ADMIN_API_SECRET: ENC[AES256_GCM,data:OqN/e8kkQpWBNi/Q3VoVdGZo5tWIxNBOAQWK4FbDvrvdUs8qO7w4lByhfN5R5G3ThTA4UUILHBo8M35IdIGWSw==,iv:qViN44+1jtJbJG9Q2J3tucRGYZHMkH4rQ25QIy82CFs=,tag:g8FLuAeD79JgwbEnLuDTfw==,type:str]
+    AIRTABLE_BASE_ID: ENC[AES256_GCM,data:IM+5YR0jlOBVFchfpWOY7tg=,iv:Hdala5aSEYWMr6fEZtvlkBE2T07Tz2pdX4eHdBQ7jc4=,tag:G0zOtSqddYcNEwGJ1qcJ5Q==,type:str]
+    AIRTABLE_TOKEN: ENC[AES256_GCM,data:mKQbB4YKvAX+NfPfLBIcF+8oE6Qzvy+pGqwihvXFzU2LyH5l5dWwobOaYZzLqZMkEsxuTNmKsRI6VeoPpHrysBcOzEtrUxyZRIihrpK2P0CTIw==,iv:lhuFEX8+eexnp0Suo3QbvO/x6GUUsmg/o+5net190wk=,tag:zUSy7tyus6UmdataAUygxg==,type:str]
+    GOOGLE_CLIENT_ID: ENC[AES256_GCM,data:/F4gY0+2JISuSczIUs39FlVUqc73z7K7e7N8pxNZm6vetud5L24ab15k4afTQFwP7+l1ng3MyJHUZua0YR1W/MQcPS6f+dat,iv:6cVCWpZyGzXJg9lpB2DABatdsBC8iit7TCapyii571w=,tag:5qUQ5yWVBIXDu/CdeiMq+A==,type:str]
+    GOOGLE_CLIENT_SECRET: ENC[AES256_GCM,data:7o0++Om8LNSLb4q8ZKZp4xwoahBaRfI8mKPuJi9jy5McQjU=,iv:taMAsOSVxe9NGxRnCN99oK1Vf0wLt0hKIJoQVQQG+v4=,tag:kT4OY7vFL14kcuQmkXKSMw==,type:str]
+    GOOGLE_REDIRECT_URI: ENC[AES256_GCM,data:ItGqLBtcRWySCZsAHx9c3Lzlq0rFogEVDPCckjPBjBWHFaWdnLh+XC76,iv:jcXjOgiFU5AJPxKKXenjOnotUs2mXeazBFWjtB7BTvc=,tag:Bliwkdn8QJgPsYpaM0zvrw==,type:str]
+    WEBHOOK_URL: ENC[AES256_GCM,data:w61BfACX+gM2FgXNSvYB91gJOBzcaoeSQw==,iv:AXHBOeceu+BQCkhQO8br63j3jUf60uVzTkKOeewcY70=,tag:Zsga72p6K4qJIUIA4vgU9A==,type:str]
+kind: ConfigMap
+metadata:
+    name: calvite
+sops:
+    age:
+        - recipient: age1puse8jhtwqw87w9qr9j4g8dajqccn0899vpyc0wnn9y2e6wz0cms2g895x
+          enc: |
+            -----BEGIN AGE ENCRYPTED FILE-----
+            YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSBUTWpYcFFBWFNMMUh2bWVl
+            Y2ZWbTFhcnhlbTJCSmQ0bVYxK3oxbVNaWW1jClpPQVdiSmh1S3BaU0VZSVFidUNm
+            cWMzNC9SQ2sraktVYWVoSGpLQ2F0WVUKLS0tIFRYcldZZlQ4YXJDc1JVQWVEdS81
+            MGN2aU5XRkZRUU9hQ2Vka2toWUE0U1UKK5SZMxzdalA8eIKnS9tlLGrrAjsLG8ix
+            YqKA3XKhLAJwx6EEjkCSYcofaBoze4rzDTTD/PezIMez8CnhX+FWcg==
+            -----END AGE ENCRYPTED FILE-----
+    lastmodified: "2025-08-12T01:24:59Z"
+    mac: ENC[AES256_GCM,data:0+AtR/EeZ5tw5Q72480HfApSVLThdHL4QCRj/XL2mulpIj0AXHpfIzkXZmz4bXE8zAOdFtUPa7NI9uCphmBT09XMhr1IrxopIFYSXZwDr8ZI+6Wkc5VsmAkFLvFetjX2Uq3pENq8QtoaXjUZKwluMNvJLC0Ty9L4X/BpvJTrcKU=,iv:R9sAh+9TIdRk2qG50UN7aQkDnr0g3n4mGfIa6UwIKt8=,tag:+1ULK2qqTiWaDFR7cDNktg==,type:str]
+    encrypted_regex: ^(data|stringData)$
+    version: 3.10.2
