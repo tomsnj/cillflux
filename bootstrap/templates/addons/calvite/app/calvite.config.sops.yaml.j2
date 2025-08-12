@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: calvite
+data:
+  GOOGLE_CLIENT_ID: {{ calvite.GOOGLE_CLIENT_ID }}
+  GOOGLE_CLIENT_SECRET: {{ calvite.GOOGLE_CLIENT_SECRET }}
+  GOOGLE_REDIRECT_URI: {{ calvite.GOOGLE_REDIRECT_URI }}
+  AIRTABLE_TOKEN: {{ calvite.AIRTABLE_TOKEN }}
+  AIRTABLE_BASE_ID: {{ calvite.AIRTABLE_BASE_ID }}
+  WEBHOOK_URL: {{ calvite.WEBHOOK_URL }}
+  ADMIN_API_SECRET: {{ calvite.ADMIN_API_SECRET }}
+  

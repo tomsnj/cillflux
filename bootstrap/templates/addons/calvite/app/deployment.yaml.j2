@@ -1,0 +1,25 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: calvite
+  labels:
+    name: calvite
+spec:
+  selector:
+    matchLabels:
+      app: calvite 
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: calvite
+    spec:
+      containers:
+      - name: calvite 
+        image: calvinsteckphoto-admin:latest  # Replace with your image name and tag
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 80 # Replace with the port your app listens on
+        envFrom:
+          - configMapRef:
+              name: calvite
