@@ -49,7 +49,51 @@ spec:
         image: calvinsteckphoto-admin:latest  # Replace with your image name and tag
         imagePullPolicy: IfNotPresent
         ports:
-        - containerPort: 80 # Replace with the port your app listens on
+        - containerPort: 5173 # Replace with the port your app listens on
         envFrom:
           - configMapRef:
               name: calvite
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: calvite-svc
+  labels:
+    name: calvite-svc
+spec:
+  #type: LoadBalancer
+  ports:
+    - port: 5173
+      targetPort: 5173
+  selector:
+    app: calvite
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: calvite-ingress
+  labels:
+    name: calvite-ingress
+  annotations:
+    external-dns.alpha.kubernetes.io/target: external.gs-farm.net
+    kubernetes.io/ingress.class: external
+    kubernetes.io/tls-acme: "true"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    cert-manager.io/cluster-issuer: "letsencrypt-production"
+spec:
+  ingressClassName: external
+  tls:
+    - hosts:
+        - "cgs312.gs-farm.net"
+      secretName: calvite-secret
+  rules:
+  - host: cgs312.gs-farm.net
+    http:
+      paths:
+      - pathType: Prefix
+        path: "/"
+        backend:
+          service:
+            name: calvite-svc
+            port: 
+              number: 5173
