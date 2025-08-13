@@ -6,7 +6,7 @@ data:
     GOOGLE_CLIENT_ID: ENC[AES256_GCM,data:/F4gY0+2JISuSczIUs39FlVUqc73z7K7e7N8pxNZm6vetud5L24ab15k4afTQFwP7+l1ng3MyJHUZua0YR1W/MQcPS6f+dat,iv:6cVCWpZyGzXJg9lpB2DABatdsBC8iit7TCapyii571w=,tag:5qUQ5yWVBIXDu/CdeiMq+A==,type:str]
     GOOGLE_CLIENT_SECRET: ENC[AES256_GCM,data:7o0++Om8LNSLb4q8ZKZp4xwoahBaRfI8mKPuJi9jy5McQjU=,iv:taMAsOSVxe9NGxRnCN99oK1Vf0wLt0hKIJoQVQQG+v4=,tag:kT4OY7vFL14kcuQmkXKSMw==,type:str]
     GOOGLE_REDIRECT_URI: ENC[AES256_GCM,data:ItGqLBtcRWySCZsAHx9c3Lzlq0rFogEVDPCckjPBjBWHFaWdnLh+XC76,iv:jcXjOgiFU5AJPxKKXenjOnotUs2mXeazBFWjtB7BTvc=,tag:Bliwkdn8QJgPsYpaM0zvrw==,type:str]
-    WEBHOOK_URL: ENC[AES256_GCM,data:kR+nQPeAkr4jfC8kbH79ERi2iWvzP6CG72w3FE+Q,iv:klWCb6k5qMZf5m9NeqrigLJBI1dKwSMJP3Cc4eamfss=,tag:godfGXWe9Ph0sqq6591bGQ==,type:str]
+    WEBHOOK_URL: ENC[AES256_GCM,data:zclCDfU4jVCO1Txd3Yk/Gf3/yotyZz87uR/TjL0JFQ==,iv:MwiXqEoODUMuDOr6q1PYV5HdTAFy8Jg6R55Cl9GVgms=,tag:aOfNiexzgXmUp+s7N6mWDw==,type:str]
 kind: ConfigMap
 metadata:
     name: calvite
@@ -21,7 +21,7 @@ sops:
             MGN2aU5XRkZRUU9hQ2Vka2toWUE0U1UKK5SZMxzdalA8eIKnS9tlLGrrAjsLG8ix
             YqKA3XKhLAJwx6EEjkCSYcofaBoze4rzDTTD/PezIMez8CnhX+FWcg==
             -----END AGE ENCRYPTED FILE-----
-    lastmodified: "2025-08-13T21:42:00Z"
-    mac: ENC[AES256_GCM,data:2gfrZX/bWNKqv7j3zIrLHESLhX5n9mm/7EwxnS5HZkYqEad+k8qLXBpPPbBpBVqUWSyEDnzJ2BhkFn4o8Z2CpLO5yBs3s13xZmYvONdqVcu3b3njDibqMPpvpJH0GySn7Sed9u4BJ+KYP7aJp2Os2hsjdt6zEBiWSjMAvLHP+Dk=,iv:GhnJeCUD9Q5jSZVBRg6121Ms0/gS3PS2yMyrDdCWerg=,tag:P84aiq30YZsCHY3qSF1tqg==,type:str]
+    lastmodified: "2025-08-13T21:47:59Z"
+    mac: ENC[AES256_GCM,data:u+NQdoPbIzcgkziZLy6q9ho32Rb5KuOLsg7njV7VAiEssMRuyYwIoMBdQL/+jP5E/fTqe0OZ0Jgqv54WXXrQ3LoR2Kdd13sKoT59V5497p7syvsONCdaCYgFKadmXPxYV57/QBv+LEbfB4VLJuboLqPQjVBDjKg9bkokQszY+D8=,iv:+xqgDqyJ+0yBZf5EXZl2kY2aHgDuVl89tPrdUVKwBaM=,tag:RkXJNknCMKJaHZ2j8Rjc0A==,type:str]
     encrypted_regex: ^(data|stringData)$
     version: 3.10.2
