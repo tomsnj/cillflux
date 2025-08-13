@@ -63,7 +63,7 @@ metadata:
 spec:
   #type: LoadBalancer
   ports:
-    - port: 5173
+    - port: 443
       targetPort: 5173
   selector:
     app: calvite
@@ -96,4 +96,4 @@ spec:
           service:
             name: calvite-svc
             port: 
-              number: 5173
+              number: 443
