@@ -17,7 +17,7 @@ spec:
       initContainers:
       - name: download-config
         image: calvinsteckphoto-admin:latest
-        imagePullPolicy: Always
+        imagePullPolicy: IfNotPresent
 #          volumeMounts:
 #            - name: kerberos-data
 #              mountPath: /home/agent/data/config
@@ -47,7 +47,7 @@ spec:
       containers:
       - name: calvite 
         image: calvinsteckphoto-admin:latest  # Replace with your image name and tag
-        imagePullPolicy: IfNotPresent
+        imagePullPolicy: Always
         ports:
         - containerPort: 443 # Replace with the port your app listens on
         envFrom:
