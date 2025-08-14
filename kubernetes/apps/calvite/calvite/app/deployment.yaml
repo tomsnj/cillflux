@@ -17,7 +17,7 @@ spec:
       initContainers:
       - name: download-config
         image: calvinsteckphoto-admin:latest
-        imagePullPolicy: IfNotPresent
+        imagePullPolicy: Always
 #          volumeMounts:
 #            - name: kerberos-data
 #              mountPath: /home/agent/data/config
