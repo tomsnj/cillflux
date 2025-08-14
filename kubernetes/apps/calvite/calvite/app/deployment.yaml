@@ -69,9 +69,6 @@ spec:
       targetPort: 443
   selector:
     name: calvite
-    app.kubernetes.io/component: calvite
-    app.kubernetes.io/instance: calvite
-    app.kubernetes.io/name: calvite
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
