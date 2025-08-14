@@ -43,7 +43,10 @@ spec:
           - >-
               whoami &&
               env &&
+              cat Dockerfile &&
               ls -al
+# command: [ "npm run dev -- --host" ]
+# command: [ "npm run monitor" ]
       containers:
       - name: calvite 
         image: calvinsteckphoto-admin:latest  # Replace with your image name and tag
