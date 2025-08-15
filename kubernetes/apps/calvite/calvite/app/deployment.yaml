@@ -14,20 +14,31 @@ spec:
       labels:
         app: calvite
     spec:
+      initContainers:
+      - name: calvite-monitor
+        image: calvinsteckphoto-admin:latest  # Replace with your image name and tag
+        imagePullPolicy: Always
+        envFrom:
+          - configMapRef:
+              name: calvite
+#        command: ["npm"]
+        restartPolicy: Always
+        command: "env"
+        args: [">", ".env"]
       containers:
       - name: calvite
         image: calvinsteckphoto-admin:latest
-        imagePullPolicy: Always
+        imagePullPolicy: IfNotPresent
         securityContext:
           runAsUser: 0
           allowPrivlegeEscalation: false
         envFrom:
           - configMapRef:
               name: calvite
-        command: ["npm"]
-        args: ["run", "dev", "--", "--host", "--port", "443"]
+#        command: ["npm"]
+#        args: ["run", "dev", "--", "--host", "--port", "443"]
         ports:
-        - containerPort: 443 # Replace with the port your app listens on
+        - containerPort: 80 # Replace with the port your app listens on
 ---
 apiVersion: v1
 kind: Service
@@ -38,8 +49,8 @@ metadata:
 spec:
   #type: LoadBalancer
   ports:
-    - port: 443
-      targetPort: 443
+    - port: 80
+      targetPort: 80
   selector:
     name: calvite
 ---
@@ -71,4 +82,4 @@ spec:
           service:
             name: calvite
             port: 
-              number: 443
+              number: 80
