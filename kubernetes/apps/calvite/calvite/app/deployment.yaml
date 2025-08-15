@@ -37,7 +37,8 @@ spec:
         envFrom:
           - configMapRef:
               name: calvite
-        command: ["ls"]
+        command: ["sleep"]
+        args: ["600"]
 #        command: ["env"]
 #        args: [">", ".env"]
 #        command: ["npm"]
