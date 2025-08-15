@@ -37,14 +37,14 @@ spec:
         envFrom:
           - configMapRef:
               name: calvite
-        command: ["/bin/sh"]
-        args:
-          - -c
-          - >-
-              whoami &&
-              env &&
-              cat Dockerfile &&
-              ls -al
+#        command: ["/bin/sh"]
+#        args:
+#          - -c
+#          - >-
+#              whoami &&
+#              env &&
+#              cat Dockerfile &&
+#              ls -al
         command: ["npm"]
         args: ["run", "dev", "--", "--host"]
 # command: [ "npm run dev -- --host" ]
