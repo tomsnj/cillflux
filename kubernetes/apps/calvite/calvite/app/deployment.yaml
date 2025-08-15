@@ -18,8 +18,6 @@ spec:
       - name: download-config
         image: calvinsteckphoto-admin:latest
         imagePullPolicy: Always
-        ports:
-        - containerPort: 443 # Replace with the port your app listens on
 #          volumeMounts:
 #            - name: kerberos-data
 #              mountPath: /home/agent/data/config
@@ -60,6 +58,8 @@ spec:
               name: calvite
         command: ["npm"]
         args: ["run", "monitor"]
+        ports:
+        - containerPort: 443 # Replace with the port your app listens on
 ---
 apiVersion: v1
 kind: Service
@@ -73,7 +73,7 @@ spec:
     - port: 443
       targetPort: 443
   selector:
-    name: download-config
+    name: calvite
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
