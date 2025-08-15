@@ -18,6 +18,7 @@ spec:
       - name: download-config
         image: calvinsteckphoto-admin:latest
         imagePullPolicy: Always
+        restartPolicy: Always
 #          volumeMounts:
 #            - name: kerberos-data
 #              mountPath: /home/agent/data/config
