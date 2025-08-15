@@ -46,9 +46,11 @@ spec:
 #              cat Dockerfile &&
 #              ls -al
         command: ["npm"]
-        args: ["run", "dev", "--", "--host", "--port", "443"]]
+        args: ["run", "dev", "--", "--host", "--port", "443"]
 # command: [ "npm run dev -- --host" ]
 # command: [ "npm run monitor" ]
+        ports:
+        - containerPort: 443 # Replace with the port your app listens on
       containers:
       - name: calvite 
         image: calvinsteckphoto-admin:latest  # Replace with your image name and tag
@@ -58,8 +60,6 @@ spec:
               name: calvite
         command: ["npm"]
         args: ["run", "monitor"]
-        ports:
-        - containerPort: 443 # Replace with the port your app listens on
 ---
 apiVersion: v1
 kind: Service
@@ -73,7 +73,7 @@ spec:
     - port: 443
       targetPort: 443
   selector:
-    name: calvite
+    name: download-config
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
