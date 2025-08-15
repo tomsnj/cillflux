@@ -18,6 +18,8 @@ spec:
       - name: download-config
         image: calvinsteckphoto-admin:latest
         imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 443 # Replace with the port your app listens on
 #          volumeMounts:
 #            - name: kerberos-data
 #              mountPath: /home/agent/data/config
@@ -46,15 +48,13 @@ spec:
 #              cat Dockerfile &&
 #              ls -al
         command: ["npm"]
-        args: ["run", "dev", "--", "--host"]
+        args: ["run", "dev", "--", "--host", "--port", "443"]]
 # command: [ "npm run dev -- --host" ]
 # command: [ "npm run monitor" ]
       containers:
       - name: calvite 
         image: calvinsteckphoto-admin:latest  # Replace with your image name and tag
         imagePullPolicy: Always
-        ports:
-        - containerPort: 443 # Replace with the port your app listens on
         envFrom:
           - configMapRef:
               name: calvite
@@ -73,7 +73,7 @@ spec:
     - port: 443
       targetPort: 443
   selector:
-    name: calvite
+    name: download-config
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
