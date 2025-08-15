@@ -25,6 +25,8 @@ spec:
         restartPolicy: Always
 #        command: ["env"]
 #        args: [">", ".env"]
+       command: ["sleep"]
+       args: ["15"]
       containers:
       - name: calvite
         image: calvinsteckphoto-admin:latest
