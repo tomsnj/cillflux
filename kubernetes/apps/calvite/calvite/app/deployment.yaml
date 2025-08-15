@@ -17,7 +17,7 @@ spec:
       initContainers:
       - name: download-config
         image: calvinsteckphoto-admin:latest
-        imagePullPolicy: IfNotPresent
+        imagePullPolicy: Always
         ports:
         - containerPort: 443 # Replace with the port your app listens on
 #          volumeMounts:
@@ -36,6 +36,7 @@ spec:
         securityContext:
           runAsUser: 0
           allowPrivlegeEscalation: false
+        restartPolicy: Always
         envFrom:
           - configMapRef:
               name: calvite
