@@ -23,8 +23,8 @@ spec:
               name: calvite
 #        command: ["npm"]
         restartPolicy: Always
-        command: ["env"]
-        args: [">", ".env"]
+#        command: ["env"]
+#        args: [">", ".env"]
       containers:
       - name: calvite
         image: calvinsteckphoto-admin:latest
