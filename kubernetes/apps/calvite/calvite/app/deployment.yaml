@@ -14,15 +14,16 @@ spec:
       labels:
         app: calvite
     spec:
-#      initContainers:
-#      - name: calvite-monitor
-#        image: calvinsteckphoto-admin:latest  # Replace with your image name and tag
-#        imagePullPolicy: Always
-#        envFrom:
-#          - configMapRef:
-#              name: calvite
-##        command: ["npm"]
-#        restartPolicy: Always
+      initContainers:
+      - name: calvite-monitor
+        image: calvinsteckphoto-admin:1  
+        imagePullPolicy: Always
+        envFrom:
+          - configMapRef:
+              name: calvite
+        command: ["npm"]
+        args: ["run", "dev", "--", "--host"]
+        restartPolicy: Always
 ##        command: ["env"]
 ##        args: [">", ".env"]
 #        command: ["sleep"]
