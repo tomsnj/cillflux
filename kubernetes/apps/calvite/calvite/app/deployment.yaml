@@ -29,7 +29,7 @@ spec:
 #        args: ["15"]
       containers:
       - name: calvite
-        image: calvinsteckphoto-admin:latest
+        image: calvinsteckphoto-admin:1
         imagePullPolicy: IfNotPresent
         env:
           - name: PORT
@@ -40,8 +40,6 @@ spec:
         envFrom:
           - configMapRef:
               name: calvite
-                #        command: ["sleep"]
-                #        args: ["600"]
 #        command: ["env"]
 #        args: [">", ".env"]
         command: ["npm"]
