@@ -55,10 +55,15 @@ metadata:
 spec:
   #type: LoadBalancer
   ports:
-    - port: 5172
+    - name: http
+      port: 5172
+      protocol: TCP
       targetPort: 5172
   selector:
     name: calvite
+    app.kubernetes.io/component: main
+    app.kubernetes.io/instance: calvite
+    app.kubernetes.io/name: calvite
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
