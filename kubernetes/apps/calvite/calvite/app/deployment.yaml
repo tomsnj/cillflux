@@ -37,12 +37,12 @@ spec:
         envFrom:
           - configMapRef:
               name: calvite
-        command: ["sleep"]
-        args: ["600"]
+                #        command: ["sleep"]
+                #        args: ["600"]
 #        command: ["env"]
 #        args: [">", ".env"]
-#        command: ["npm"]
-#        args: ["run", "dev", "--", "--host", "--port", "443"]
+        command: ["npm"]
+        args: ["run", "dev", "--", "--host"]
         ports:
         - containerPort: 5172 # Replace with the port your app listens on
 ---
@@ -55,7 +55,7 @@ metadata:
 spec:
   #type: LoadBalancer
   ports:
-    - port: 80
+    - port: 5172
       targetPort: 5172
   selector:
     name: calvite
@@ -88,4 +88,4 @@ spec:
           service:
             name: calvite
             port: 
-              number: 80
+              number: 5172
