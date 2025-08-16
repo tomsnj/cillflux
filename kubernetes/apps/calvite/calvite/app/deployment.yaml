@@ -30,7 +30,7 @@ spec:
       containers:
       - name: calvite
         image: calvinsteckphoto-admin:1
-        imagePullPolicy: IfNotPresent
+        imagePullPolicy: Always
         env:
           - name: PORT
             value: "5173"
