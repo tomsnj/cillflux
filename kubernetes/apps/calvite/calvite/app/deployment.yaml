@@ -43,7 +43,8 @@ spec:
 #        command: ["env"]
 #        args: [">", ".env"]
         command: ["npm"]
-        args: ["run", "dev", "--", "--host"]
+          #args: ["run", "dev", "--", "--host"]
+        args: ["run", "monitor"]
         ports:
         - containerPort: 5173 # Replace with the port your app listens on
           hostPort: 5173
