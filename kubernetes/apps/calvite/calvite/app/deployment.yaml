@@ -53,8 +53,8 @@ spec:
           - -c
           - >-
               env > .env &&
-              #              (npm run dev -- --host &) &&
               sleep 6000
+              #              (npm run dev -- --host &) &&
         ports:
         - containerPort: 5173 # Replace with the port your app listens on
           hostPort: 5173
