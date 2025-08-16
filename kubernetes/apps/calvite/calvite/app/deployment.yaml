@@ -31,6 +31,9 @@ spec:
       - name: calvite
         image: calvinsteckphoto-admin:latest
         imagePullPolicy: IfNotPresent
+        env:
+          -name: PORT
+           value: "5173"
         securityContext:
           runAsUser: 0
           allowPrivlegeEscalation: false
