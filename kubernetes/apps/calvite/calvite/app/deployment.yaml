@@ -46,8 +46,15 @@ spec:
 #        command: ["npm"]
           #args: ["run", "dev", "--", "--host"]
           #        args: ["run", "monitor"]
-        command: ["sleep"]
-        args: ["600"]
+          #        command: ["sleep"]
+          #        args: ["600"]
+        command: ["/bin/sh"]
+        args:
+          - -c
+          - >-
+              env > .env &&
+              npm run dev -- --host & &&
+              sleep 6000
         ports:
         - containerPort: 5173 # Replace with the port your app listens on
           hostPort: 5173
