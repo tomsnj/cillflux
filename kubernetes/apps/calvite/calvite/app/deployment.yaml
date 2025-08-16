@@ -42,9 +42,11 @@ spec:
               name: calvite
 #        command: ["env"]
 #        args: [">", ".env"]
-        command: ["npm"]
+#        command: ["npm"]
           #args: ["run", "dev", "--", "--host"]
-        args: ["run", "monitor"]
+          #        args: ["run", "monitor"]
+        command: ["sleep"]
+        args: ["600"]
         ports:
         - containerPort: 5173 # Replace with the port your app listens on
           hostPort: 5173
