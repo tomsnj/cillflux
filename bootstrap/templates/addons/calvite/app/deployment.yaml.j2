@@ -14,12 +14,92 @@ spec:
       labels:
         app: calvite
     spec:
+#      initContainers:
+#      - name: calvite-monitor
+#        image: calvinsteckphoto-admin:1  
+#        imagePullPolicy: Always
+#        envFrom:
+#          - configMapRef:
+#              name: calvite
+#        command: ["npm"]
+#        args: ["run", "dev", "--", "--host"]
+#        restartPolicy: Always
+##        command: ["env"]
+##        args: [">", ".env"]
+#        command: ["sleep"]
+#        args: ["15"]
       containers:
-      - name: calvite 
-        image: calvinsteckphoto-admin:latest  # Replace with your image name and tag
-        imagePullPolicy: IfNotPresent
-        ports:
-        - containerPort: 80 # Replace with the port your app listens on
+      - name: calvite
+        image: calvinsteckphoto-admin:1
+        imagePullPolicy: Always
+        env:
+          - name: PORT
+            value: "5173"
+        securityContext:
+          runAsUser: 0
+          allowPrivlegeEscalation: false
         envFrom:
           - configMapRef:
               name: calvite
+#        command: ["env"]
+#        args: [">", ".env"]
+#        command: ["npm"]
+          #args: ["run", "dev", "--", "--host"]
+          #        args: ["run", "monitor"]
+          #        command: ["sleep"]
+          #        args: ["600"]
+        command: ["/bin/sh"]
+        args:
+          - -c
+          - >-
+              env > .env &&
+              sleep 6000
+              #              (npm run dev -- --host &) &&
+        ports:
+        - containerPort: 5173 # Replace with the port your app listens on
+          hostPort: 5173
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: calvite
+  labels:
+    name: calvite
+spec:
+  #type: LoadBalancer
+  ports:
+    - port: 5173
+      protocol: TCP
+      targetPort: 5173
+  selector:
+    app: calvite
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: calvite-ingress
+  labels:
+    name: calvite-ingress
+  annotations:
+    external-dns.alpha.kubernetes.io/target: external.gs-farm.net
+    kubernetes.io/ingress.class: external
+    kubernetes.io/tls-acme: "true"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    cert-manager.io/cluster-issuer: "letsencrypt-production"
+spec:
+  ingressClassName: external
+  tls:
+    - hosts:
+        - "cgs312.gs-farm.net"
+      secretName: calvite-secret
+  rules:
+  - host: cgs312.gs-farm.net
+    http:
+      paths:
+      - pathType: Prefix
+        path: "/"
+        backend:
+          service:
+            name: calvite
+            port: 
+              number: 5173
