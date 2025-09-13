@@ -27,9 +27,10 @@ spec:
     controller:
       strategy: node
       externalProvisioner:
-        #image: registry.k8s.io/sig-storage/csi-provisioner:v5.3.0
-        image: gcr.io/k8s-staging-sig-storage/csi-provisioner:5.3.0
+        image: registry.k8s.io/sig-storage/csi-provisioner
+        tag: 3.6.0
         extraArgs:
+          - --v=5
           - --leader-election=false
           - --node-deployment=true
           - --node-deployment-immediate-binding=false
