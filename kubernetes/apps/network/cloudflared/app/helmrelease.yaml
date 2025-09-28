@@ -31,7 +31,7 @@ spec:
         annotations:
           reloader.stakater.com/auto: "true"
         containers:
-          main:
+          app:
             image:
               repository: docker.io/cloudflare/cloudflared
               tag: 2025.9.1
@@ -39,7 +39,8 @@ spec:
               NO_AUTOUPDATE: "true"
               TUNNEL_CRED_FILE: /etc/cloudflared/creds/credentials.json
               TUNNEL_METRICS: 0.0.0.0:8080
-              TUNNEL_TRANSPORT_PROTOCOL: quic
+              TUNNEL_ORIGIN_ENABLE_HTTP2: true
+              TUNNEL_TRANSPORT_PROTOCOL: http2
               TUNNEL_POST_QUANTUM: true
               TUNNEL_ID:
                 valueFrom:
@@ -78,13 +79,14 @@ spec:
             runAsUser: 568
             runAsGroup: 568
     service:
-      main:
+      app:
         ports:
           http:
             port: *port
     serviceMonitor:
-      main:
-        enabled: true
+      app:
+        endpoints:
+          - port: http
     persistence:
       config:
         enabled: true
