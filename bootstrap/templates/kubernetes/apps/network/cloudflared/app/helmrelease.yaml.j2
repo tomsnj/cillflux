@@ -8,10 +8,10 @@ spec:
   chart:
     spec:
       chart: app-template
-      version: 2.6.0
+      version: 4.3.0
       sourceRef:
         kind: HelmRepository
-        name: bjw-s
+        name: bjw-s-labs
         namespace: flux-system
   maxHistory: 2
   install:
@@ -25,22 +25,22 @@ spec:
     keepHistory: false
   values:
     controllers:
-      main:
+      cloudflare-tunnel:
         replicas: 2
         strategy: RollingUpdate
         annotations:
           reloader.stakater.com/auto: "true"
         containers:
-          main:
+          app:
             image:
               repository: docker.io/cloudflare/cloudflared
               tag: 2025.9.1
             env:
               NO_AUTOUPDATE: "true"
               TUNNEL_CRED_FILE: /etc/cloudflared/creds/credentials.json
+              TUNNEL_ORIGIN_ENABLE_HTTP2: true
               TUNNEL_METRICS: 0.0.0.0:8080
-              TUNNEL_TRANSPORT_PROTOCOL: quic
-              TUNNEL_POST_QUANTUM: true
+              TUNNEL_TRANSPORT_PROTOCOL: http2
               TUNNEL_ID:
                 valueFrom:
                   secretKeyRef:
@@ -78,13 +78,14 @@ spec:
             runAsUser: 568
             runAsGroup: 568
     service:
-      main:
+      app:
         ports:
           http:
             port: *port
     serviceMonitor:
-      main:
-        enabled: true
+      app:
+        endpoints:
+          - port: http
     persistence:
       config:
         enabled: true
