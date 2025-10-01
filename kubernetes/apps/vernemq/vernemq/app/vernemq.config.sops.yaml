@@ -1,6 +1,6 @@
 apiVersion: v1
 data:
-    DOCKER_VERNEMQ_USER_VERNEMQ: ENC[AES256_GCM,data:eZZnCFZRHH7T0fdXk1QBkQ==,iv:BUW0nTuLQMet58HWTcj3/JlWe1ijZ9vu6CYt7HNv+wg=,tag:ftOMjDFrOKFHI9c+VmlzTg==,type:str]
+    DOCKER_VERNEMQ_USER_VERNEMQ: ENC[AES256_GCM,data:X8Xlw4Pq9wo0kVH2Qm/Ueg==,iv:m5fO/LPe7IGcg7deXbAUg5PU3U11y8ublzJV+u7Y4qw=,tag:Y42/+V9o7OueKKpu9bE/rA==,type:str]
 kind: ConfigMap
 metadata:
     name: vernemq-map
@@ -9,13 +9,13 @@ sops:
         - recipient: age1puse8jhtwqw87w9qr9j4g8dajqccn0899vpyc0wnn9y2e6wz0cms2g895x
           enc: |
             -----BEGIN AGE ENCRYPTED FILE-----
-            YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSBHYy9CVDNxamorUWJUazY2
-            S1NVWURmck5lNGJJQzNibGQ3U3BrcStUbm1nCjUwUnAvbEwzUUNJVWpPSFM1S3Fy
-            L3BXRHJaNUcyaElEeWx5Rm5rektDa1EKLS0tIFUwY3FueFIzVUUrZGE3dGhGZGEy
-            VzBoWmtkaDN3b2FBSTJKT1puZjdVM3MKaz/8mvvN8W4nGUzN1F7iDATwYaSHge6S
-            T3+0/ClCjvGwIzi1aQYdVZXzGY8G893FOzp9bBLxxr2GQgqMcCiUCg==
+            YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSBDblB3dmRvR01HeHA3Y0J0
+            S1JYbFlCT1Yxb2ZxZnZFeGdxb2RGV1ZkYXlZCnJXUUw4SFRWZ3M4dGFDakxldjBN
+            NlQ4OUE1OGVmVEVJTkRHQzBsL3FpcFEKLS0tIEZ1cTUxRldhUC85MXd0b2RSeGFp
+            V2N0OWhoVGVHbDg3QnFYNVVwdHhYd00K+bv0gAtMv7ENOudIC/DONVAnpxEFtZcQ
+            IWa3Mdxyu/N1VXS7W2jEaJc8LSr4sv8L50JLsBEOn9pvlaRJSYm+fg==
             -----END AGE ENCRYPTED FILE-----
-    lastmodified: "2025-08-12T01:25:05Z"
-    mac: ENC[AES256_GCM,data:A04CfTHZ86RXD60tCOQO5I2TiEH6JS53qAGS0yTJG2IGH9KDO97KhVC9ApBSIfCf7Qd2pUSRVZTw8nYsWR6QrlOHga76YPGNDS7Q4F2ehsgXqeJgMXbExozdpzokK1/jiXryMQtRIqxd3fnieI5xAs8m08t6z7jRzegaDxbptOU=,iv:vlN1hTTQPx8YtQtmcvtSAyZbMCo6BDrQST9FjdVBnJI=,tag:NTlcwikOI9LlhTBr0IBvlg==,type:str]
+    lastmodified: "2025-09-29T23:20:25Z"
+    mac: ENC[AES256_GCM,data:YtQAowLMnC0fUeF+S/3pZAtfafdvj5MZK9SPWCAfBXd+0/3srg5iIu9ya9SLUlzu3K6rK7ex1TxIvX8g6R0zutysPWFLkYUzRdhhQ+zTjy/lQyXLMTpz17iiMLuT7nlOamu2Lh1qj+TcLk8Dqxijc9MCILrV2RqcMT9fpTI/kqA=,iv:Hnpgty/IN3xkTGgATs4JS8kM1XGOxbS6BnPgzm7YO7A=,tag:gqcJUCqqAdn+IZcXrsEJSw==,type:str]
     encrypted_regex: ^(data|stringData)$
     version: 3.10.2
