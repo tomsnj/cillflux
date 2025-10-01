@@ -27,7 +27,7 @@ spec:
     controller:
       strategy: node
       externalProvisioner:
-        image: 
+        image:
           registry: registry.k8s.io/sig-storage/csi-provisioner
           tag: 3.6.0
         extraArgs:
