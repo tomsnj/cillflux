@@ -36,10 +36,6 @@
   when: banzaic.enabled | default(false)
   ansible.builtin.include_tasks: banzaic.yaml
 
-- name: Process addon calvite
-  when: calvite.enabled | default(false)
-  ansible.builtin.include_tasks: calvite.yaml
-
 - name: Process addon mongodb
   when: mongodb.enabled | default(false)
   ansible.builtin.include_tasks: mongodb.yaml
