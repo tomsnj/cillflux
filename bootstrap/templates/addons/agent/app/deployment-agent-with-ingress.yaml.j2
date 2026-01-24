@@ -23,7 +23,7 @@ spec:
 
       initContainers:
         - name: download-config
-          image: kerberos/agent:v3.5.6
+          image: kerberos/agent:v3.6.0
           volumeMounts:
             - name: kerberos-data
               mountPath: /home/agent/data/config
@@ -55,7 +55,7 @@ spec:
 
       containers:
         - name: agent
-          image: kerberos/agent:v3.5.6 
+          image: kerberos/agent:v3.6.0 
           volumeMounts:
             - name: kerberos-data
               mountPath: /home/agent/data/config
