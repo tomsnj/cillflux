@@ -1,6 +1,6 @@
 apiVersion: v1
 data:
-    RABBITMQ_PASSWORD: ENC[AES256_GCM,data:0kPUstC7b7KpYIQrlL0gjg==,iv:K4EuumAhnwYhgds9MaWZ7U9zTaPE0yZIzpLq8ew+ic4=,tag:kEcPa6yRXNvSiCtjBKXk/Q==,type:str]
+    RABBITMQ_PASSWORD: ENC[AES256_GCM,data:YkQKzfnYATbFdxznqbLqyg==,iv:9bR0MW7eBrIWiAqCVd//vewOGdDEj8UPba43IQzjnaQ=,tag:IKgDK2woNJe42Mp2vrKsBg==,type:str]
 kind: ConfigMap
 metadata:
     name: rabbitmq-map
@@ -9,13 +9,13 @@ sops:
         - recipient: age1puse8jhtwqw87w9qr9j4g8dajqccn0899vpyc0wnn9y2e6wz0cms2g895x
           enc: |
             -----BEGIN AGE ENCRYPTED FILE-----
-            YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSBRanlpMDNXdTl0MjlDUXdU
-            NzF6UzJGVGxjRzd2VDRsR3JMK0s5VjhZd1NjClJlS0hoKzJ1ekFCMVdVL1BzTnBy
-            VDRqYmtBS0xtaTFBYTRzY09ETjZzMkEKLS0tIFFrYlRiOU9va1pKRXNrdDdNRnF5
-            ZjBvUUVEMDd3dmxaUjZoQTNkdlloRHMKK4joXl680xuWlLZG3Zk0kNh+zFjRe3C0
-            l0Rb5OkEMHvT0v1BYSiWkTGA5r+U9IUwNlzWViFRWNaIFjn6Ms3jeQ==
+            YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSBHV0ZqUWZ0K1FYME9nRTB6
+            cFNJcHdUYkw2N1ZSbnFUQktYS0lTd1o5b0VBCmhEaUEyQndmdmJQSnlCNjhRaGRz
+            MTF6d1lWcURCRVdteHpNQVdWa2g2L28KLS0tIHlyVlNOQU9salErMzJYNmhQNkZt
+            eCt2eVdUL1g4aTRudktiUUFrRVplWTAKOfD73iLAGCtMHx6/n8So52FQgTR3Zh0C
+            jK1tnZVtC4GaoakNVEaoDzoyaQEpVfsxJlCSnP5fD+ZmeNKMB7zGcg==
             -----END AGE ENCRYPTED FILE-----
-    lastmodified: "2025-09-29T23:20:18Z"
-    mac: ENC[AES256_GCM,data:EbOxhuE/iHupasJLHh6Dg7cF0Tl0gefcitlVXmuE0q4+25p+gVSgRKPWpLtlrM2Eswk2feKLg+zkq4uvaZHV06fNaZllHiiRiVj+c1kwWRwHAu13mtRiUK1abdfKif2BXxsSRByWZbjrxxDw+v8cuLGIGgD7B7K3hrz8Bw4NJ3M=,iv:5rXsIUG6YlrgK6mpqfR17sbij3CTDrfxR8feqzP9F78=,tag:jA3qrYVG3AmbZs1OufXPdw==,type:str]
+    lastmodified: "2026-01-24T18:18:15Z"
+    mac: ENC[AES256_GCM,data:Zit2F7wKtj74kVOuExcKTwSLvS7n1N31corumR4XIeSFPAWklxkpfe2iqJqx81Nx8KG8CHuxcfISfehEt+JKDA55aGwzkMAaAB/Yym/spYFfePoZLmUvDfRg1T2nAKkNDDVDXk7nfxr5CsxnIeTJ8AMArYfYgRdBGorKdVGYvq0=,iv:hYPkP4fBnxhXTHgjwL4kes2C4ILd1XL71lXN0kgj0M8=,tag:SvM9OfrFaLIjSWq3QjuqbQ==,type:str]
     encrypted_regex: ^(data|stringData)$
-    version: 3.10.2
+    version: 3.11.0
