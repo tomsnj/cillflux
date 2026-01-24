@@ -68,7 +68,7 @@ spec:
       driver:
         image: 
           registry: ghcr.io/democratic-csi/democratic-csi
-          tag: v1.9.5
+          tag: latest
         extraVolumeMounts:
           - name: local-hostpath
             mountPath: *storagePath
