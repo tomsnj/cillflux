@@ -27,4 +27,10 @@ spec:
             name: vaultwarden-svc
             port:
               number: 80
-
+      - pathType: Prefix
+        path: "/notifications/hub"
+        backend:
+          service:
+            name: vaultwarden-svc
+            port:
+              number: 3012
