@@ -38,6 +38,14 @@ spec:
                 cpu: 100m
                 memory: 100Mi
 
+    smtp:
+      enabled: true
+      host: smtp.gmail.com
+      from: "tfs05jhu@gmail.com"
+      fromName: "Tom Steck"
+      security: starttls
+      port: 587
+      existingSecret: vw-secret
     persistence:
       config:
         enabled: true

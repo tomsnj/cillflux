@@ -11,10 +11,13 @@ spec:
       chart: app-template
       sourceRef:
         kind: HelmRepository
-        name: bjw-s
+        name: bjw-s-labs
         namespace: flux-system
       version: 4.6.2
   interval: 24h
+  dependsOn:
+    - name: local-path-provisioner
+      namespace: storage
   values:
     controllers:
       vaultwarden:
@@ -34,31 +37,101 @@ spec:
               requests:
                 cpu: 100m
                 memory: 100Mi
-        statefulset:
-          podManagementPolicy: Parallel
-          volumeClaimTemplates:
-            - accessMode: ReadWriteOnce
-              globalMounts:
-                - path: /data
-              name: data
-              size: 1Mi
-        type: statefulset
-    route:
-      app:
-        annotations:
-          gethomepage.dev/description: Password Manager
-          gethomepage.dev/enabled: 'true'
-          gethomepage.dev/group: Cloud
-          gethomepage.dev/icon: bitwarden
-          gethomepage.dev/name: Bitwarden
-        hostnames:
-          - bw.sko.ai
-        parentRefs:
-          - name: internal-noauth
-            namespace: agentgateway
+
+    smtp:
+      enabled: true
+      host: smtp.gmail.com
+      from: "tfs05jhu@gmail.com"
+      fromName: "Tom Steck"
+      security: starttls
+      port: 587
+      existingSecret: vw-secret
+    persistence:
+      config:
+        enabled: true
+        type: nfs
+        server: 10.10.10.110
+        path: /mnt/storage1/home_nfs/nginx/www/gs-farm
+#        storageClass: local-hostpath
+#        storageClassName: local-hostpath
+#        size: 1Gi
+#        accessMode: ReadWriteOnce
+##      data:
+#        # Avoid a name change with the app-template v2->v4 migration.
+#        suffix: data
+#        enabled: true
+#        type: persistentVolumeClaim
+
+#        statefulset:
+#          podManagementPolicy: Parallel
+#          volumeClaimTemplates:
+#            - accessMode: ReadWriteOnce
+#              globalMounts:
+#                - path: /data
+#              name: vaultwarden-data
+#              size: 1Mi
+#        type: statefulset
+#    route:
+#      app:
+#        annotations:
+#          gethomepage.dev/description: Password Manager
+#          gethomepage.dev/enabled: 'true'
+#          gethomepage.dev/group: Cloud
+#          gethomepage.dev/icon: bitwarden
+#          gethomepage.dev/name: Bitwarden
+#        hostnames:
+#          - bw.sko.ai
+#        parentRefs:
+#          - name: internal-noauth
+#            namespace: agentgateway
+#    route:
+#      # -- Enable and configure route settings for the chart under this key.
+#      app:
+#        parentRefs:
+#          - name: gateway
+#            namespace: gateway-namespace
+#            sectionName: gateway-section
+#        hostnames:
+#          - vaultwarden.gs-farm.net
+#        rules:
+#          - matches:
+#              - path:
+#                  type: PathPrefix
+#                  value: /
+#            backendRefs:
+#              - kind: Service
+#                port: 80
+#                name: app
+#                namespace: vaultwarden
+#                weight: 1
+#          - matches:
+#              - path:
+#                  type: PathPrefix
+#                  value: /notifications/hub/negotiate
+#            backendRefs:
+#              - kind: Service
+#                port: 80
+#                name: app
+#                namespace: vaultwarden
+#                weight: 1
+#          - matches:
+#              - path:
+#                  type: PathPrefix
+#                  value: /notifications/hub
+#            backendRefs:
+#              - kind: Service
+#                port: 3012
+#                name: app
+#                namespace: vaultwarden
+#                weight: 1
+
     service:
       app:
         controller: vaultwarden
         ports:
           http:
             port: 80
+          websocket:
+            enabled: true
+            port: 3012
+        
