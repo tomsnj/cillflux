@@ -11,3 +11,18 @@ spec:
   resources:
     requests:
       storage: 1Gi
+apiVersion: v1
+---
+kind: PersistentVolume
+metadata:
+  name: data-vaultwarden-0
+  namespace: default
+spec:
+  storageClassName: gsks0
+  capacity:
+    storage: 1Mi # Size does not matter
+  accessModes: ["ReadWriteMany"]
+  persistentVolumeReclaimPolicy: Retain
+  nfs:
+    server: 10.10.10.110
+    path: /mnt/storage1/home_nfs/nginx/www/gs-farm`
