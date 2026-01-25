@@ -39,15 +39,16 @@ spec:
                 memory: 100Mi
 
     persistence:
-      storageClass: local-hostpath
-      storageClassName: local-hostpath
-      data:
-        # Avoid a name change with the app-template v2->v4 migration.
-        suffix: data
-        enabled: true
-        type: persistentVolumeClaim
+      config:
+        storageClass: local-hostpath
+        storageClassName: local-hostpath
         size: 1Gi
         accessMode: ReadWriteOnce
+#      data:
+#        # Avoid a name change with the app-template v2->v4 migration.
+#        suffix: data
+#        enabled: true
+#        type: persistentVolumeClaim
 
 #        statefulset:
 #          podManagementPolicy: Parallel
