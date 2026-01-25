@@ -27,7 +27,9 @@ spec:
     controller:
       strategy: node
       externalProvisioner:
-        image: registry.k8s.io/sig-storage/csi-provisioner:v6.1.0
+        image: 
+          registry: registry.k8s.io/sig-storage/csi-provisioner
+          tag: v5.2.0
         extraArgs:
           - --leader-election=false
           - --node-deployment=true
@@ -57,14 +59,16 @@ spec:
       config:
         driver: local-hostpath
         local-hostpath:
-          shareBasePath: &storagePath "{{ bootstrap_local_path_provisioner_path | default('/var/lib/rancher/k3s/local-hostpath', true) }}"
+          shareBasePath: &storagePath "/var/lib/rancher/k3s/local-hostpath"
           controllerBasePath: *storagePath
           dirPermissionsMode: "0770"
           dirPermissionsUser: 0
           dirPermissionsGroup: 0
     node:
       driver:
-        image: ghcr.io/democratic-csi/democratic-csi:v1.9.5
+        image: 
+          registry: ghcr.io/democratic-csi/democratic-csi
+          tag: latest
         extraVolumeMounts:
           - name: local-hostpath
             mountPath: *storagePath
