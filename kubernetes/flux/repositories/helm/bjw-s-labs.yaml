@@ -5,6 +5,5 @@ metadata:
   name: bjw-s-labs
   namespace: flux-system
 spec:
-  type: helm
   interval: 5m
   url: https://bjw-s-labs.github.io/helm-charts
