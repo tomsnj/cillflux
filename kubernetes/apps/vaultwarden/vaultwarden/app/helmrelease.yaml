@@ -43,19 +43,19 @@ spec:
               name: data
               size: 1Mi
         type: statefulset
-    route:
-      app:
-        annotations:
-          gethomepage.dev/description: Password Manager
-          gethomepage.dev/enabled: 'true'
-          gethomepage.dev/group: Cloud
-          gethomepage.dev/icon: bitwarden
-          gethomepage.dev/name: Bitwarden
-        hostnames:
-          - bw.sko.ai
-        parentRefs:
-          - name: internal-noauth
-            namespace: agentgateway
+#    route:
+#      app:
+#        annotations:
+#          gethomepage.dev/description: Password Manager
+#          gethomepage.dev/enabled: 'true'
+#          gethomepage.dev/group: Cloud
+#          gethomepage.dev/icon: bitwarden
+#          gethomepage.dev/name: Bitwarden
+#        hostnames:
+#          - bw.sko.ai
+#        parentRefs:
+#          - name: internal-noauth
+#            namespace: agentgateway
     service:
       app:
         controller: vaultwarden

@@ -1,0 +1,30 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: vaultwarden-ingress
+  labels:
+    name: vaultwarden-ingress
+  annotations:
+    external-dns.alpha.kubernetes.io/target: external.gs-farm.net
+    kubernetes.io/ingress.class: external
+    kubernetes.io/tls-acme: "true"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    cert-manager.io/cluster-issuer: "letsencrypt-production"
+spec:
+  ingressClassName: external
+  tls:
+    - hosts:
+        - "vaultwarden.gs-farm.net"
+      secretName: vaultwarden-secret
+  rules:
+  - host: vaultwarden.gs-farm.net
+    http:
+      paths:
+      - pathType: Prefix
+        path: "/"
+        backend:
+          service:
+            name: vaultwarden-svc
+            port:
+              number: 80
+
