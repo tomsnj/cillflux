@@ -4,4 +4,4 @@ kind: Kustomization
 resources:
   - ./helmrelease.yaml
   - ./ingress.yaml
-  - ./storage.yaml
+    #  - ./storage.yaml

@@ -40,11 +40,15 @@ spec:
 
     persistence:
       config:
-        storageClass: local-hostpath
-        storageClassName: local-hostpath
-        size: 1Gi
-        accessMode: ReadWriteOnce
-#      data:
+        enabled: true
+        type: nfs
+        server: 10.10.10.110
+        path: /mnt/storage1/home_nfs/nginx/www/gs-farm
+#        storageClass: local-hostpath
+#        storageClassName: local-hostpath
+#        size: 1Gi
+#        accessMode: ReadWriteOnce
+##      data:
 #        # Avoid a name change with the app-template v2->v4 migration.
 #        suffix: data
 #        enabled: true
