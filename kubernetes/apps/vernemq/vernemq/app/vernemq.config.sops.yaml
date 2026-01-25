@@ -1,6 +1,6 @@
 apiVersion: v1
 data:
-    DOCKER_VERNEMQ_USER_VERNEMQ: ENC[AES256_GCM,data:F7BzAQ350EHOhaX4Fv3TIQ==,iv:boJxzYUMzt2Yltf1gsEDRvKOqgEkaJYTX1DPJ4vtyK4=,tag:eLjMnbtQgU6aABRTUlhs4w==,type:str]
+    DOCKER_VERNEMQ_USER_VERNEMQ: ENC[AES256_GCM,data:Zm7moS7AltjbX36tRWRC6Q==,iv:yOotY8LcSwlwKw4BoPsugV2Q4E2XIuQW0lTWKYAoNII=,tag:My1XHjiFDnjVnyA0r4g6ag==,type:str]
 kind: ConfigMap
 metadata:
     name: vernemq-map
@@ -9,13 +9,13 @@ sops:
         - recipient: age1puse8jhtwqw87w9qr9j4g8dajqccn0899vpyc0wnn9y2e6wz0cms2g895x
           enc: |
             -----BEGIN AGE ENCRYPTED FILE-----
-            YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSBQTHJEUVdwdkVFdGUzbjFu
-            Z1JOLy9ndjNjRlQ4czlOUUEvRnYvZHFTNFgwCmJBVUl0ajdROWxycElJYlIzSGFR
-            MnNpVGJ0TXgrNWN2ODNqenYxS2w3aGcKLS0tIENJTmRWaHVvZ0NLTTBtWkNXKzVG
-            L3l2UUZ6Smt3SXdPVVNZTzNVUUxMcjAKkgALezeBMczy+015iko2MVEhsbdr5pBY
-            6D5xh85L4BRutF/B9ExsOaVs/7buip+K5smPRCClLyRGofx9hxGUMA==
+            YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSBSSnE4VmEwazVMRkRCY2F0
+            Zis2ekUya3JRUmpZRTVBOEs4ZzNIV3h3SG4wCkFJQ2FEWnZxVmdkaU5oRDVMak5V
+            UDNQQTk1ZWhieDFuK3ZLVmZlV0pEZ0kKLS0tIG82WGM5U001am9FUHRKelNyUkFK
+            TzZpaUg2WFNmTll2UDZuSDBnZUVlNE0Kzpkf6fFi8N4IG6//2jTfoLJKgWGSqWd9
+            PuTkY7J4UtKJZ0KKLkIOeZItVlaqp4aEUa5QZinPZ44+8zxEHkMKNA==
             -----END AGE ENCRYPTED FILE-----
-    lastmodified: "2026-01-24T18:18:24Z"
-    mac: ENC[AES256_GCM,data:L0tsOpY36RY2a02ocwwFf1J0Hs3lpCUU7ymKOnHzp5KqzzSe1XbQzAJzJX2d5ze7yk+5hAKgyPpwSdkFj7SjYhIH+Ph6kVS1xgMfoNs6KRmSkgznkqrV+38JjeMJFkNdk3ILKdv3oe7ovZ9b+mGPlL4VLw3u7dL3ZCeepmCoY6o=,iv:Rb+U7cYlkIzAU67dst8+ugWS+c9mKoSumZDRZot8ZC8=,tag:1s78XiePBVSZdZCxKDpwlA==,type:str]
+    lastmodified: "2026-01-25T02:04:45Z"
+    mac: ENC[AES256_GCM,data:A2QPgBvSO+6tfJuUpBPm24o08bq1rjCxdXQWc+LTVTnOjC2hlJ89wmxgte5nMsQkBtZDhtA/BD6wk/uMCAFOsG+up1BLy3/ApGQd+4Y/bHQt4frv2YaaLITAsxGw0WMD0d/X7AuP5g2h91LGGTSF2lvGdEZdT/xES4qthbx2wEM=,iv:301bvs3KqdU5hMJXIo/tGUbOhPODl7VH1age5s1+HZU=,tag:ddw1oCkHGpoRAtWXCv/sgg==,type:str]
     encrypted_regex: ^(data|stringData)$
     version: 3.11.0
