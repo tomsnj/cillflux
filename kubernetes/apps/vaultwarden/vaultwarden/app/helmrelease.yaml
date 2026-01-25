@@ -11,7 +11,7 @@ spec:
       chart: app-template
       sourceRef:
         kind: HelmRepository
-        name: bjw-s
+        name: bjw-s-labs
         namespace: flux-system
       version: 4.6.2
   interval: 24h
