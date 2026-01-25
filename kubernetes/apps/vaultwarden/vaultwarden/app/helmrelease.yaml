@@ -15,6 +15,10 @@ spec:
         namespace: flux-system
       version: 4.6.2
   interval: 24h
+  volumes:
+    - name: vaultwarden-data
+      persistentVolumeClaim:
+        claimName: vaultwarden-data
   values:
     controllers:
       vaultwarden:
@@ -23,6 +27,9 @@ spec:
             image:
               repository: ghcr.io/dani-garcia/vaultwarden
               tag: 1.35.2@sha256:d89a6d21e361254670c24a4272b4b5f245e402c284f2f55de2c379fdbcfa1fa5
+            volumeMounts:
+              - name: vaultwarden-data
+                mountPath: /data
             probes:
               liveness:
                 enabled: true
@@ -34,15 +41,16 @@ spec:
               requests:
                 cpu: 100m
                 memory: 100Mi
-        statefulset:
-          podManagementPolicy: Parallel
-          volumeClaimTemplates:
-            - accessMode: ReadWriteOnce
-              globalMounts:
-                - path: /data
-              name: data
-              size: 1Mi
-        type: statefulset
+
+#        statefulset:
+#          podManagementPolicy: Parallel
+#          volumeClaimTemplates:
+#            - accessMode: ReadWriteOnce
+#              globalMounts:
+#                - path: /data
+#              name: data
+#              size: 1Mi
+#        type: statefulset
 #    route:
 #      app:
 #        annotations:
@@ -62,3 +70,6 @@ spec:
         ports:
           http:
             port: 80
+    persistence:
+      data:
+        
