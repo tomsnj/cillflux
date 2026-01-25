@@ -15,6 +15,9 @@ spec:
         namespace: flux-system
       version: 4.6.2
   interval: 24h
+  dependsOn:
+    - name: local-path-provisioner
+      namespace: storage
   values:
     controllers:
       vaultwarden:
@@ -35,15 +38,26 @@ spec:
                 cpu: 100m
                 memory: 100Mi
 
-        statefulset:
-          podManagementPolicy: Parallel
-          volumeClaimTemplates:
-            - accessMode: ReadWriteOnce
-              globalMounts:
-                - path: /data
-              name: vaultwarden-data
-              size: 1Mi
-        type: statefulset
+    persistence:
+      data:
+        # Avoid a name change with the app-template v2->v4 migration.
+        suffix: data
+        enabled: true
+        storageClass: local-hostpath
+        storageClassName: local-hostpath
+        type: persistentVolumeClaim
+        size: 1Gi
+        accessMode: ReadWriteOnce
+
+#        statefulset:
+#          podManagementPolicy: Parallel
+#          volumeClaimTemplates:
+#            - accessMode: ReadWriteOnce
+#              globalMounts:
+#                - path: /data
+#              name: vaultwarden-data
+#              size: 1Mi
+#        type: statefulset
 #    route:
 #      app:
 #        annotations:
