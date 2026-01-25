@@ -24,5 +24,4 @@ resources:
   - ./piraeus.yaml
   - ./prometheus-community.yaml
   - ./stakater.yaml
-  - ./vaultwarden.yaml
   - ./weave-gitops.yaml
