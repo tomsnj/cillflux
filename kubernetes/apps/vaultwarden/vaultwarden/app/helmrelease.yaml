@@ -38,6 +38,11 @@ spec:
                 cpu: 100m
                 memory: 100Mi
 
+    admin:
+      enabled: true
+      disableAdminToken: false
+      existingSecret: vw-secret
+
     smtp:
       enabled: true
       host: smtp.gmail.com
