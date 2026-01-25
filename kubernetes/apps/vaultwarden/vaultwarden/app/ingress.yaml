@@ -24,13 +24,13 @@ spec:
         path: "/"
         backend:
           service:
-            name: vaultwarden-svc
+            name: vaultwarden
             port:
               number: 80
       - pathType: Prefix
         path: "/notifications/hub"
         backend:
           service:
-            name: vaultwarden-svc
+            name: vaultwarden
             port:
               number: 3012
