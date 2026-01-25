@@ -63,11 +63,11 @@ spec:
         type: nfs
         server: 10.10.10.110
         path: /mnt/storage1/home_nfs/nginx/www/gs-farm
-      data:
-        enabled: true
-        type: nfs
-        server: 10.10.10.110
-        path: /mnt/storage1/home_nfs/nginx/www/gs-farm
+#      data:
+#        enabled: true
+#        type: nfs
+#        server: 10.10.10.110
+#        path: /mnt/storage1/home_nfs/nginx/www/gs-farm
 
     service:
       app:
