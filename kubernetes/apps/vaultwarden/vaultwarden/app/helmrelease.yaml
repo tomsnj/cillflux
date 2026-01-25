@@ -15,10 +15,10 @@ spec:
         namespace: flux-system
       version: 4.6.2
   interval: 24h
-  volumes:
-    - name: vaultwarden-data
-      persistentVolumeClaim:
-        claimName: vaultwarden-data
+#  volumes:
+#    - name: vaultwarden-data
+#      persistentVolumeClaim:
+#        claimName: vaultwarden-data
   values:
     controllers:
       vaultwarden:
@@ -42,15 +42,15 @@ spec:
                 cpu: 100m
                 memory: 100Mi
 
-#        statefulset:
-#          podManagementPolicy: Parallel
-#          volumeClaimTemplates:
-#            - accessMode: ReadWriteOnce
-#              globalMounts:
-#                - path: /data
-#              name: data
-#              size: 1Mi
-#        type: statefulset
+        statefulset:
+          podManagementPolicy: Parallel
+          volumeClaimTemplates:
+            - accessMode: ReadWriteOnce
+              globalMounts:
+                - path: /data
+              name: vaultwarden-data
+              size: 1Mi
+        type: statefulset
 #    route:
 #      app:
 #        annotations:
