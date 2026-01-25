@@ -57,7 +57,6 @@ spec:
         type: nfs
         server: 10.10.10.110
         path: /mnt/storage1/home_nfs/nginx/www/gs-farm
-        storageClass: gsks1
 #        storageClass: local-hostpath
 #        storageClassName: local-hostpath
 #        size: 1Gi
