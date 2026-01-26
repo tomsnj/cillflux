@@ -59,7 +59,7 @@ spec:
       existingSecret: vw-secret
 
     persistence:
-      config:
+      data:
         enabled: true
         type: nfs
         server: 10.10.10.110
