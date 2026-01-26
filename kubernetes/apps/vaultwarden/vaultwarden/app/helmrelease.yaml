@@ -66,6 +66,7 @@ spec:
 #        path: /mnt/storage1/home_nfs/nginx/www/gs-farm
       config:
         enabled: true
+        type: persistentVolumeClaim
         storageClass: local-hostpath
           #        type: nfs
           #        server: 10.10.10.110
