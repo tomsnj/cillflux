@@ -5,4 +5,4 @@ resources:
   - ./helmrelease.yaml
   - ./ingress.yaml
   - ./secret.sops.yaml
-  - ./storage.yaml
+    # - ./storage.yaml
