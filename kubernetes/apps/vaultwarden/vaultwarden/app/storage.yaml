@@ -1,21 +1,7 @@
-#kind: PersistentVolumeClaim
-#apiVersion: v1
-#metadata:
-#  name: vaultwarden
-#  annotations:
-#    volume.beta.kubernetes.io/storage-class: "gsks1"
-#spec:
-#  storageClassName: gsks1
-#  accessModes:
-#    - ReadWriteMany
-#  resources:
-#    requests:
-#      storage: 1Gi
-#---
 kind: PersistentVolumeClaim
 apiVersion: v1
 metadata:
-  name: data-vaultwarden-0
+  name: vaultwarden
   annotations:
     volume.beta.kubernetes.io/storage-class: "gsks1"
 spec:
@@ -25,3 +11,17 @@ spec:
   resources:
     requests:
       storage: 1Gi
+#---
+#kind: PersistentVolumeClaim
+#apiVersion: v1
+#metadata:
+#  name: data-vaultwarden-0
+#  annotations:
+#    volume.beta.kubernetes.io/storage-class: "gsks1"
+#spec:
+#  storageClassName: gsks1
+#  accessModes:
+#    - ReadWriteMany
+#  resources:
+#    requests:
+#      storage: 1Gi
