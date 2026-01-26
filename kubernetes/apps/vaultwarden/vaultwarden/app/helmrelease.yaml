@@ -70,6 +70,12 @@ spec:
         size: 1Gi
         accessMode: ReadWriteOnce
         storageClass: local-hostpath
+      data:
+        enabled: true
+        type: persistentVolumeClaim
+        size: 1Gi
+        accessMode: ReadWriteOnce
+        storageClass: local-hostpath
         
           #        type: nfs
           #        server: 10.10.10.110
