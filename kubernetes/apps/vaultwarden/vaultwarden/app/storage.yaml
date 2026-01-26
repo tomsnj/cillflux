@@ -17,9 +17,9 @@ apiVersion: v1
 metadata:
   name: data-vaultwarden-0
   annotations:
-    volume.beta.kubernetes.io/storage-class: "gsks2"
+    volume.beta.kubernetes.io/storage-class: "gsks1"
 spec:
-  storageClassName: gsks2
+  storageClassName: gsks1
   accessModes:
     - ReadWriteMany
   resources:
