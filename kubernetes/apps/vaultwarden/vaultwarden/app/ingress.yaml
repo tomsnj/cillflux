@@ -17,7 +17,7 @@ spec:
         - "kumar.gs-farm.net"
       secretName: vaultwarden-secret
   rules:
-  - host: vaultwarden.gs-farm.net
+  - host: kumar.gs-farm.net
     http:
       paths:
       - pathType: Prefix
