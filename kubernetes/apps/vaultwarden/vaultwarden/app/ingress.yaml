@@ -14,7 +14,7 @@ spec:
   ingressClassName: external
   tls:
     - hosts:
-        - "vaultwarden.gs-farm.net"
+        - "kumar.gs-farm.net"
       secretName: vaultwarden-secret
   rules:
   - host: vaultwarden.gs-farm.net

@@ -59,11 +59,6 @@ spec:
       existingSecret: vw-secret
 
     persistence:
-#      data:
-#        enabled: true
-#        type: nfs
-#        server: 10.10.10.110
-#        path: /mnt/storage1/home_nfs/nginx/www/gs-farm
       config:
         enabled: true
         type: persistentVolumeClaim
@@ -76,10 +71,6 @@ spec:
         size: 1Gi
         accessMode: ReadWriteOnce
         storageClass: local-hostpath
-        
-          #        type: nfs
-          #        server: 10.10.10.110
-          #        path: /mnt/storage1/home_nfs/nginx/www/gs-farm
 
     service:
       app:
