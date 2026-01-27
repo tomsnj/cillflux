@@ -28,6 +28,13 @@ spec:
             port:
               number: 80
       - pathType: Prefix
+        path: "/notifications/hub/negotiate"
+        backend:
+          service:
+            name: vaultwarden
+            port:
+              number: 80
+      - pathType: Prefix
         path: "/notifications/hub"
         backend:
           service:
