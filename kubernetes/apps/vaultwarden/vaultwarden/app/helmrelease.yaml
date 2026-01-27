@@ -99,20 +99,19 @@ spec:
               - path:
                   type: PathPrefix
                   value: /notifications/hub/negotiate
-              backendRefs:
-                - kind: Service
-                  port: 80
-                  name: app
-                  namespace: vaultwarden
-                  weight: 1
+            backendRefs:
+              - kind: Service
+                port: 80
+                name: app
+                namespace: vaultwarden
+                weight: 1
           - matches:
               - path:
                   type: PathPrefix
                   value: /notifications/hub
-              backendRefs:
-                - kind: Service
-                  port: 3012
-                  name: app
-                  namespace: vaultwarden
-                  weight: 1
-        
+            backendRefs:
+              - kind: Service
+                port: 3012
+                name: app
+                namespace: vaultwarden
+                weight: 1
