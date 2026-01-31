@@ -96,6 +96,11 @@ data:
           - hosts:
               - "prometheus.${SECRET_DOMAIN}"
       prometheusSpec:
+        additionalScrapeConfigs: |
+          - job_name: vaultwarden
+            static_configs:
+              - targets:
+                - kumar.gs-farm.net:3012
         ruleSelectorNilUsesHelmValues: false
         serviceMonitorSelectorNilUsesHelmValues: false
         podMonitorSelectorNilUsesHelmValues: false
