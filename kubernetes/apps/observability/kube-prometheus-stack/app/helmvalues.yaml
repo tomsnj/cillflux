@@ -114,8 +114,6 @@ data:
             static_configs:
               - targets:
                 - kumar.gs-farm.net:3012
-              - path:
-                - /notifications/hub
         ruleSelectorNilUsesHelmValues: false
         serviceMonitorSelectorNilUsesHelmValues: false
         serviceMonitorNamespaceSelector:
