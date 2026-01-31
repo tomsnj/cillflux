@@ -76,8 +76,7 @@ spec:
           value: 3750MiB
       persistence:
         enabled: true
-        storageClass:
-          storageClassName: local-hostpath
+        storageClass: "local-hostpath"
     
     chunksCache:
       # default is 500MB, with limited memory keep this smaller
