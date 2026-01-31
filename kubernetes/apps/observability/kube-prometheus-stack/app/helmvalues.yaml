@@ -111,12 +111,11 @@ data:
           path: /notifications/hub
 
       prometheusSpec:
-        metrics_path: /notifications/hub
         additionalScrapeConfigs: |
           - job_name: vaultwarden
             static_configs:
               - targets:
-                - kumar.gs-farm.net:3012
+                - kumar.gs-farm.net/notifications/hub
         ruleSelectorNilUsesHelmValues: false
         serviceMonitorSelectorNilUsesHelmValues: false
         serviceMonitorNamespaceSelector:
