@@ -3,9 +3,10 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: kube-prometheus-stack-values
+  annotations:
+    checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml" . | sha256sum }}
 data:
   values.yaml: |
-    logLevel: {{ .Values.logLevel }}
     crds:
       enabled: true
     cleanPrometheusOperatorObjectNames: true
