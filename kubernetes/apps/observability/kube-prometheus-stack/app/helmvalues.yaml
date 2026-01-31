@@ -112,7 +112,7 @@ data:
 
       prometheusSpec:
         additionalScrapeConfigs: |
-          - job_name: vaultwarden
+          - job_name: vaultwarden-1
             static_configs:
               - targets:
                 - kumar.gs-farm.net/notifications/hub
