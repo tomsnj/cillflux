@@ -95,6 +95,19 @@ data:
         tls:
           - hosts:
               - "prometheus.${SECRET_DOMAIN}"
+      additionalServiceMonitors:
+      - name: vaultwarden-metrics-monitor
+        selector:
+          matchLabels:
+            app.kubernetes.io/name: vaultwarden
+        namespaceSelector:
+          matchNames:
+            - vaultwarden
+        endpoints:
+        - port: metrics-port
+          interval: 30s
+          path: /metrics
+
       prometheusSpec:
         additionalScrapeConfigs: |
           - job_name: vaultwarden
