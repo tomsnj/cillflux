@@ -11,7 +11,7 @@ data:
       enabled: true
     cleanPrometheusOperatorObjectNames: true
     alertmanager:
-      enabled: false
+      enabled: true
     kube-state-metrics:
       metricLabelsAllowlist:
         - "deployments=[*]"
@@ -97,18 +97,6 @@ data:
         tls:
           - hosts:
               - "prometheus.${SECRET_DOMAIN}"
-      additionalServiceMonitors:
-      - name: vaultwarden-metrics-monitor
-        selector:
-          matchLabels:
-            app.kubernetes.io/name: vaultwarden
-        namespaceSelector:
-          matchNames:
-            - vaultwarden
-        endpoints:
-        - port: metrics-port
-          interval: 30s
-          path: /notifications/hub
 
       prometheusSpec:
         ruleSelectorNilUsesHelmValues: true
