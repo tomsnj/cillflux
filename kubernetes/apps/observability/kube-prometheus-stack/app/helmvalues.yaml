@@ -111,14 +111,11 @@ data:
           path: /notifications/hub
 
       prometheusSpec:
-        ruleSelectorNilUsesHelmValues: false
-        serviceMonitorSelectorNilUsesHelmValues: false
-        serviceMonitorNamespaceSelector:
-          matchLabels:
-            prometheus: vaultwarden
-        podMonitorSelectorNilUsesHelmValues: false
-        probeSelectorNilUsesHelmValues: false
-        scrapeConfigSelectorNilUsesHelmValues: false
+        ruleSelectorNilUsesHelmValues: true
+        serviceMonitorSelectorNilUsesHelmValues: true
+        podMonitorSelectorNilUsesHelmValues: true
+        probeSelectorNilUsesHelmValues: true
+        scrapeConfigSelectorNilUsesHelmValues: true
         enableAdminAPI: true
         walCompression: true
         retentionSize: 8GB
