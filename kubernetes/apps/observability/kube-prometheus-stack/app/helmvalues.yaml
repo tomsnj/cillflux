@@ -106,7 +106,7 @@ data:
         endpoints:
         - port: metrics-port
           interval: 30s
-          path: /metrics
+          path: /notifications/hub
 
       prometheusSpec:
         additionalScrapeConfigs: |
