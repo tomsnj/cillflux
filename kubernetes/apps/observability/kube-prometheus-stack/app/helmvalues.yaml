@@ -5,6 +5,7 @@ metadata:
   name: kube-prometheus-stack-values
 data:
   values.yaml: |
+    logLevel: {{ .Values.logLevel }}
     crds:
       enabled: true
     cleanPrometheusOperatorObjectNames: true
@@ -109,6 +110,7 @@ data:
           path: /notifications/hub
 
       prometheusSpec:
+        metrics_path: /notifications/hub
         additionalScrapeConfigs: |
           - job_name: vaultwarden
             static_configs:

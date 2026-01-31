@@ -29,6 +29,12 @@ spec:
   dependsOn:
     - name: local-path-provisioner
       namespace: storage
+  template:
+    metadata:
+      annotations:
+        checksum/config: {{ include {print
+$.Template.BasePath "/configmap.yaml") . |
+sha256sum }}
   valuesFrom:
     - name: kube-prometheus-stack-values
       kind: ConfigMap
