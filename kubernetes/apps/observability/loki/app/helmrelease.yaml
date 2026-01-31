@@ -74,6 +74,9 @@ spec:
         # Keep a little bit lower than memory limits
         - name: GOMEMLIMIT
           value: 3750MiB
+      persistence:
+        enabled: true
+        storageClassName: local-hostpath
     
     chunksCache:
       # default is 500MB, with limited memory keep this smaller
@@ -120,8 +123,8 @@ spec:
       tls:
         - hosts:
             - *host
-    persistence:
-      enabled: true
-      storageClassName: local-hostpath
+              #persistence:
+              #      enabled: true
+              #      storageClassName: local-hostpath
     testFramework:
       enabled: false
