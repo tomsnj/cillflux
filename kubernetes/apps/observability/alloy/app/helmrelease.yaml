@@ -427,6 +427,9 @@ spec:
       pathType: Prefix
       hosts:
         - &host "alloy.${SECRET_DOMAIN}"
+      tls:
+        - hosts:
+            - *host
       # pathType is only for k8s >= 1.1=
     
     
