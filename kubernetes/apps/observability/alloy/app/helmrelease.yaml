@@ -386,6 +386,17 @@ spec:
       #   targetLabel: nodename
       #   replacement: $1
       #   action: replace
+      #
+
+    persistence:
+      config:
+        enabled: true
+        type: configMap
+        name: alloy-config
+        globalMounts:
+          - path: /
+            subPath: alloy.config
+            readOnly: true
 
     ingress:
       # -- Enables ingress for Alloy (Faro port)
