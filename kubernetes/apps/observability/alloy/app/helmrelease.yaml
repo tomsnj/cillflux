@@ -393,19 +393,19 @@ spec:
       # For Kubernetes >= 1.18 you should specify the ingress-controller via the field ingressClassName
       # See https://kubernetes.io/blog/2020/04/02/improvements-to-the-ingress-api-in-kubernetes-1.18/#specifying-the-class-of-an-ingress
       # ingressClassName: nginx
-      # Values can be templated
       ingressClassName: internal
       annotations:
         hajimari.io/icon: simple-icons:alloy
+      # Values can be templated
         # kubernetes.io/ingress.class: nginx
         # kubernetes.io/tls-acme: "true"
-      hosts:
-        - &host "alloy.${SECRET_DOMAIN}"
-        labels: {}
-      # pathType is only for k8s >= 1.1=
-      pathType: Prefix
+      labels: {}
       path: /
       faroPort: 12347
+      pathType: Prefix
+      hosts:
+        - &host "alloy.${SECRET_DOMAIN}"
+      # pathType is only for k8s >= 1.1=
     
     
       ## Extra paths to prepend to every host configuration. This is useful when working with annotation based services.
