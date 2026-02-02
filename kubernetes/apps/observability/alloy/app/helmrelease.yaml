@@ -33,6 +33,17 @@ spec:
       create: true
 
     alloy:
+
+      stabilityLevel: "generally-available"
+      storagePath: /tmp/alloy
+      
+      listenScheme: HTTP
+      
+      initialDelay: 10
+      timeoutSeconds: 1
+      uiPathPrefix: /
+      enableReporting: true
+
       configMap:
         create: false
         name: alloy-config
