@@ -394,8 +394,8 @@ spec:
         type: configMap
         name: alloy-config
         globalMounts:
-          - path: /
-            subPath: alloy.config
+          - path: /etc/alloy/config.alloy
+            subPath: config.alloy
             readOnly: true
 
     ingress:
