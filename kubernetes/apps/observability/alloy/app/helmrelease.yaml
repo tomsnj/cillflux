@@ -388,16 +388,16 @@ spec:
       #   action: replace
       #
 
-    persistence:
-      config:
-        enabled: true
-        type: configMap
-        name: alloy-config
-        globalMounts:
-          - path: /etc/alloy/config.alloy
-            subPath: config.alloy
-            readOnly: true
-
+#    persistence:
+#      config:
+#        enabled: true
+#        type: configMap
+#        name: alloy-config
+#        globalMounts:
+#          - path: /etc/alloy/config.alloy
+#            subPath: config.alloy
+#            readOnly: true
+#
     ingress:
       # -- Enables ingress for Alloy (Faro port)
       enabled: true
