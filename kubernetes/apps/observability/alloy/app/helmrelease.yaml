@@ -386,16 +386,7 @@ spec:
       #   targetLabel: nodename
       #   replacement: $1
       #   action: replace
-  ingress:
-    enabled: true
-    ingressClassName: internal
-    annotations:
-      hajimari.io/icon: simple-icons:alloy
-    hosts:
-      - &host "alloy.${SECRET_DOMAIN}"
-    tls:
-      - hosts:
-          - *host
+
     ingress:
       # -- Enables ingress for Alloy (Faro port)
       enabled: true
