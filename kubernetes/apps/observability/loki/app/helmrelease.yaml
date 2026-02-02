@@ -123,8 +123,5 @@ spec:
       tls:
         - hosts:
             - *host
-              #persistence:
-              #      enabled: true
-              #      storageClassName: local-hostpath
     testFramework:
       enabled: false

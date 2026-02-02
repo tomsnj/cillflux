@@ -1,0 +1,15 @@
+// Write your Alloy config here:
+logging {
+  level = "info"
+  format = "logfmt"
+}
+
+stabilityLevel: "generally-available"
+storagePath: /tmp/alloy
+
+listenScheme: HTTP
+
+initialDelay: 10
+timeoutSeconds: 1
+uiPathPrefix: /
+enableReporting: true

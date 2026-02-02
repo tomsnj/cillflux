@@ -5,5 +5,5 @@ resources:
   - ./namespace.yaml
   - ./grafana/ks.yaml
   - ./loki/ks.yaml
+  - ./alloy/ks.yaml
   - ./kube-prometheus-stack/ks.yaml
-  - ./kubernetes-dashboard/ks.yaml
