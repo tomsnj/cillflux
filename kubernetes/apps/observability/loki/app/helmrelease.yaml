@@ -113,15 +113,19 @@ spec:
     bloomGateway:
       replicas: 0
 
-    ingress:
-      enabled: true
-      ingressClassName: internal
-      annotations:
-        hajimari.io/icon: simple-icons:loki
-      hosts:
-        - &host "loki.${SECRET_DOMAIN}"
-      tls:
-        - hosts:
-            - *host
+    gateway:
+      enabled:
+        containerPort: 8080
+        ingress:
+          enabled: true
+          ingressClassName: internal
+          annotations:
+            hajimari.io/icon: simple-icons:loki
+          hosts:
+            - &host "loki.${SECRET_DOMAIN}"
+          tls:
+            - hosts:
+                - *host
+
     testFramework:
       enabled: false
