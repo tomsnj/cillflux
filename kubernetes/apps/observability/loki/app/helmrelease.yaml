@@ -8,11 +8,12 @@ spec:
   chart:
     spec:
       chart: loki
-        #      version: 10.5.15
+      version: 6.51.0
       sourceRef:
         kind: HelmRepository
         name: grafana
         namespace: flux-system
+      interval: 5m
   maxHistory: 2
   install:
     remediation:
@@ -26,14 +27,17 @@ spec:
   dependsOn:
     - name: local-path-provisioner
       namespace: storage
+    - name: kube-prometheus-stack
+      namespace: observability
   values:
     deploymentStrategy:
       type: Recreate
     loki:
+      auth_enabled: false
       commonConfig:
         replication_factor: 1
       storage:
-        type: 'filesystem'
+        type: filesystem
       schemaConfig:
         configs:
           - from: "2024-04-01"
@@ -43,6 +47,8 @@ spec:
             index:
               prefix: loki_index_
               period: 24h
+      rulerConfig:
+        alertmanager_url: http://kube-prometheus-stack-alertmanager:9093
       ingester:
         chunk_encoding: snappy
       tracing:
@@ -77,9 +83,17 @@ spec:
       persistence:
         enabled: true
         storageClass: "local-hostpath"
+    monitoring:
+      self-monitoring:
+        enabled: false
+      loki-canary:
+        enabled: false
+    results-cache:
+      enabled: false
     
     chunksCache:
       # default is 500MB, with limited memory keep this smaller
+      enabled: false
       writebackSizeLimit: 10MB
     
     # Enable minio for storage
