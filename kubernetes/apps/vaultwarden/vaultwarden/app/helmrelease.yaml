@@ -28,9 +28,9 @@ spec:
       namespace: storage
   values:
     controllers:
-      annotations:
-        reloader.stakater.com/auto: true
       vaultwarden:
+        annotations:
+          reloader.stakater.com/auto: true
         containers:
           app:
             image:
