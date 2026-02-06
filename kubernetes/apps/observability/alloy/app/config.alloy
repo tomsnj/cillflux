@@ -10,15 +10,15 @@ discovery.kubernetes "pod" {
   role = "pod"
 }
 
-discovery.relabel "drop_canary" {
-  targets = discovery.kubernetes.pods.targets
-  rule {
-    source_labels = ["__meta_kubernetes_pod_container_name"]
-    regex = "canary"
-    action = "drop"
-  }
-  forward_to = [loki.source.kubernetes]
-}
+//discovery.relabel "drop_canary" {
+//  targets = discovery.kubernetes.pods.targets
+//  rule {
+//    source_labels = ["__meta_kubernetes_pod_container_name"]
+//    regex = "canary"
+//    action = "drop"
+//  }
+//  forward_to = [loki.source.kubernetes]
+//}
 
 discovery.kubernetes "service" {
   role = "service"
@@ -98,6 +98,8 @@ discovery.relabel "pod_logs" {
 // loki.source.kubernetes tails logs from Kubernetes containers using the Kubernetes API.
 loki.source.kubernetes "pod_logs" {
   targets    = discovery.relabel.pod_logs.output
+  regex = "canary"
+  action = "drop"
   forward_to = [loki.process.pod_logs.receiver]
 }
 
