@@ -17,7 +17,7 @@ discovery.relabel "drop_canary" {
     regex = "canary"
     action = "drop"
   }
-  forward_to = loki.source.kubernetes
+  forward_to = [loki.source.kubernetes]
 }
 
 discovery.kubernetes "service" {
