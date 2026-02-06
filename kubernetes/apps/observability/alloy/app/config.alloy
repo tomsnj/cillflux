@@ -10,7 +10,7 @@ discovery.kubernetes "pod" {
   role = "pod"
 }
 
-discovery.relabel "drop canary" {
+discovery.relabel "drop_canary" {
   targets = discovery.kubernetes.pods.targets
   rule {
     source_labels = ["__meta_kubernetes_pod_container_name"]
