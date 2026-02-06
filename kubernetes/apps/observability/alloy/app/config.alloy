@@ -10,6 +10,16 @@ discovery.kubernetes "pod" {
   role = "pod"
 }
 
+discovery.relabel "drop canary" {
+  targets = discovery.kubernetes.pods.targets
+  rule = {
+    source_labels = ["__meta_kubernetes_pod_container_name"]
+    regex = "loki-canary"
+    action = "drop"
+  }
+  forward_to = loki.source.kubernetes
+}
+
 discovery.kubernetes "service" {
   role = "service"
 }
