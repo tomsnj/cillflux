@@ -12,9 +12,9 @@ discovery.kubernetes "pod" {
 
 discovery.relabel "drop canary" {
   targets = discovery.kubernetes.pods.targets
-  rule = {
+  rule {
     source_labels = ["__meta_kubernetes_pod_container_name"]
-    regex = "loki-canary"
+    regex = "canary"
     action = "drop"
   }
   forward_to = loki.source.kubernetes
