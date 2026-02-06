@@ -98,8 +98,11 @@ discovery.relabel "pod_logs" {
 // loki.source.kubernetes tails logs from Kubernetes containers using the Kubernetes API.
 loki.source.kubernetes "pod_logs" {
   targets    = discovery.relabel.pod_logs.output
-  regex = "canary"
-  action = "drop"
+  rule {
+    source_labels = ["__meta_kubernetes_pod_container_name"] 
+    regex = "canary"
+    action = "drop"
+  }
   forward_to = [loki.process.pod_logs.receiver]
 }
 
