@@ -20,7 +20,6 @@ resources:
   - ./jetstack.yaml
   - ./k8s-gateway.yaml
   - ./kerberos.yaml
-  - ./kubernetes-dashboard.yaml
   - ./metrics-server.yaml
   - ./piraeus.yaml
   - ./prometheus-community.yaml
