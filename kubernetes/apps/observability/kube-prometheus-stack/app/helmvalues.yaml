@@ -3,13 +3,15 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: kube-prometheus-stack-values
+annotations:
+  checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml" . | sha256sum }}
 data:
   values.yaml: |
     crds:
       enabled: true
     cleanPrometheusOperatorObjectNames: true
     alertmanager:
-      enabled: false
+      enabled: true
     kube-state-metrics:
       metricLabelsAllowlist:
         - "deployments=[*]"
@@ -96,11 +98,11 @@ data:
           - hosts:
               - "prometheus.${SECRET_DOMAIN}"
       prometheusSpec:
-        ruleSelectorNilUsesHelmValues: false
-        serviceMonitorSelectorNilUsesHelmValues: false
-        podMonitorSelectorNilUsesHelmValues: false
-        probeSelectorNilUsesHelmValues: false
-        scrapeConfigSelectorNilUsesHelmValues: false
+        ruleSelectorNilUsesHelmValues: true
+        serviceMonitorSelectorNilUsesHelmValues: true
+        podMonitorSelectorNilUsesHelmValues: true
+        probeSelectorNilUsesHelmValues: true
+        scrapeConfigSelectorNilUsesHelmValues: true
         enableAdminAPI: true
         walCompression: true
         retentionSize: 8GB
