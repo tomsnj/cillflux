@@ -33,6 +33,3 @@ spec:
     - name: kube-prometheus-stack-values
       kind: ConfigMap
       valuesKey: values.yaml
-  values:
-    config:
-      logLevel: debug
