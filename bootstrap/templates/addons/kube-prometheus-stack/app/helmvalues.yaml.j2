@@ -1,4 +1,3 @@
-#jinja2: trim_blocks: True, lstrip_blocks: True
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -10,7 +9,7 @@ data:
       enabled: true
     cleanPrometheusOperatorObjectNames: true
     alertmanager:
-      enabled: false
+      enabled: true
     kube-state-metrics:
       metricLabelsAllowlist:
         - "deployments=[*]"
@@ -62,9 +61,7 @@ data:
     kubeControllerManager:
       enabled: true
       endpoints: &endpoints
-      {% for item in bootstrap_nodes.master %}
-        - {{ item.address }}
-      {% endfor %}
+        - 10.10.1.110
       serviceMonitor:
         metricRelabelings:
           # Remove duplicate labels provided by k3s
@@ -72,11 +69,7 @@ data:
             sourceLabels: ["__name__"]
             regex: "(apiserver_audit|apiserver_client|apiserver_delegated|apiserver_envelope|apiserver_storage|apiserver_webhooks|attachdetach_controller|authenticated_user|authentication|cronjob_controller|disabled_metric|endpoint_slice|ephemeral_volume|garbagecollector_controller|get_token|go|hidden_metric|job_controller|kubernetes_build|kubernetes_feature|leader_election|node_collector|node_ipam|process_cpu|process_max|process_open|process_resident|process_start|process_virtual|pv_collector|registered_metric|replicaset_controller|rest_client|retroactive_storageclass|root_ca|running_managed|scrape_duration|scrape_samples|scrape_series|service_controller|storage_count|storage_operation|ttl_after|volume_operation|workqueue)_(.+)"
     kubeEtcd:
-      {% if bootstrap_nodes.master | length > 1 %}
-      enabled: true
-      {% else %}
       enabled: false
-      {% endif %}
       endpoints: *endpoints
     kubeScheduler:
       enabled: true
@@ -103,11 +96,11 @@ data:
           - hosts:
               - "prometheus.${SECRET_DOMAIN}"
       prometheusSpec:
-        ruleSelectorNilUsesHelmValues: false
-        serviceMonitorSelectorNilUsesHelmValues: false
-        podMonitorSelectorNilUsesHelmValues: false
-        probeSelectorNilUsesHelmValues: false
-        scrapeConfigSelectorNilUsesHelmValues: false
+        ruleSelectorNilUsesHelmValues: true
+        serviceMonitorSelectorNilUsesHelmValues: true
+        podMonitorSelectorNilUsesHelmValues: true
+        probeSelectorNilUsesHelmValues: true
+        scrapeConfigSelectorNilUsesHelmValues: true
         enableAdminAPI: true
         walCompression: true
         retentionSize: 8GB
