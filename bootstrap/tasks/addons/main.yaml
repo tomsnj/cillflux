@@ -12,6 +12,14 @@
   when: grafana.enabled | default(false)
   ansible.builtin.include_tasks: grafana.yaml
 
+- name: Process addon loki
+  when: loki.enabled | default(false)
+  ansible.builtin.include_tasks: loki.yaml
+
+- name: Process addon alloy
+  when: alloy.enabled | default(false)
+  ansible.builtin.include_tasks: alloy.yaml
+
 - name: Process addon kerberos
   when: kerberos.disabled | default(false)
   ansible.builtin.include_tasks: kerberos.yaml
