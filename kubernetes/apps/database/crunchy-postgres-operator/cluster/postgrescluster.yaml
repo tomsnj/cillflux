@@ -76,17 +76,17 @@ spec:
         io.cilium/lb-ipam-ips: "10.10.1.151"
 
 
-#  patroni: # turn on sync writes to at least 1 other replica
-#    dynamicConfiguration:
-#      synchronous_mode: true
-#      postgresql:
-#        parameters:
-#          max_connections: 300
-#        max_wal_size: 5GB
-#        synchronous_commit: "on"
-#        pg_hba:
-#          - hostnossl all all 10.69.0.0/16 md5
-#          - hostssl all all all md5
+  patroni: # turn on sync writes to at least 1 other replica
+    dynamicConfiguration:
+      synchronous_mode: true
+      postgresql:
+        parameters:
+          max_connections: 300
+        max_wal_size: 5GB
+        synchronous_commit: "on"
+        pg_hba:
+          - hostnossl all all 10.69.0.0/16 md5
+          - hostssl all all all md5
 
   users:
     - name: "postgres"
