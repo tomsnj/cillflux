@@ -21,7 +21,6 @@ spec:
         name: repo1
         volume:
           volumeClaimSpec:
-          storageClassName: gsks0
             accessModes:
             - "ReadWriteOnce"
             resources:
