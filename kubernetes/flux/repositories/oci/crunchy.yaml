@@ -3,7 +3,7 @@
 apiVersion: source.toolkit.fluxcd.io/v1
 kind: OCIRepository
 metadata:
-  name: pgo
+  name: database
 spec:
   interval: 5m
   layerSelector:
