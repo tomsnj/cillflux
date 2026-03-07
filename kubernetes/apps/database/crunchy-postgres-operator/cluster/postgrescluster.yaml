@@ -9,42 +9,15 @@ metadata:
   annotations:
     crunchy-users.henrywhitaker3.github.com/superuser: "postgres"
 spec:
-  postgresVersion: 16
-
-  dataSource:
-    pgbackrest:
-      stanza: db
-      configuration:
-        - secret:
-            name: crunchy-postgres-secret
-      repo:
-        name: repo1
-        volume:
-          volumeClaimSpec:
-            accessModes:
-            - "ReadWriteOnce"
-            resources:
-              requests:
-                storage: 1Gi
-
-  service:
-    type: LoadBalancer
-    metadata:
-      annotations:
-        external-dns.alpha.kubernetes.io/hostname: "main.postgres.${SECRET_DOMAIN}"
-        io.cilium/lb-ipam-ips: "10.10.1.151"
-
-#  patroni: # turn on sync writes to at least 1 other replica
-#    dynamicConfiguration:
-#      synchronous_mode: true
-#      postgresql:
-#        parameters:
-#          max_connections: 300
-#        max_wal_size: 5GB
-#        synchronous_commit: "on"
-#        pg_hba:
-#          - hostnossl all all 10.69.0.0/16 md5
-#          - hostssl all all all md5
+  postgresVersion: 18
+#  instances:
+#    - name: instance1
+#      dataVolumeClaimSpec:
+#        accessModes:
+#        - "ReadWriteOnce"
+#        resources:
+#          requests:
+#            storage: 1Gi
 
   instances:
     - name: postgres
@@ -67,6 +40,53 @@ spec:
             matchLabels:
               postgres-operator.crunchydata.com/cluster: *name
               postgres-operator.crunchydata.com/data: postgres
+
+  backups:
+    pgbackrest:
+      repos:
+      - name: repo1
+        volume:
+          volumeClaimSpec:
+            accessModes:
+            - "ReadWriteOnce"
+            resources:
+              requests:
+                storage: 1Gi
+#  dataSource:
+#    pgbackrest:
+#      stanza: db
+#      configuration:
+#        - secret:
+#            name: crunchy-postgres-secret
+#      repo:
+#        name: repo1
+#        volume:
+#          volumeClaimSpec:
+#            accessModes:
+#            - "ReadWriteOnce"
+#            resources:
+#              requests:
+#                storage: 1Gi
+
+  service:
+    type: LoadBalancer
+    metadata:
+      annotations:
+        external-dns.alpha.kubernetes.io/hostname: "main.postgres.${SECRET_DOMAIN}"
+        io.cilium/lb-ipam-ips: "10.10.1.151"
+
+
+#  patroni: # turn on sync writes to at least 1 other replica
+#    dynamicConfiguration:
+#      synchronous_mode: true
+#      postgresql:
+#        parameters:
+#          max_connections: 300
+#        max_wal_size: 5GB
+#        synchronous_commit: "on"
+#        pg_hba:
+#          - hostnossl all all 10.69.0.0/16 md5
+#          - hostssl all all all md5
 
   users:
     - name: "postgres"
