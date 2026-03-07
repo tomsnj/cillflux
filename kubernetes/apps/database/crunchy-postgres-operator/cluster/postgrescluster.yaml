@@ -20,10 +20,6 @@ spec:
 #            storage: 1Gi
   instances:
     - name: postgres
-      podSpec:
-        securityContext:
-          fsGroup: 26          # Crunchy default postgres GID — keep this
-          fsGroupChangePolicy: "OnRootMismatch"  # Less aggressive, may help
       metadata:
         labels:
           app.kubernetes.io/name: crunchy-postgres
