@@ -48,9 +48,21 @@
   when: vaultwarden.enabled | default(false)
   ansible.builtin.include_tasks: vaultwarden.yaml
 
+- name: Process addon keycloak
+  when: keycloak.enabled | default(false)
+  ansible.builtin.include_tasks: keycloak.yaml
+
 - name: Process addon mongodb
   when: mongodb.enabled | default(false)
   ansible.builtin.include_tasks: mongodb.yaml
+
+- name: Process addon postgresql
+  when: postgresql.enabled | default(false)
+  ansible.builtin.include_tasks: postgresql.yaml
+
+- name: Process addon crunchy_postgres_operator
+  when: crunchy_postgres_operator.enabled | default(false)
+  ansible.builtin.include_tasks: crunchy_postgres_operator.yaml
 
 - name: Process addon vernemq
   when: vernemq.enabled | default(false)

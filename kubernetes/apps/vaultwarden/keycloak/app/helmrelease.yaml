@@ -1,0 +1,109 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s-labs/helm-charts/main/charts/other/app-template/schemas/helmrelease-helm-v2.schema.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  annotations:
+    patch.sko.ai/app-template: common
+  name: keycloak
+spec:
+  chart:
+    spec:
+      chart: app-template
+      sourceRef:
+        kind: HelmRepository
+        name: bjw-s-labs
+        namespace: flux-system
+      version: 4.6.2
+  interval: 12h
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    cleanupOnFail: true
+    remediation:
+      strategy: rollback
+      retries: 3
+  dependsOn:
+    - name: local-path-provisioner
+      namespace: storage
+  values:
+    controllers:
+      keycloak:
+        annotations:
+          reloader.stakater.com/auto: "true"
+        strategy: Recreate
+        containers:
+          app:
+            image:
+              repository: quay.io/keycloak/keycloak
+              tag: "26.5.4"
+            env:
+              TZ: ${TIMEZONE}
+              KC_HOSTNAME: "https://elvis.${SECRET_DOMAIN}"
+              KC_HOSTNAME_ADMIN: "https://auth-console.${SECRET_DOMAIN}"
+              KC_DB: postgres
+              KC_FEATURES: passkeys,scripts,update-email
+              KC_PROXY_HEADERS: "xforwarded"
+              KC_HTTP_ENABLED: "true"
+              KC_HEALTH_ENABLED: "true"
+              KC_SPI_CORS_ENABLED: "true"
+              KC_CACHE: "ispn"
+              POD_ID:
+                valueFrom:
+                  fieldRef:
+                    fieldPath: status.podIP
+              KC_CACHE_EMBEDDED_NETWORK_BIND_ADDRESS: "$${POD_ID}"
+              KC_SPI_CORS_ORIGINS: "*"
+              KC_SPI_CORS_METHODS: "GET,HEAD,OPTIONS,POST,PUT,DELETE"
+              KC_SPI_CORS_HEADERS: "Authorization,Content-Type,Accept,Origin,X-Requested-With"
+              KC_SPI_CORS_EXPOSED_HEADERS: "Content-Disposition,Content-Length,Content-Type"
+              KC_SPI_CORS_ALLOW_CREDENTIALS: "true"
+              KC_SPI_CORS_MAX_AGE: "3600"
+            envFrom:
+              - secretRef:
+                  name: keycloak-secret
+            args:
+              - "start"
+
+            probes:
+              liveness:
+                enabled: true
+                custom: true
+                spec:
+                  httpGet:
+                    path: /health/live
+                    port: 9000
+                  periodSeconds: 10
+                  failureThreshold: 3
+              readiness:
+                enabled: true
+                custom: true
+                spec:
+                  httpGet:
+                    path: /health/ready
+                    port: 9000
+                  periodSeconds: 10
+                  failureThreshold: 3
+              startup:
+                enabled: true
+                custom: true
+                spec:
+                  httpGet:
+                    path: /health/started
+                    port: 9000
+                  periodSeconds: 1
+                  failureThreshold: 600
+            resources:
+              limits:
+                cpu: 1000m
+                memory: 1Gi
+              requests:
+                cpu: 100m
+                memory: 256Mi
+
+    service:
+      app:
+        controller: *app
+        ports:
+          http:
+            port: 8080
