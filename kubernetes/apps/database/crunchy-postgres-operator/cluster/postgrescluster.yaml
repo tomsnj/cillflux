@@ -20,6 +20,9 @@ spec:
 #            storage: 1Gi
 
   instances:
+    securityContext:
+      fsGroup: 1000
+      fsGroupChangePolicy: "OnRootMismatch"
     - name: postgres
       metadata:
         labels:
@@ -32,9 +35,6 @@ spec:
         resources:
           requests:
             storage: 20Gi
-      securityContext:
-        fsGroup: 1000
-        fsGroupChangePolicy: "OnRootMismatch"
       topologySpreadConstraints:
         - maxSkew: 1
           topologyKey: "kubernetes.io/hostname"
