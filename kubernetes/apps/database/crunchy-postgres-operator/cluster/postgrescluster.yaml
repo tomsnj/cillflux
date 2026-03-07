@@ -31,10 +31,6 @@ spec:
         resources:
           requests:
             storage: 20Gi
-      podSpec:
-        securityContext:               # <-- add this
-          fsGroup: 26
-          fsGroupChangePolicy: "OnRootMismatch"
       topologySpreadConstraints:
         - maxSkew: 1
           topologyKey: "kubernetes.io/hostname"
