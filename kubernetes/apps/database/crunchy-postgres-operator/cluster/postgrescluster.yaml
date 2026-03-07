@@ -10,9 +10,6 @@ metadata:
     crunchy-users.henrywhitaker3.github.com/superuser: "postgres"
 spec:
   postgresVersion: 18
-  securityContext:
-    fsGroup: 1000
-    fsGroupChangePolicy: "OnRootMismatch"
 #  instances:
 #    - name: instance1
 #      dataVolumeClaimSpec:
@@ -35,6 +32,9 @@ spec:
         resources:
           requests:
             storage: 20Gi
+      securityContext:
+        fsGroup: 1000
+        fsGroupChangePolicy: "OnRootMismatch"
       topologySpreadConstraints:
         - maxSkew: 1
           topologyKey: "kubernetes.io/hostname"
