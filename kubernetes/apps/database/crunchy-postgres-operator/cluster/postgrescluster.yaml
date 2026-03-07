@@ -18,7 +18,6 @@ spec:
 #        resources:
 #          requests:
 #            storage: 1Gi
-
   instances:
     - name: postgres
       podSpec:
