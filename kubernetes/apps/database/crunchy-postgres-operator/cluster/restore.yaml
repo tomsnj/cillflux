@@ -16,14 +16,14 @@ spec:
     type: LoadBalancer
 
 
-  patroni:
-    dynamicConfiguration:
-      synchronous_mode: true
-      postgresql:
-        max_wal_size: 5GB
-        synchronous_commit: "on"
-        pg_hba:
-          - hostssl all all all md5
+#  patroni:
+#    dynamicConfiguration:
+#      synchronous_mode: true
+#      postgresql:
+#        max_wal_size: 5GB
+#        synchronous_commit: "on"
+#        pg_hba:
+#          - hostssl all all all md5
 
   instances:
     - name: restore
@@ -57,8 +57,8 @@ spec:
       restore:
         enabled: true
         repoName: repo1
-        options:
-          - --db-include=matrixbridge
+          #        options:
+          #          - --db-include=matrixbridge
       metadata:
         labels:
           app.kubernetes.io/name: crunchy-postgres-backup
@@ -68,8 +68,8 @@ spec:
             bucket: "postgres-backup"
             endpoint: "s3.${SECRET_DOMAIN}"
             region: "us-east-1"
-        - name: repo2
-          s3:
-            bucket: "matrix-backup"
-            endpoint: "s3.${SECRET_DOMAIN}"
-            region: "us-east-1"
+#        - name: repo2
+#          s3:
+#            bucket: "matrix-backup"
+#            endpoint: "s3.${SECRET_DOMAIN}"
+#            region: "us-east-1"
