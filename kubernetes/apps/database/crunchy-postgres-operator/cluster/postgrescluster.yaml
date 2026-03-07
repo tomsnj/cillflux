@@ -10,7 +10,7 @@ metadata:
     crunchy-users.henrywhitaker3.github.com/superuser: "postgres"
 spec:
   postgresVersion: 18
-  openShift: true
+  openshift: true
 #  instances:
 #    - name: instance1
 #      dataVolumeClaimSpec:
