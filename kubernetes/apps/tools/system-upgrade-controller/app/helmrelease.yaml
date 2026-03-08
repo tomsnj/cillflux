@@ -54,8 +54,6 @@ spec:
             runAsGroup: 65534
             seccompProfile:
               type: RuntimeDefault
-            capabilities:
-              drop: ["ALL"]
           affinity:
             nodeAffinity:
               requiredDuringSchedulingIgnoredDuringExecution:
