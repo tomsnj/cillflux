@@ -75,14 +75,12 @@ spec:
         size: 1Gi
         accessMode: ReadWriteOnce
         storageClass: local-hostpath
-        persistenVolumeReclaimPolicy: retain
       data:
         enabled: true
         type: persistentVolumeClaim
         size: 1Gi
         accessMode: ReadWriteOnce
         storageClass: local-hostpath
-        persistenVolumeReclaimPolicy: retain
 
     service:
       app:
