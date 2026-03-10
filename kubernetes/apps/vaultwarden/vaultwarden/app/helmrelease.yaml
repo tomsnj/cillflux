@@ -74,13 +74,13 @@ spec:
         type: persistentVolumeClaim
         size: 1Gi
         accessMode: ReadWriteOnce
-        storageClass: local-hostpath
+        storageClass: gsks0
       data:
         enabled: true
         type: persistentVolumeClaim
         size: 1Gi
         accessMode: ReadWriteOnce
-        storageClass: local-hostpath
+        storageClass: gsks0
 
     service:
       app:
