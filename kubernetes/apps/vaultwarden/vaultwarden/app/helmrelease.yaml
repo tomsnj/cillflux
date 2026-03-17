@@ -72,15 +72,15 @@ spec:
       config:
         enabled: true
         type: persistentVolumeClaim
-        size: 5Gi
+        size: 1Gi
         accessMode: ReadWriteOnce
-        storageClass: gsks0
+        storageClass: local-hostpath
       data:
         enabled: true
         type: persistentVolumeClaim
-        size: 5Gi
+        size: 1Gi
         accessMode: ReadWriteOnce
-        storageClass: gsks0
+        storageClass: local-hostpath
 
     service:
       app:

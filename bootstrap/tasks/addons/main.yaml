@@ -48,6 +48,10 @@
   when: vaultwarden.enabled | default(false)
   ansible.builtin.include_tasks: vaultwarden.yaml
 
+- name: Process addon minio
+  when: minio.enabled | default(false)
+  ansible.builtin.include_tasks: minio.yaml
+
 - name: Process addon keycloak
   when: keycloak.enabled | default(false)
   ansible.builtin.include_tasks: keycloak.yaml
