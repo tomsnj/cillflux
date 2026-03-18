@@ -59,6 +59,16 @@ spec:
               MINIO_PROMETHEUS_URL: http://kube-prometheus-stack-prometheus.observability.svc.cluster.local:9090
               MINIO_PROMETHEUS_JOB_ID: minio
               MINIO_PROMETHEUS_AUTH_TYPE: public
+              MINIO_ROOT_USER:
+                valueFrom:
+                  secretKeyRef:
+                    name: minio-secret
+                    key: user
+              MINIO_ROOT_PASSWORD:
+                valueFrom:
+                  secretKeyRef:
+                    name: minio-secret
+                    key: password
             envFrom:
               - secretRef:
                   name: minio-secret
