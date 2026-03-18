@@ -63,12 +63,12 @@ spec:
                 valueFrom:
                   secretKeyRef:
                     name: minio-secret
-                    key: user
+                    key: minio-root-user
               MINIO_ROOT_PASSWORD:
                 valueFrom:
                   secretKeyRef:
                     name: minio-secret
-                    key: password
+                    key: minio-root-password
             envFrom:
               - secretRef:
                   name: minio-secret
