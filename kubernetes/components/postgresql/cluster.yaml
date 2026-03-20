@@ -96,7 +96,7 @@ spec:
       dataVolumeClaimSpec:
         accessModes:
         - "ReadWriteOnce"
-        storageClassName: gskw0
+        storageClassName: gsks0
         resources:
           requests:
             storage: ${POSTGRES_DATA_SIZE:-1Gi}
