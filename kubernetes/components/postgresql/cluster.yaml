@@ -16,7 +16,7 @@ spec:
         repo1-retention-full: "14"
         repo1-retention-full-type: count
       jobs:
-        ttlSecondsAfterFinished: 60
+        ttlSecondsAfterFinished: 30
       manual:
         repoName: repo1
         options:
