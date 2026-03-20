@@ -68,7 +68,7 @@
   when: crunchy_postgres_operator.enabled | default(false)
   ansible.builtin.include_tasks: crunchy_postgres_operator.yaml
 
-- name: Process addon postgres-infra
+- name: Process addon postgres_infra
   when: postgres_infra.enabled | default(false)
   ansible.builtin.include_tasks: postgres_infra.yaml
 
