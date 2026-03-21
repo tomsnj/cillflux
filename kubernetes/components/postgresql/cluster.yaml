@@ -4,6 +4,8 @@ apiVersion: postgres-operator.crunchydata.com/v1beta1
 kind: PostgresCluster
 metadata:
   name: ${APP}-local
+  annotations:
+    postgres-operator.crunchydata.com/autoCreateUserSchema: "true"
 spec:
   backups:
     pgbackrest:
@@ -69,7 +71,7 @@ spec:
         limits:
           memory: 1024Mi
 
-  postgresVersion: 17
+  postgresVersion: 18
 
   metadata:
     labels:
