@@ -98,9 +98,6 @@ spec:
         labels:
           app.kubernetes.io/name: ${APP}-local-crunchy-postgres
       replicas: 1
-      securityContext:
-        fsGroup: 26  # postgres GID in crunchy images
-        fsGroupChangePolicy: "OnRootMismatch"
       dataVolumeClaimSpec:
         accessModes:
         - "ReadWriteOnce"
