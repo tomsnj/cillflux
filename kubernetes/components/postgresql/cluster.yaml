@@ -105,6 +105,10 @@ spec:
         resources:
           requests:
             storage: ${POSTGRES_DATA_SIZE:-1Gi}
+      podSpec:
+        securityContext:
+          fsGroup: 26  # postgres GID in crunchy images
+          fsGroupChangePolicy: "OnRootMismatch"
       sidecars:
         replicaCertCopy:
           resources:
