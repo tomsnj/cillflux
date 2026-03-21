@@ -47,7 +47,7 @@ spec:
         - name: repo1
           s3: &s3
             bucket: crunchy-postgres-backups
-            endpoint: minio.minio.svc.cluster.local
+            endpoint: minio.minio.svc.cluster.local:9000
             region: us-east-1
 #            uri-style: path
 #            verify-tls: false
