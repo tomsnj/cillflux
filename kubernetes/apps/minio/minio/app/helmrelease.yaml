@@ -72,10 +72,9 @@ spec:
             envFrom:
               - secretRef:
                   name: minio-secret
-            app:
-              volumeMounts:
-                - name: tls
-                  mountPath: /root/.minio/certs
+            volumeMounts:
+              - name: tls
+                mountPath: /root/.minio/certs
     volumes:
       tls:
         secret:
