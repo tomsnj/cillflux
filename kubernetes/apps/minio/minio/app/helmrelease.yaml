@@ -32,6 +32,7 @@ spec:
       minio:
         annotations:
           reloader.stakater.com/auto: "true"
+
         containers:
           main:
             image:
@@ -148,4 +149,4 @@ spec:
         type: secret
         name: minio-tls
         globalMounts:
-          path: /root/.minio/certs
+          - path: /root/.minio/certs
