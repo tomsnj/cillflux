@@ -22,7 +22,7 @@ spec:
 #    name: app-template
   install:
     remediation:
-      retries: -1
+      retries: 5
   upgrade:
     cleanupOnFail: true
     remediation:
@@ -32,6 +32,7 @@ spec:
       minio:
         annotations:
           reloader.stakater.com/auto: "true"
+
         containers:
           main:
             image:
@@ -94,6 +95,7 @@ spec:
           hajimari.io/enable: 'true'
           hajimari.io/icon: "mdi:pail"
           hajimari.io/group: "Storage"
+          nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"  # add this
         hosts:
           - host: "minio.${SECRET_DOMAIN}"
             paths:
@@ -144,3 +146,8 @@ spec:
         existingClaim: minio-nfs
         globalMounts:
           - path: /data
+      tls:
+        type: secret
+        name: minio-tls
+        globalMounts:
+          - path: /root/.minio/certs
