@@ -1,0 +1,24 @@
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: postgres-infra-local-instance-extra
+  namespace: infrastructure
+rules:
+- apiGroups: [""]
+  resources: ["endpoints"]
+  verbs: ["update"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: postgres-infra-local-instance-extra
+  namespace: infrastructure
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: postgres-infra-local-instance-extra
+subjects:
+- kind: ServiceAccount
+  name: postgres-infra-local-instance
+  namespace: infrastructure
