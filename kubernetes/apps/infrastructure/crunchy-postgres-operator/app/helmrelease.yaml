@@ -15,7 +15,7 @@ spec:
     crds: CreateReplace
   values:
     singleNamespace: false
-    debug: false
+    debug: true
     disable_check_for_upgrades: true
     install:
       clusterLabels:
