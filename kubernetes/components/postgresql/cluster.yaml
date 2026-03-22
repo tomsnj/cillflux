@@ -83,7 +83,7 @@ spec:
 
   patroni:
     dynamicConfiguration:
-      synchronous_mode: true
+      synchronous_mode: false
       postgresql:
         parameters:
           max_wal_size: 5GB
