@@ -72,18 +72,6 @@ spec:
             envFrom:
               - secretRef:
                   name: minio-secret
-            volumeMounts:
-              - name: tls
-                mountPath: /root/.minio/certs
-    volumes:
-      tls:
-        secret:
-          secretName: minio-tls
-          items:
-            - key: public.crt
-              path: public.crt
-            - key: private.key
-              path: private.key
     service:
       main:
         controller: minio
@@ -156,3 +144,8 @@ spec:
         existingClaim: minio-nfs
         globalMounts:
           - path: /data
+      tls:
+        type: secret:
+        name: minio-tls
+        globalMounts:
+          path: /root/.minio/certs
