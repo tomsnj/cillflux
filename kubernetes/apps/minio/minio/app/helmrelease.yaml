@@ -79,6 +79,11 @@ spec:
       tls:
         secret:
           secretName: minio-tls
+          items:
+            - key: public.crt
+              path: public.crt
+            - key: private.key
+              path: private.key
     service:
       main:
         controller: minio
