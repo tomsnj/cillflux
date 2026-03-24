@@ -13,9 +13,6 @@ data:
     cluster:
       name: home-cluster
       id: 1
-    containerRuntime:
-      integration: containerd
-      socketPath: /var/run/k3s/containerd/containerd.sock
     endpointRoutes:
       enabled: true
     hubble:
@@ -93,5 +90,21 @@ data:
         grafana_folder: Cilium
     rollOutCiliumPods: true
     securityContext:
-      privileged: true
-    tunnel: disabled
+      capabilities:
+        ciliumAgent:
+          - CHOWN
+          - KILL
+          - NET_ADMIN
+          - NET_RAW
+          - IPC_LOCK
+          - SYS_ADMIN
+          - SYS_RESOURCE
+          - DAC_OVERRIDE
+          - FOWNER
+          - SETGID
+          - SETUID
+        cleanCiliumState:
+          - NET_ADMIN
+          - SYS_ADMIN
+          - SYS_RESOURCE
+    routingMode: native
