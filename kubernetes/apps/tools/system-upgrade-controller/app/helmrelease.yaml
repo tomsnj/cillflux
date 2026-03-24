@@ -55,8 +55,8 @@ spec:
               #            allowPrivilegeEscalation: false
             seccompProfile:
               type: RuntimeDefault
-            capabilities:
-              drop: ["ALL"]
+                #            capabilities:
+                #              drop: ["ALL"]
           affinity:
             nodeAffinity:
               requiredDuringSchedulingIgnoredDuringExecution:
