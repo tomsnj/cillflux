@@ -52,7 +52,7 @@ spec:
             runAsNonRoot: true
             runAsUser: 65534
             runAsGroup: 65534
-            allowPrivilegeEscalation: false
+              #            allowPrivilegeEscalation: false
             seccompProfile:
               type: RuntimeDefault
             capabilities:
