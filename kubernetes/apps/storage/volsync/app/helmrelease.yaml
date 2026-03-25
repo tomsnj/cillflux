@@ -30,8 +30,8 @@ spec:
     manageCRDs: true
     image:
       # https://github.com/backube/volsync/issues/828
-      repository: &image ghcr.io/onedr0p/volsync
-      tag: &tag 0.15.0
+      repository: &image quay.io/onedr0p/volsync
+      tag: &tag ""
     rclone:
       repository: *image
       tag: *tag
