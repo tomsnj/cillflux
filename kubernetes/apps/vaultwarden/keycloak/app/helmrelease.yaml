@@ -43,7 +43,17 @@ spec:
               KC_HOSTNAME_ADMIN: "https://auth-console.${SECRET_DOMAIN}"
               KC_DB: postgres
               KC_DB_URL: jdbc:postgresql://postgres-infra-local-ha.infrastructure.svc.cluster.local:5432/keycloak
-              KC_DB_USERNAME: keycloak
+              - name: KC_DB_USERNAME
+                valueFrom:
+                  secretKeyRef:
+                    name: postgres-infra-local-pguser-keycloak
+                    key: user
+              - name: KC_DB_PASSWORD
+                valueFrom:
+                  secretKeyRef:
+                    name: postgres-infra-local-pguser-keycloak
+                    key: password
+                      #              KC_DB_USERNAME: keycloak
               KC_FEATURES: passkeys,scripts,update-email
               KC_PROXY_HEADERS: "xforwarded"
               KC_HTTP_ENABLED: "true"
