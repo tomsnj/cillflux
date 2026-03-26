@@ -38,10 +38,19 @@ spec:
               repository: quay.io/keycloak/keycloak
               tag: "26.5.4"
             env:
-              TZ: ${TIMEZONE}
-              KC_HOSTNAME: "https://elvis.${SECRET_DOMAIN}"
-              KC_HOSTNAME_ADMIN: "https://auth-console.${SECRET_DOMAIN}"
-              KC_DB: postgres
+              - name: TZ
+                value: ${TIMEZONE}
+              - name: KC_HOSTNAME
+                value: "https://elvis.${SECRET_DOMAIN}"
+              - name: KC_HOSTNAME_ADMIN
+                value: "https://auth-console.${SECRET_DOMAIN}"
+              - name: KC_DB
+                value: postgres
+              - name: KC_DB_URL
+                valueFrom:
+                  secretKeyRef:
+                    name: postgres-infra-local-pguser-keycloak
+                    key: jdbc-uri
               KC_DB_URL: jdbc:postgresql://postgres-infra-local-ha.infrastructure.svc.cluster.local:5432/keycloak
               - name: KC_DB_USERNAME
                 valueFrom:
@@ -53,25 +62,56 @@ spec:
                   secretKeyRef:
                     name: postgres-infra-local-pguser-keycloak
                     key: password
-                      #              KC_DB_USERNAME: keycloak
-              KC_FEATURES: passkeys,scripts,update-email
-              KC_PROXY_HEADERS: "xforwarded"
-              KC_HTTP_ENABLED: "true"
-              KC_HEALTH_ENABLED: "true"
-              KC_SPI_CORS_ENABLED: "true"
-              KC_CACHE: "ispn"
-              POD_ID:
+              - name: KC_FEATURES
+                value: "passkeys,scripts,update-email"
+              - name: KC_PROXY_HEADERS
+                value: "xforwarded"
+              - name: KC_HTTP_ENABLED
+                value: "true"
+              - name: KC_HEALTH_ENABLED
+                value: "true"
+              - name: KC_SPI_CORS_ENABLED
+                value: "true"
+              - name: KC_CACHE
+                value: "ispn"
+              - name: POD_ID
                 valueFrom:
                   fieldRef:
                     fieldPath: status.podIP
-              KC_CACHE_EMBEDDED_NETWORK_BIND_ADDRESS: "$${POD_ID}"
-              KC_SPI_CORS_ORIGINS: "*"
-              KC_SPI_CORS_METHODS: "GET,HEAD,OPTIONS,POST,PUT,DELETE"
-              KC_SPI_CORS_HEADERS: "Authorization,Content-Type,Accept,Origin,X-Requested-With"
-              KC_SPI_CORS_EXPOSED_HEADERS: "Content-Disposition,Content-Length,Content-Type"
-              KC_SPI_CORS_ALLOW_CREDENTIALS: "true"
-              KC_SPI_CORS_MAX_AGE: "3600"
-              JAVA_OPTS_APPEND: "-Djgroups.dns.query=keycloak.vaultwarden.svc.cluster.local"
+              - name: KC_CACHE_EMBEDDED_NETWORK_BIND_ADDRESS
+                value: "$$(POD_ID)"
+              - name: KC_SPI_CORS_ORIGINS
+                value: "*"
+              - name: KC_SPI_CORS_METHODS
+                value: "GET,HEAD,OPTIONS,POST,PUT,DELETE"
+              - name: KC_SPI_CORS_HEADERS
+                value: "Authorization,Content-Type,Accept,Origin,X-Requested-With"
+              - name: KC_SPI_CORS_EXPOSED_HEADERS
+                value: "Content-Disposition,Content-Length,Content-Type"
+              - name: KC_SPI_CORS_ALLOW_CREDENTIALS
+                value: "true"
+              - name: KC_SPI_CORS_MAX_AGE
+                value: "3600"
+              - name: JAVA_OPTS_APPEND
+                value: "-Djgroups.dns.query=keycloak.vaultwarden.svc.cluster.local"
+#              KC_FEATURES: passkeys,scripts,update-email
+#              KC_PROXY_HEADERS: "xforwarded"
+#              KC_HTTP_ENABLED: "true"
+#              KC_HEALTH_ENABLED: "true"
+#              KC_SPI_CORS_ENABLED: "true"
+#              KC_CACHE: "ispn"
+#              POD_ID:
+#                valueFrom:
+#                  fieldRef:
+#                    fieldPath: status.podIP
+#              KC_CACHE_EMBEDDED_NETWORK_BIND_ADDRESS: "$${POD_ID}"
+#              KC_SPI_CORS_ORIGINS: "*"
+#              KC_SPI_CORS_METHODS: "GET,HEAD,OPTIONS,POST,PUT,DELETE"
+#              KC_SPI_CORS_HEADERS: "Authorization,Content-Type,Accept,Origin,X-Requested-With"
+#              KC_SPI_CORS_EXPOSED_HEADERS: "Content-Disposition,Content-Length,Content-Type"
+#              KC_SPI_CORS_ALLOW_CREDENTIALS: "true"
+#              KC_SPI_CORS_MAX_AGE: "3600"
+#              JAVA_OPTS_APPEND: "-Djgroups.dns.query=keycloak.vaultwarden.svc.cluster.local"
             envFrom:
               - secretRef:
                   name: keycloak-admin-secret
