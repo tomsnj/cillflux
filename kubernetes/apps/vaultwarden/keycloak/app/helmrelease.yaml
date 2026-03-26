@@ -42,6 +42,7 @@ spec:
               KC_HOSTNAME: "https://elvis.${SECRET_DOMAIN}"
               KC_HOSTNAME_ADMIN: "https://auth-console.${SECRET_DOMAIN}"
               KC_DB: postgres
+              KC_DB_URL: postgres.infrastructure.svc.cluster.local:5432
               KC_FEATURES: passkeys,scripts,update-email
               KC_PROXY_HEADERS: "xforwarded"
               KC_HTTP_ENABLED: "true"
