@@ -51,7 +51,6 @@ spec:
                   secretKeyRef:
                     name: postgres-infra-local-pguser-keycloak
                     key: jdbc-uri
-              KC_DB_URL: jdbc:postgresql://postgres-infra-local-ha.infrastructure.svc.cluster.local:5432/keycloak
               - name: KC_DB_USERNAME
                 valueFrom:
                   secretKeyRef:
