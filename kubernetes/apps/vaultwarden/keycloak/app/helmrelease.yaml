@@ -41,7 +41,7 @@ spec:
               TZ: ${TIMEZONE}
               KC_HOSTNAME: "https://elvis.${SECRET_DOMAIN}"
               KC_HOSTNAME_ADMIN: "https://auth-console.${SECRET_DOMAIN}"
-              KC_DB: postgres
+                #              KC_DB: postgres
               KC_DB_URL: postgres.infrastructure.svc.cluster.local:5432
               KC_FEATURES: passkeys,scripts,update-email
               KC_PROXY_HEADERS: "xforwarded"
@@ -60,6 +60,7 @@ spec:
               KC_SPI_CORS_EXPOSED_HEADERS: "Content-Disposition,Content-Length,Content-Type"
               KC_SPI_CORS_ALLOW_CREDENTIALS: "true"
               KC_SPI_CORS_MAX_AGE: "3600"
+              JAVA_OPTS_APPEND: "-Djgroups.dns.query=keycloak-headless.infrastructure.svc.cluster.local"
             envFrom:
               - secretRef:
                   name: keycloak-admin-secret
