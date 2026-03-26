@@ -61,7 +61,7 @@ spec:
               KC_SPI_CORS_MAX_AGE: "3600"
             envFrom:
               - secretRef:
-                  name: keycloak-secret
+                  name: keycloak-admin-secret
             args:
               - "start"
 
