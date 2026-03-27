@@ -70,6 +70,8 @@ spec:
                     key: password
               - name: KC_FEATURES
                 value: "passkeys,scripts,update-email"
+              - name: KC_PROXY
+                value: edge
               - name: KC_PROXY_HEADERS
                 value: "xforwarded"
               - name: KC_HTTP_ENABLED
