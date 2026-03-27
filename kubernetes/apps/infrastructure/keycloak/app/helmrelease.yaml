@@ -41,9 +41,9 @@ spec:
               - name: TZ
                 value: ${TIMEZONE}
               - name: KC_HOSTNAME
-                value: elvis.${SECRET_DOMAIN}
+                value: "elvis.${SECRET_DOMAIN}"
               - name: KC_HOSTNAME_ADMIN
-                value: auth-console.${SECRET_DOMAIN}
+                value: "auth-console.${SECRET_DOMAIN}"
               - name: KC_BOOTSTRAP_ADMIN_USERNAME
                 value: "admin"
               - name: KC_BOOTSTRAP_ADMIN_PASSWORD
@@ -101,7 +101,7 @@ spec:
               - name: KC_SPI_CORS_MAX_AGE
                 value: "3600"
               - name: JAVA_OPTS_APPEND
-                value: "-Djgroups.dns.query=keycloak.vaultwarden.svc.cluster.local"
+                value: "-Djgroups.dns.query=keycloak.infrastructure.svc.cluster.local"
 #              KC_FEATURES: passkeys,scripts,update-email
 #              KC_PROXY_HEADERS: "xforwarded"
 #              KC_HTTP_ENABLED: "true"
