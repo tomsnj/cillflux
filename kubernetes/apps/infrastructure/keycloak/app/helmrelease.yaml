@@ -41,9 +41,9 @@ spec:
               - name: TZ
                 value: ${TIMEZONE}
               - name: KC_HOSTNAME
-                value: "elvis.${SECRET_DOMAIN}"
+                value: "https://elvis.${SECRET_DOMAIN}"
               - name: KC_HOSTNAME_ADMIN
-                value: "auth-console.${SECRET_DOMAIN}"
+                value: "https://auth-console.${SECRET_DOMAIN}"
               - name: KC_BOOTSTRAP_ADMIN_USERNAME
                 value: "admin"
               - name: KC_BOOTSTRAP_ADMIN_PASSWORD
