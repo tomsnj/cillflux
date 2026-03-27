@@ -41,9 +41,9 @@ spec:
               - name: TZ
                 value: ${TIMEZONE}
               - name: KC_HOSTNAME
-                value: "https://elvis.${SECRET_DOMAIN}"
+                value: elvis.${SECRET_DOMAIN}
               - name: KC_HOSTNAME_ADMIN
-                value: "https://auth-console.${SECRET_DOMAIN}"
+                value: auth-console.${SECRET_DOMAIN}
               - name: KC_BOOTSTRAP_ADMIN_USERNAME
                 value: "admin"
               - name: KC_BOOTSTRAP_ADMIN_PASSWORD
@@ -70,12 +70,12 @@ spec:
                     key: password
               - name: KC_FEATURES
                 value: "passkeys,scripts,update-email"
-              - name: KC_PROXY
-                value: edge
               - name: KC_PROXY_HEADERS
                 value: "xforwarded"
               - name: KC_HTTP_ENABLED
                 value: "true"
+              - name: KC_HOSTNAME_STRICT
+                value: "false"
               - name: KC_HEALTH_ENABLED
                 value: "true"
               - name: KC_SPI_CORS_ENABLED
