@@ -78,7 +78,7 @@ spec:
                 value: "false"
               - name: KC_HEALTH_ENABLED
                 value: "true"
-              - name: KC_SPI_CORS_ENABLED
+              - name: KC_SPI--CORS--ENABLED
                 value: "true"
               - name: KC_CACHE
                 value: "ispn"
@@ -103,15 +103,10 @@ spec:
               - name: JAVA_OPTS_APPEND
                 value: "-Djgroups.dns.query=keycloak.infrastructure.svc.cluster.local"
 #              KC_FEATURES: passkeys,scripts,update-email
-#              KC_PROXY_HEADERS: "xforwarded"
 #              KC_HTTP_ENABLED: "true"
 #              KC_HEALTH_ENABLED: "true"
 #              KC_SPI_CORS_ENABLED: "true"
 #              KC_CACHE: "ispn"
-#              POD_ID:
-#                valueFrom:
-#                  fieldRef:
-#                    fieldPath: status.podIP
 #              KC_CACHE_EMBEDDED_NETWORK_BIND_ADDRESS: "$${POD_ID}"
 #              KC_SPI_CORS_ORIGINS: "*"
 #              KC_SPI_CORS_METHODS: "GET,HEAD,OPTIONS,POST,PUT,DELETE"
