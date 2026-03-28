@@ -42,6 +42,16 @@ spec:
                   secretKeyRef:
                     name: vw-secret
                     key: admin-token
+              SSO_ENABLED: "true"
+              SSO_CLIENT_ID: "vaultwarden"
+              SSO_CLIENT_SECRET:
+                valueFrom:
+                  secretKeyRef:
+                    name: vw-secret
+                    key: SSO_CLIENT_SECRET
+              SSO_AUTHORITY: "https://elvis.gs-farm.net/realms/master"
+              SSO_SCOPES: "email profile"
+              SSO_PKCE_ENABLED: "true"
             probes:
               liveness:
                 enabled: true
