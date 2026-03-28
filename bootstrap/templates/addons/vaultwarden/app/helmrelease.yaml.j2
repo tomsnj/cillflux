@@ -37,11 +37,27 @@ spec:
               repository: ghcr.io/dani-garcia/vaultwarden
               tag: 1.35.4@sha256:43498a94b22f9563f2a94b53760ab3e710eefc0d0cac2efda4b12b9eb8690664
             env:
+              DOMAIN: "https://kumar.gs-farm.net"
               ADMIN_TOKEN:
                 valueFrom:
                   secretKeyRef:
                     name: vw-secret
                     key: admin-token
+              SSO_ENABLED: "true"
+              SSO_CLIENT_ID: "vaultwarden"
+              SSO_CLIENT_SECRET:
+                valueFrom:
+                  secretKeyRef:
+                    name: vw-secret
+                    key: SSO_CLIENT_SECRET
+              SSO_AUTHORITY: "https://elvis.gs-farm.net/realms/master"
+              SSO_SCOPES: "email profile"
+              SSO_PKCE_ENABLED: "true"
+              ROCKET_SECRET_KEY:
+                valueFrom:
+                  secretKeyRef:
+                    name: vw-secret
+                    key: ROCKET_SECRET_KEY
             probes:
               liveness:
                 enabled: true
