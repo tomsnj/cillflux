@@ -82,7 +82,7 @@ spec:
           value: 3750MiB
       persistence:
         enabled: true
-        storageClass: "local-hostpath"
+        storageClass: "gsks0"
     monitoring:
       self-monitoring:
         enabled: false
