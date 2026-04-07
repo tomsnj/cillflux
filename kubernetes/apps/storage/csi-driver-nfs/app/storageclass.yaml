@@ -9,7 +9,7 @@ parameters:
   share: /mnt/storage1/home_nfs
 reclaimPolicy: Delete
 volumeBindingMode: Immediate
-mountOptions: ["hard", "noatime"]
+mountOptions: ["hard", "noatime", "nolock", "nfsvers=3"]
 ---
 apiVersion: storage.k8s.io/v1
 kind: StorageClass
@@ -21,4 +21,4 @@ parameters:
   share: /mnt/storage1/home_nfs/knfs
 reclaimPolicy: Delete
 volumeBindingMode: Immediate
-mountOptions: ["hard", "noatime"]
+mountOptions: ["hard", "noatime", "nolock", "nfsvers=3"]
