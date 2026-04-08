@@ -29,6 +29,19 @@ spec:
   dependsOn:
     - name: local-path-provisioner
       namespace: storage
+  prometheus:
+    ingress:
+      enabled: true
+      ingressClassName: internal
+      annotations:
+        hajimari.io/appName: Prometheus
+        hajimari.io/icon: simple-icons:prometheus
+      pathType: Prefix
+      hosts:
+        - "prometheus.${SECRET_DOMAIN}"
+      tls:
+        - hosts:
+            - "prometheus.${SECRET_DOMAIN}"
   valuesFrom:
     - name: kube-prometheus-stack-values
       kind: ConfigMap
