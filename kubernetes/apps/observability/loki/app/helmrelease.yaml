@@ -128,18 +128,19 @@ spec:
       replicas: 0
 
     gateway:
-      enabled:
-        containerPort: 8080
-        ingress:
-          enabled: true
-          ingressClassName: internal
-          annotations:
-            hajimari.io/icon: simple-icons:loki
-          hosts:
-            - &host "loki.${SECRET_DOMAIN}"
-          tls:
-            - hosts:
-                - *host
+      enabled: true
+      ingress:
+        enabled: true
+        ingressClassName: internal
+        annotations:
+          hajimari.io/icon: simple-icons:loki
+        hosts:
+          - &host "loki.${SECRET_DOMAIN}"
+        tls:
+          - hosts:
+              - *host
+      nginxConfig:
+        resolver: 10.43.0.10
 
     testFramework:
       enabled: false
