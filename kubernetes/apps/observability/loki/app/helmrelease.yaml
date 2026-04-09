@@ -135,10 +135,10 @@ spec:
         annotations:
           hajimari.io/icon: simple-icons:loki
         hosts:
-          host: "loki.${SECRET_DOMAIN}"
-          paths:
-            - path: /
-              pathType: Prefix
+          - host: "loki.${SECRET_DOMAIN}"
+            paths:
+              - path: /
+                pathType: Prefix
         tls:
           - hosts:
               - *host
