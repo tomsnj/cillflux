@@ -141,7 +141,7 @@ spec:
                 pathType: Prefix
         tls:
           - hosts:
-              - *host
+              - "loki.${SECRET_DOMAIN}"
       nginxConfig:
         resolver: 10.43.0.10
 
