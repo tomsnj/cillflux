@@ -21,6 +21,7 @@ resources:
   - ./k8s-gateway.yaml
   - ./kerberos.yaml
   - ./metrics-server.yaml
+  - ./pihole.yaml
   - ./piraeus.yaml
   - ./prometheus-community.yaml
   - ./stakater.yaml
