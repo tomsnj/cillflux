@@ -41,8 +41,8 @@ spec:
     serviceDns:
       type: LoadBalancer
       annotations:
-        io.cilium/lb-ipam-ips: 10.0.0.154
-      loadBalancerIP: 10.0.0.154
+        io.cilium/lb-ipam-ips: 10.0.0.156
+      loadBalancerIP: 10.0.0.156
       port: 53
     serviceDhcp:
       enabled: false
