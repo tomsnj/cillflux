@@ -41,8 +41,8 @@ spec:
     serviceDns:
       type: LoadBalancer
       annotations:
-        io.cilium/lb-ipam-ips: 10.0.0.156
-      loadBalancerIP: 10.0.0.156
+        io.cilium/lb-ipam-ips: 10.0.0.157
+      loadBalancerIP: 10.0.0.157
       port: 53
     serviceDhcp:
       enabled: false
@@ -65,8 +65,9 @@ spec:
     DNS1: "1.1.1.1"
     DNS2: "8.8.8.8"
     adlists: {}
-    customDnsEntries:
-      - "address=/gs-farm.net/10.0.0.153"
+    dnsmasq:
+      customDnsEntries:
+        - "address=/gs-farm.net/10.0.0.153"
     resources:
       requests:
         cpu: 50m
