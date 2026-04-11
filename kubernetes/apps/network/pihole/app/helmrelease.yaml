@@ -44,6 +44,7 @@ spec:
         io.cilium/lb-ipam-ips: 10.0.10.6
       loadBalancerIP: 10.0.10.6
       port: 53
+      tcp: false
     serviceDhcp:
       enabled: false
     virtualHost: "pihole.${SECRET_DOMAIN}"
@@ -67,7 +68,7 @@ spec:
     adlists: {}
     dnsmasq:
       customDnsEntries:
-        - "address=/gs-farm.net/10.0.0.153"
+        - "address=/gs-farm.net/10.0.10.1"
     resources:
       requests:
         cpu: 50m
