@@ -1,0 +1,76 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: pihole
+spec:
+  interval: 30m
+  chart:
+    spec:
+      chart: pihole
+      version: 2.26.1
+      sourceRef:
+        kind: HelmRepository
+        name: pihole
+        namespace: flux-system
+  maxHistory: 2
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    cleanupOnFail: true
+    remediation:
+      retries: 3
+  uninstall:
+    keepHistory: false
+  values:
+    replicaCount: 1
+    image:
+      repository: pihole/pihole
+      tag: 2024.07.0
+    serviceWeb:
+      type: LoadBalancer
+      annotations:
+        io.cilium/lb-ipam-ips: 10.0.0.154
+      loadBalancerIP: 10.0.0.154
+      http:
+        enabled: true
+        port: 80
+      https:
+        enabled: false
+    serviceDns:
+      type: LoadBalancer
+      annotations:
+        io.cilium/lb-ipam-ips: 10.0.0.154
+      loadBalancerIP: 10.0.0.154
+      port: 53
+    serviceDhcp:
+      enabled: false
+    virtualHost: "pihole.${SECRET_DOMAIN}"
+    ingress:
+      enabled: true
+      ingressClassName: internal
+      annotations:
+        hajimari.io/icon: simple-icons:pihole
+      hosts:
+        - "pihole.${SECRET_DOMAIN}"
+      tls:
+        - hosts:
+            - "pihole.${SECRET_DOMAIN}"
+    persistentVolumeClaim:
+      enabled: true
+      storageClass: gsks0
+      size: 1Gi
+    adminPassword: "${PIHOLE_ADMIN_PASSWORD}"
+    DNS1: "1.1.1.1"
+    DNS2: "8.8.8.8"
+    adlists: {}
+    customDnsEntries:
+      - "address=/gs-farm.net/10.0.0.153"
+    resources:
+      requests:
+        cpu: 50m
+        memory: 128Mi
+      limits:
+        cpu: 200m
+        memory: 256Mi
