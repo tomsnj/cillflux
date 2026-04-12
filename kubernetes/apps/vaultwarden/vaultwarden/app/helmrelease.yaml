@@ -43,7 +43,7 @@ spec:
                   secretKeyRef:
                     name: vw-secret
                     key: admin-token
-              SSO_ENABLED: "true"
+              SSO_ENABLED: "false"
               SSO_CLIENT_ID: "vaultwarden"
               SSO_CLIENT_SECRET:
                 valueFrom:
