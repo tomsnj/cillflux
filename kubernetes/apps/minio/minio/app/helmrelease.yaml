@@ -93,7 +93,7 @@ spec:
           hajimari.io/enable: 'true'
           hajimari.io/icon: "mdi:pail"
           hajimari.io/group: "Storage"
-          nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"  # add this
+#          nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"  # add this
         hosts:
           - host: "minio.${SECRET_DOMAIN}"
             paths:
