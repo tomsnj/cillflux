@@ -23,9 +23,9 @@ spec:
     remediation:
       strategy: rollback
       retries: 3
-  dependsOn:
-    - name: local-path-provisioner
-      namespace: storage
+#  dependsOn:
+#    - name: local-path-provisioner
+#      namespace: storage
   values:
     controllers:
       keycloak:
