@@ -107,6 +107,11 @@ spec:
                 service:
                   identifier: main
                   port: api
+        tls:
+          - hosts:
+              - "minio.${SECRET_DOMAIN}"
+              - "s3.${SECRET_DOMAIN}"
+            secretName: minio-tls
 
 #    route:
 #      main:
