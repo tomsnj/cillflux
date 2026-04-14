@@ -134,7 +134,7 @@ spec:
   tls:
     - hosts:
         - "agent1.gs-farm.net"
-      secretName: agent-secret
+      secretName: agent1-secret
   rules:
   - host: agent1.gs-farm.net
     http:
