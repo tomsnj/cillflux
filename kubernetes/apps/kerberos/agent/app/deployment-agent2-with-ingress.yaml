@@ -147,3 +147,29 @@ spec:
             port: 
               number: 80
    
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: agent2-internal-ingress
+  namespace: kerberos
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    cert-manager.io/cluster-issuer: "letsencrypt-production"
+spec:
+  ingressClassName: internal
+  tls:
+    - hosts:
+        - "agent2.gs-farm.net"
+      secretName: agent2-secret
+  rules:
+    - host: agent2.gs-farm.net
+      http:
+        paths:
+          - pathType: Prefix
+            path: "/"
+            backend:
+              service:
+                name: agent2-svc
+                port:
+                  number: 80
