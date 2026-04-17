@@ -1,4 +1,4 @@
---
+---
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -183,7 +183,7 @@ data:
                 model:"claude-sonnet-4-5",
                 max_tokens:1500,
                 tools:[{type:"web_search_20250305",name:"web_search",max_uses:2}],
-                messages:[{role:"user",content:"Fetch this exact URL and extract all listing titles and prices from the results: https://www.ebay.com/sch/i.html?_nkw=macbook+air+15+24gb+ram&_sop=15&LH_ItemCondition=3000&rt=nc . List each item with its title, price in USD, condition, chip (M2 or M3), storage, and full item URL."]
+                messages:[{role:"user",content:"Fetch this URL and list every item you find with its title, price in USD, condition, chip (M2 or M3), storage, and full item URL: https://www.ebay.com/sch/i.html?_nkw=macbook+air+15+24gb+ram&_sop=15&LH_ItemCondition=3000&rt=nc"}]
               })
             });
             clearTimeout(t);
@@ -207,7 +207,7 @@ data:
                 model:"claude-sonnet-4-5",
                 max_tokens:1500,
                 messages:[
-                  {role:"user",content:"Fetch this exact URL and extract all listing titles and prices from the results: https://www.ebay.com/sch/i.html?_nkw=macbook+air+15+24gb+ram&_sop=15&LH_ItemCondition=3000&rt=nc . List each item with its title, price in USD, condition, chip (M2 or M3), storage, and full item URL."},
+                  {role:"user",content:"Search eBay for used MacBook Air 15-inch 24GB RAM listings currently for sale. Find individual item listings with their prices, conditions, chip (M2 or M3), storage, and direct item URLs like ebay.com/itm/NUMBER."},
                   {role:"assistant",content:json.content},
                   {role:"user",content:'Now output ONLY a raw JSON object (no markdown, no text before or after) like: {"scanDate":"'+new Date().toISOString()+'","listings":[{"source":"eBay","price":1299,"condition":"Good","chip":"M2","storage":"512GB","title":"MacBook Air 15 M2 24GB","url":"https://www.ebay.com/itm/123","inStock":true,"sold":false}],"lowestPrice":1199,"averagePrice":1350,"listingCount":1,"marketNote":"brief note"}'}
                 ]
