@@ -1,0 +1,413 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: macbook-tracker-html
+  namespace: default
+data:
+  index.html: |
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MacBook Air Price Tracker</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@700;800&display=swap');
+      *{box-sizing:border-box;margin:0;padding:0}
+      body{background:#0a0a0a;color:#e5e5e5;font-family:'Space Mono',monospace;min-height:100vh;padding:24px 16px}
+      .title-font{font-family:'Syne',sans-serif}
+      .btn-main{background:#f97316;color:#000;border:none;padding:12px 28px;font-family:'Space Mono',monospace;font-weight:700;font-size:13px;letter-spacing:1px;cursor:pointer;text-transform:uppercase;transition:all .15s;width:100%}
+      .btn-main:hover{background:#fb923c}
+      .btn-main:disabled{background:#444;color:#888;cursor:not-allowed}
+      .btn-ghost{background:transparent;color:#888;border:1px solid #333;padding:8px 16px;font-family:'Space Mono',monospace;font-size:11px;cursor:pointer;text-transform:uppercase;letter-spacing:1px;transition:all .15s}
+      .btn-ghost:hover{border-color:#f97316;color:#f97316}
+      .card{background:#111;border:1px solid #1f1f1f;padding:20px;margin-bottom:12px}
+      .card-alert{border-color:#f97316;background:#1a0e00}
+      .stat-val{font-family:'Syne',sans-serif;font-size:32px;font-weight:800;color:#fff}
+      .stat-lbl{font-size:10px;color:#666;letter-spacing:2px;text-transform:uppercase;margin-top:2px}
+      .listing-row{border-bottom:1px solid #1a1a1a;padding:10px 0;display:grid;grid-template-columns:60px 1fr auto;gap:12px;align-items:center;font-size:12px}
+      .listing-row:last-child{border-bottom:none}
+      .badge{display:inline-block;padding:2px 8px;font-size:10px;letter-spacing:1px;text-transform:uppercase}
+      .badge-good{background:#052e16;color:#4ade80}
+      .badge-fair{background:#1c1a00;color:#facc15}
+      .badge-refurb{background:#0c1a3b;color:#60a5fa}
+      .scan-row{display:grid;grid-template-columns:100px 80px 80px 1fr;gap:8px;font-size:11px;padding:6px 0;border-bottom:1px solid #1a1a1a;align-items:center}
+      .scan-row:last-child{border-bottom:none}
+      input[type=number],input[type=password]{background:#1a1a1a;border:1px solid #333;color:#fff;padding:8px 12px;font-family:'Space Mono',monospace;font-size:13px}
+      input[type=number]:focus,input[type=password]:focus{outline:1px solid #f97316;border-color:#f97316}
+      .spinner{width:16px;height:16px;border:2px solid #333;border-top-color:#f97316;border-radius:50%;animation:spin .8s linear infinite;display:inline-block;margin-right:8px;vertical-align:middle}
+      @keyframes spin{to{transform:rotate(360deg)}}
+      .tab-bar{display:flex;gap:2px;margin-bottom:12px}
+      .tab{flex:1;padding:8px 4px;font-size:10px;letter-spacing:1px;text-transform:uppercase;border:none;cursor:pointer;font-family:'Space Mono',monospace;font-weight:700;transition:all .15s}
+      .tab.active{background:#f97316;color:#000}
+      .tab.inactive{background:#1a1a1a;color:#555}
+    </style>
+    </head>
+    <body>
+    <div id="root"></div>
+    <script>
+    const {useState,useEffect,useCallback,createElement:h} = React;
+    const STORAGE_KEY = "mba-price-tracker-v1";
+    const ALERT_PRESETS = [1200,1300,1400,1500];
+    
+    function formatDate(iso){
+      const d=new Date(iso);
+      return d.toLocaleDateString("en-US",{month:"short",day:"numeric",hour:"2-digit",minute:"2-digit"});
+    }
+    function formatShort(iso){
+      const d=new Date(iso);
+      return d.toLocaleDateString("en-US",{month:"short",day:"numeric"});
+    }
+    
+    function PriceSpark({history}){
+      if(!history||history.length<2)return null;
+      const prices=history.map(h=>h.lowestPrice).filter(Boolean);
+      if(prices.length<2)return null;
+      const min=Math.min(...prices)-50, max=Math.max(...prices)+50;
+      const W=120,H=36;
+      const pts=prices.map((p,i)=>{
+        const x=(i/(prices.length-1))*W;
+        const y=H-((p-min)/(max-min))*H;
+        return x+","+y;
+      }).join(" ");
+      return h("svg",{width:W,height:H,style:{overflow:"visible"}},
+        h("polyline",{points:pts,fill:"none",stroke:"#f97316",strokeWidth:2,strokeLinejoin:"round"}),
+        ...prices.map((p,i)=>{
+          const x=(i/(prices.length-1))*W;
+          const y=H-((p-min)/(max-min))*H;
+          return h("circle",{key:i,cx:x,cy:y,r:3,fill:"#f97316"});
+        })
+      );
+    }
+    
+    function ListingRow({l,alertPrice}){
+      const isSold=l.sold===true;
+      const isUnavailable=l.inStock===false&&!isSold;
+      const isGoodPrice=l.price&&l.price<=alertPrice;
+      const dimmed=isSold||isUnavailable;
+      const isDirectListing=l.url&&(/ebay\.com\/itm\/\d+/.test(l.url)||/swappa\.com\/listing\//.test(l.url)||/backmarket\.com\/.*\/\d+/.test(l.url));
+      const searchUrl="https://www.ebay.com/sch/i.html?_nkw="+encodeURIComponent((l.title||"")+" 24GB")+"&_sop=15";
+      const href=isDirectListing?l.url:searchUrl;
+      const linkLabel=isDirectListing?"VIEW →":"SEARCH →";
+      const condClass=l.condition==="Excellent"||l.condition==="Good"?"badge-good":l.condition==="Refurbished"?"badge-refurb":"badge-fair";
+      return h("div",{className:"listing-row",style:{opacity:dimmed?0.45:1}},
+        h("div",null,
+          h("div",{style:{color:dimmed?"#666":isGoodPrice?"#f97316":"#4ade80",fontWeight:700,fontSize:14,textDecoration:dimmed?"line-through":"none"}},"$"+(l.price??"—")),
+          h("div",{style:{fontSize:9,color:"#555",marginTop:2}},l.source)
+        ),
+        h("div",null,
+          h("div",{style:{fontSize:11,color:"#ccc",marginBottom:3}},l.title),
+          h("div",{style:{display:"flex",gap:4,flexWrap:"wrap"}},
+            isSold&&h("span",{className:"badge",style:{background:"#1a0a0a",color:"#f87171"}},"SOLD"),
+            isUnavailable&&h("span",{className:"badge",style:{background:"#2a0a0a",color:"#fb923c"}},"OUT OF STOCK"),
+            isGoodPrice&&!dimmed&&h("span",{className:"badge",style:{background:"#1a1200",color:"#fbbf24"}},"🎯 DEAL"),
+            h("span",{className:"badge "+condClass},l.condition||"Unknown"),
+            l.chip&&l.chip!=="Unknown"&&h("span",{className:"badge",style:{background:"#1e1a2e",color:"#a78bfa"}},l.chip),
+            l.storage&&l.storage!=="Unknown"&&h("span",{className:"badge",style:{background:"#1a1a1a",color:"#888"}},l.storage)
+          )
+        ),
+        h("div",null,
+          h("a",{href,target:"_blank",rel:"noopener noreferrer",style:{color:isDirectListing?"#f97316":"#555",fontSize:10,textDecoration:"none",letterSpacing:1}},linkLabel)
+        )
+      );
+    }
+    
+    function App(){
+      const loadFromStorage=()=>{
+        try{
+          const raw=localStorage.getItem(STORAGE_KEY);
+          const p=raw?JSON.parse(raw):{};
+          return{history:p.history||[],alertPrice:p.alertPrice||1300,lastScan:p.lastScan||null,savedFinds:p.savedFinds||[]};
+        }catch{return{history:[],alertPrice:1300,lastScan:null,savedFinds:[]};}
+      };
+    
+      const [apiKey,setApiKey]=useState(()=>localStorage.getItem("mba-api-key")||"");
+      const [apiKeyInput,setApiKeyInput]=useState("");
+      const [showKeySetup,setShowKeySetup]=useState(()=>!localStorage.getItem("mba-api-key"));
+      const [data,setData]=useState(loadFromStorage);
+      const [loading,setLoading]=useState(false);
+      const [scanStatus,setScanStatus]=useState("");
+      const [error,setError]=useState(null);
+      const [activeTab,setActiveTab]=useState("listings");
+      const [debugText,setDebugText]=useState("");
+      const [showDebug,setShowDebug]=useState(false);
+      const [alertDraft,setAlertDraft]=useState(()=>loadFromStorage().alertPrice);
+      const [triggered,setTriggered]=useState(false);
+    
+      const latestEntry=data.history[data.history.length-1]||null;
+      const listings=latestEntry?.listings||[];
+      const latest=latestEntry;
+      const lowest=data.history.length>0?Math.min(...data.history.map(h=>h.lowestPrice).filter(Boolean)):null;
+      const trendDir=data.history.length>=2?(data.history[data.history.length-1].lowestPrice<data.history[data.history.length-2].lowestPrice?"down":"up"):null;
+    
+      useEffect(()=>{
+        const fn=()=>{if(document.visibilityState==="visible")setData(loadFromStorage());};
+        document.addEventListener("visibilitychange",fn);
+        return()=>document.removeEventListener("visibilitychange",fn);
+      },[]);
+    
+      const save=useCallback((newData)=>{
+        setData(newData);
+        try{localStorage.setItem(STORAGE_KEY,JSON.stringify(newData));}catch{}
+      },[]);
+    
+      useEffect(()=>{
+        setTriggered(!!(latestEntry?.lowestPrice&&latestEntry.lowestPrice<=data.alertPrice));
+      },[data,latestEntry]);
+    
+      const saveApiKey=()=>{
+        const k=apiKeyInput.trim();
+        if(!k.startsWith("sk-ant-")){setError("Key should start with sk-ant-");return;}
+        localStorage.setItem("mba-api-key",k);
+        setApiKey(k);
+        setShowKeySetup(false);
+        setError(null);
+      };
+    
+      const runScan=useCallback(async()=>{
+        if(!apiKey){setShowKeySetup(true);return;}
+        setLoading(true);setError(null);setDebugText("");setScanStatus("Searching eBay…");
+        try{
+          const ctrl=new AbortController();
+          const t=setTimeout(()=>ctrl.abort(),90000);
+          let json;
+          try{
+            const r=await fetch("https://api.anthropic.com/v1/messages",{
+              method:"POST",
+              headers:{"Content-Type":"application/json","x-api-key":apiKey,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},
+              signal:ctrl.signal,
+              body:JSON.stringify({
+                model:"claude-sonnet-4-20250514",
+                max_tokens:3000,
+                tools:[{type:"web_search_20250305",name:"web_search"}],
+                messages:[{role:"user",content:"Search eBay for used MacBook Air 15-inch 24GB RAM listings currently for sale. Find individual item listings with their prices, conditions, chip (M2 or M3), storage, and direct item URLs like ebay.com/itm/NUMBER."}]
+              })
+            });
+            clearTimeout(t);
+            json=await r.json();
+          }catch(e){clearTimeout(t);throw new Error(e.name==="AbortError"?"Timed out — try again":e.message);}
+    
+          if(json.error)throw new Error(json.error.message||"API error");
+          const rawText=(json.content||[]).map(b=>b.type==="text"?b.text:b.type==="tool_result"?JSON.stringify(b.content).slice(0,200):"["+b.type+"]").join("\n");
+          setDebugText("STEP 1:\n"+rawText.slice(0,800));
+    
+          setScanStatus("Formatting results…");
+          const ctrl2=new AbortController();
+          const t2=setTimeout(()=>ctrl2.abort(),60000);
+          let json2;
+          try{
+            const r2=await fetch("https://api.anthropic.com/v1/messages",{
+              method:"POST",
+              headers:{"Content-Type":"application/json","x-api-key":apiKey,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},
+              signal:ctrl2.signal,
+              body:JSON.stringify({
+                model:"claude-sonnet-4-20250514",
+                max_tokens:3000,
+                messages:[
+                  {role:"user",content:"Search eBay for used MacBook Air 15-inch 24GB RAM listings currently for sale. Find individual item listings with their prices, conditions, chip (M2 or M3), storage, and direct item URLs like ebay.com/itm/NUMBER."},
+                  {role:"assistant",content:json.content},
+                  {role:"user",content:'Now output ONLY a raw JSON object (no markdown, no text before or after) like: {"scanDate":"'+new Date().toISOString()+'","listings":[{"source":"eBay","price":1299,"condition":"Good","chip":"M2","storage":"512GB","title":"MacBook Air 15 M2 24GB","url":"https://www.ebay.com/itm/123","inStock":true,"sold":false}],"lowestPrice":1199,"averagePrice":1350,"listingCount":1,"marketNote":"brief note"}'}
+                ]
+              })
+            });
+            clearTimeout(t2);
+            json2=await r2.json();
+          }catch(e){clearTimeout(t2);throw new Error(e.name==="AbortError"?"Format step timed out":e.message);}
+    
+          if(json2.error)throw new Error(json2.error.message||"Step 2 API error");
+          const allText=(json2.content||[]).filter(b=>b.type==="text"&&typeof b.text==="string").map(b=>b.text).join("\n")||"";
+          setDebugText(prev=>prev+"\n\nSTEP 2:\n"+allText.slice(0,500));
+    
+          let parsed;
+          try{
+            const clean=allText.replace(/```json|```/gi,"").trim();
+            const m=clean.match(/\{[\s\S]*\}/);
+            if(!m)throw new Error("No JSON found — tap Show Debug");
+            parsed=JSON.parse(m[0]);
+            if(!Array.isArray(parsed.listings))throw new Error("No listings array");
+          }catch(e){setShowDebug(true);throw new Error(e.message);}
+    
+          const scanEntry={
+            scanDate:parsed.scanDate||new Date().toISOString(),
+            lowestPrice:parsed.lowestPrice,averagePrice:parsed.averagePrice,
+            listingCount:parsed.listings.length,marketNote:parsed.marketNote||"",
+            listings:parsed.listings
+          };
+          const threshold=data.alertPrice+200;
+          const newFinds=parsed.listings.filter(l=>!l.sold&&l.inStock!==false&&l.price&&l.price<=threshold).map(l=>({...l,seenAt:scanEntry.scanDate}));
+          const deduped=[...(data.savedFinds||[])];
+          newFinds.forEach(f=>{if(!deduped.some(e=>(f.url&&e.url===f.url)||(e.title===f.title&&e.price===f.price)))deduped.push(f);});
+          save({...data,history:[...data.history,scanEntry].slice(-30),lastScan:scanEntry.scanDate,savedFinds:deduped.slice(-50)});
+          setActiveTab(newFinds.length>0?"finds":"listings");
+        }catch(e){setError("Scan failed: "+e.message);}
+        finally{setLoading(false);setScanStatus("");}
+      },[apiKey,data,save]);
+    
+      const clearHistory=()=>{if(confirm("Clear scan history?"))save({history:[],alertPrice:data.alertPrice,lastScan:null,savedFinds:data.savedFinds||[]});};
+      const setAlert=()=>save({...data,alertPrice:alertDraft});
+    
+      // API key setup screen
+      if(showKeySetup) return h("div",{style:{maxWidth:500,margin:"0 auto"}},
+        h("div",{className:"card",style:{marginTop:40}},
+          h("div",{className:"title-font",style:{fontSize:11,color:"#f97316",letterSpacing:3,textTransform:"uppercase",marginBottom:8}},"Setup"),
+          h("h2",{className:"title-font",style:{fontSize:20,color:"#fff",marginBottom:16}},"Enter Your Anthropic API Key"),
+          h("p",{style:{fontSize:11,color:"#888",marginBottom:16,lineHeight:1.7}},"Get your key from console.anthropic.com → API Keys. It's stored only in your browser's localStorage and sent directly to Anthropic — never to any other server."),
+          h("input",{type:"password",placeholder:"sk-ant-api03-...",value:apiKeyInput,onChange:e=>setApiKeyInput(e.target.value),style:{width:"100%",marginBottom:8}}),
+          error&&h("div",{style:{color:"#f87171",fontSize:11,marginBottom:8}},error),
+          h("button",{className:"btn-main",onClick:saveApiKey,style:{marginBottom:8}},"Save Key & Start"),
+          apiKey&&h("button",{className:"btn-ghost",style:{width:"100%"},onClick:()=>setShowKeySetup(false)},"Cancel")
+        )
+      );
+    
+      return h("div",{style:{maxWidth:600,margin:"0 auto"}},
+        // Header
+        h("div",{style:{marginBottom:24}},
+          h("div",{className:"title-font",style:{fontSize:11,color:"#f97316",letterSpacing:3,textTransform:"uppercase",marginBottom:6}},"Price Tracker"),
+          h("h1",{className:"title-font",style:{fontSize:26,fontWeight:800,color:"#fff",lineHeight:1.1}},
+            'MacBook Air 15"',h("br"),h("span",{style:{color:"#f97316"}},"24GB RAM")," — Used Market"
+          ),
+          h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginTop:8}},
+            h("div",{style:{fontSize:11,color:"#555",letterSpacing:1}},data.lastScan?"Last scan: "+formatDate(data.lastScan):"No scans yet"),
+            h("button",{className:"btn-ghost",style:{fontSize:9,padding:"3px 8px"},onClick:()=>setShowKeySetup(true)},"API Key")
+          )
+        ),
+    
+        // Alert banner
+        triggered&&h("div",{className:"card card-alert",style:{marginBottom:12,display:"flex",alignItems:"center",gap:12}},
+          h("div",{style:{fontSize:20}},"🔔"),
+          h("div",null,
+            h("div",{style:{color:"#f97316",fontWeight:700,fontSize:13,letterSpacing:1}},"PRICE ALERT TRIGGERED"),
+            h("div",{style:{fontSize:11,color:"#ccc",marginTop:2}},"Latest low ($"+latest?.lowestPrice+") is at or below your $"+data.alertPrice+" alert")
+          )
+        ),
+    
+        // Stats
+        data.history.length>0&&h("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:12}},
+          h("div",{className:"card",style:{textAlign:"center"}},
+            h("div",{className:"stat-val",style:{color:"#4ade80"}},"$"+(latest?.lowestPrice??"—")),
+            h("div",{className:"stat-lbl"},"Latest Low"),
+            trendDir&&h("div",{style:{fontSize:16,marginTop:4}},trendDir==="down"?"📉":"📈")
+          ),
+          h("div",{className:"card",style:{textAlign:"center"}},
+            h("div",{className:"stat-val"},"$"+(latest?.averagePrice??"—")),
+            h("div",{className:"stat-lbl"},"Avg Price")
+          ),
+          h("div",{className:"card",style:{textAlign:"center"}},
+            h("div",{className:"stat-val",style:{color:lowest?"#facc15":"#fff"}},"$"+(lowest??"—")),
+            h("div",{className:"stat-lbl"},"All-Time Low"),
+            h("div",{style:{fontSize:10,color:"#555",marginTop:4}},data.history.length+" scans")
+          )
+        ),
+    
+        // Sparkline
+        data.history.length>=2&&h("div",{className:"card",style:{marginBottom:12}},
+          h("div",{style:{fontSize:10,color:"#666",letterSpacing:2,textTransform:"uppercase",marginBottom:12}},"Price Trend — Lowest Per Scan"),
+          h("div",{style:{display:"flex",alignItems:"flex-end",justifyContent:"space-between"}},
+            h(PriceSpark,{history:data.history}),
+            h("div",{style:{textAlign:"right"}},
+              ...data.history.slice(-3).map((hh,i)=>h("div",{key:i,style:{fontSize:10,color:"#555",marginBottom:2}},
+                formatShort(hh.scanDate)+": ",h("span",{style:{color:"#e5e5e5"}},"$"+hh.lowestPrice)
+              ))
+            )
+          )
+        ),
+    
+        // Alert setting
+        h("div",{className:"card",style:{marginBottom:12}},
+          h("div",{style:{fontSize:10,color:"#666",letterSpacing:2,textTransform:"uppercase",marginBottom:12}},"🎯 Alert Me When Price Drops Below"),
+          h("div",{style:{display:"flex",gap:8,alignItems:"center",flexWrap:"wrap"}},
+            h("input",{type:"number",value:alertDraft,onChange:e=>setAlertDraft(parseInt(e.target.value)),step:50,min:500,max:3000,style:{width:120}}),
+            h("button",{className:"btn-ghost",onClick:setAlert},"Set Alert")
+          ),
+          h("div",{style:{display:"flex",gap:6,marginTop:10,flexWrap:"wrap"}},
+            ...ALERT_PRESETS.map(p=>h("button",{key:p,className:"btn-ghost",style:{padding:"4px 10px",fontSize:10},onClick:()=>setAlertDraft(p)},"$"+p))
+          ),
+          h("div",{style:{fontSize:10,color:"#555",marginTop:8}},"Current alert: ",h("span",{style:{color:"#f97316"}},"$"+data.alertPrice))
+        ),
+    
+        // Scan button
+        h("div",{style:{marginBottom:12}},
+          h("button",{className:"btn-main",onClick:runScan,disabled:loading,style:{padding:16}},
+            loading?h("span",null,h("span",{className:"spinner"}),scanStatus||"Scanning…"):"⟳  Run Price Scan"
+          ),
+          h("div",{style:{fontSize:10,color:"#444",marginTop:6,textAlign:"center",letterSpacing:1}},
+            loading?h("span",{style:{color:"#f97316"}},scanStatus):"Searches eBay for current listings"
+          )
+        ),
+    
+        // Error
+        error&&h("div",{style:{background:"#1a0000",border:"1px solid #7f1d1d",padding:12,fontSize:11,color:"#fca5a5",marginBottom:8}},error),
+    
+        // Debug
+        debugText&&h("div",{style:{marginBottom:12}},
+          h("button",{className:"btn-ghost",style:{fontSize:9,padding:"3px 8px"},onClick:()=>setShowDebug(v=>!v)},
+            (showDebug?"Hide":"Show")+" Debug"
+          ),
+          showDebug&&h("pre",{style:{background:"#0d0d0d",border:"1px solid #1f1f1f",padding:10,fontSize:9,color:"#666",marginTop:4,overflowX:"auto",whiteSpace:"pre-wrap",wordBreak:"break-all"}},debugText)
+        ),
+    
+        // Tabs
+        (listings.length>0||(data.savedFinds||[]).length>0||data.history.length>0)&&h("div",{className:"tab-bar"},
+          ...[
+            {id:"listings",label:"Listings"+(listings.length?" ("+listings.length+")":"")},
+            {id:"finds",label:"Finds"+((data.savedFinds||[]).length?" ("+(data.savedFinds||[]).length+")":"")},
+            {id:"history",label:"Scan Log"},
+          ].map(t=>h("button",{key:t.id,className:"tab "+(activeTab===t.id?"active":"inactive"),onClick:()=>setActiveTab(t.id)},t.label))
+        ),
+    
+        // Listings tab
+        activeTab==="listings"&&listings.length>0&&h("div",{className:"card",style:{marginBottom:12}},
+          h("div",{style:{fontSize:10,color:"#666",letterSpacing:2,textTransform:"uppercase",marginBottom:12}},"Latest Scan — "+listings.length+" Found · "+(latest?.scanDate?formatDate(latest.scanDate):"")),
+          latest?.marketNote&&h("div",{style:{fontSize:11,color:"#888",marginBottom:12,fontStyle:"italic",borderLeft:"2px solid #f97316",paddingLeft:10}},latest.marketNote),
+          ...listings.map((l,i)=>h(ListingRow,{key:i,l,alertPrice:data.alertPrice}))
+        ),
+        activeTab==="listings"&&listings.length===0&&data.history.length>0&&h("div",{className:"card",style:{marginBottom:12,color:"#555",fontSize:11,textAlign:"center"}},"No listings in last scan — try again."),
+    
+        // Finds tab
+        activeTab==="finds"&&h("div",{className:"card",style:{marginBottom:12}},
+          h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}},
+            h("div",{style:{fontSize:10,color:"#666",letterSpacing:2,textTransform:"uppercase"}},"Notable Finds — Within $"+(data.alertPrice+200)),
+            (data.savedFinds||[]).length>0&&h("button",{className:"btn-ghost",style:{padding:"3px 8px",fontSize:9},onClick:()=>{if(confirm("Clear?"))save({...data,savedFinds:[]})}},"Clear")
+          ),
+          (data.savedFinds||[]).length===0
+            ?h("div",{style:{fontSize:11,color:"#555",textAlign:"center"}},"No notable finds yet.")
+            :[...(data.savedFinds||[])].reverse().map((l,i)=>h("div",{key:i},
+                h("div",{style:{fontSize:9,color:"#444",marginTop:i>0?8:0,marginBottom:2}},"Seen "+formatDate(l.seenAt)),
+                h(ListingRow,{l,alertPrice:data.alertPrice})
+              ))
+        ),
+    
+        // History tab
+        activeTab==="history"&&data.history.length>0&&h("div",{className:"card",style:{marginBottom:12}},
+          h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}},
+            h("div",{style:{fontSize:10,color:"#666",letterSpacing:2,textTransform:"uppercase"}},"Scan Log"),
+            h("button",{className:"btn-ghost",style:{padding:"3px 8px",fontSize:9},onClick:clearHistory},"Clear")
+          ),
+          h("div",{style:{fontSize:10,color:"#444",letterSpacing:1,display:"grid",gridTemplateColumns:"100px 80px 80px 1fr",gap:8,marginBottom:6,textTransform:"uppercase"}},
+            h("span",null,"Date"),h("span",null,"Low"),h("span",null,"Avg"),h("span",null,"Note")
+          ),
+          ...[...data.history].reverse().map((hh,i)=>h("div",{key:i,className:"scan-row",style:{cursor:"pointer"},onClick:()=>setActiveTab("listings")},
+            h("span",{style:{color:"#555"}},formatShort(hh.scanDate)),
+            h("span",{style:{color:"#4ade80"}},"$"+(hh.lowestPrice??"—")),
+            h("span",{style:{color:"#888"}},"$"+(hh.averagePrice??"—")),
+            h("span",{style:{color:"#555",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},hh.marketNote||"—")
+          ))
+        ),
+    
+        // Tips
+        h("div",{style:{fontSize:10,color:"#444",textAlign:"center",lineHeight:1.7,letterSpacing:.5,marginTop:8}},
+          "💡 Run a scan every few days to build trend data",h("br"),
+          "Best deals appear Sundays & Mondays on eBay",h("br"),
+          "M3 models run ~$100–150 more than M2"
+        )
+      );
+    }
+    
+    ReactDOM.createRoot(document.getElementById("root")).render(h(App));
+    </script>
+    </body>
+    </html>
+    
