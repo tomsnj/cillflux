@@ -183,7 +183,7 @@ data:
                 model:"claude-sonnet-4-5",
                 max_tokens:1500,
                 tools:[{type:"web_search_20250305",name:"web_search",max_uses:1}],
-                messages:[{role:"user",content:"Search eBay for used MacBook Air 15-inch 24GB RAM listings currently for sale. Find individual item listings with their prices, conditions, chip (M2 or M3), storage, and direct item URLs like ebay.com/itm/NUMBER."}]
+                messages:[{role:"user",content:"Search eBay sold listings AND active listings for: MacBook Air 15 inch 24GB RAM. For each result include the exact sale price in USD, title, condition, chip (M2 or M3), storage size, and the direct URL. Also check swappa.com for MacBook Air 15 24GB listings with prices. Do not search more than once."}]
               })
             });
             clearTimeout(t);
