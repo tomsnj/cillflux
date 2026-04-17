@@ -41,15 +41,6 @@ spec:
                 enabled: true
               readiness:
                 enabled: true
-
-    service:
-      app:
-        controller: macbook-tracker
-        containers:
-          app:
-            image:
-              repository: nginx
-              tag: alpine
             securityContext:
               allowPrivilegeEscalation: false
               runAsNonRoot: true
@@ -58,6 +49,9 @@ spec:
                 drop: ["ALL"]
               seccompProfile:
                 type: RuntimeDefault
+    service:
+      app:
+        controller: macbook-tracker
         ports:
           http:
             port: 80
