@@ -28,7 +28,7 @@ spec:
         containers:
           app:
             image:
-              repository: nginx
+              repository: nginxinc/nginx-unprivileged
               tag: alpine
             resources:
               requests:
@@ -54,7 +54,7 @@ spec:
         controller: macbook-tracker
         ports:
           http:
-            port: 80
+            port: 8080
 
     ingress:
       internal:
