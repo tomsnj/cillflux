@@ -1,4 +1,4 @@
----
+--
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -182,8 +182,8 @@ data:
               body:JSON.stringify({
                 model:"claude-sonnet-4-5",
                 max_tokens:1500,
-                tools:[{type:"web_search_20250305",name:"web_search",max_uses:1}],
-                messages:[{role:"user",content:"Search eBay sold listings AND active listings for: MacBook Air 15 inch 24GB RAM. For each result include the exact sale price in USD, title, condition, chip (M2 or M3), storage size, and the direct URL. Also check swappa.com for MacBook Air 15 24GB listings with prices. Do not search more than once."}]
+                tools:[{type:"web_search_20250305",name:"web_search",max_uses:2}],
+                messages:[{role:"user",content:"Fetch this exact URL and extract all listing titles and prices from the results: https://www.ebay.com/sch/i.html?_nkw=macbook+air+15+24gb+ram&_sop=15&LH_ItemCondition=3000&rt=nc . List each item with its title, price in USD, condition, chip (M2 or M3), storage, and full item URL."]
               })
             });
             clearTimeout(t);
