@@ -53,8 +53,11 @@ spec:
       internal:
         className: nginx-internal
         annotations:
+          external-dns.alpha.kubernetes.io/target: external.gs-farm.net
+          kubernetes.io/ingress.class: internal
+          kubernetes.io/tls-acme: "true"
           nginx.ingress.kubernetes.io/ssl-redirect: "true"
-          cert-manager.io/cluster-issuer: letsencrypt-production
+          cert-manager.io/cluster-issuer: "letsencrypt-production"
         hosts:
           - host: &internalHost mactrack-int.gs-farm.net
             paths:
@@ -70,7 +73,10 @@ spec:
         className: nginx-external
         annotations:
           nginx.ingress.kubernetes.io/ssl-redirect: "true"
-          cert-manager.io/cluster-issuer: letsencrypt-production
+          external-dns.alpha.kubernetes.io/target: external.gs-farm.net
+          kubernetes.io/ingress.class: internal
+          kubernetes.io/tls-acme: "true"
+          cert-manager.io/cluster-issuer: "letsencrypt-production"
         hosts:
           - host: &externalHost mactrack.gs-farm.net
             paths:

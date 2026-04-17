@@ -13,7 +13,7 @@ spec:
   prune: true
   sourceRef:
     kind: GitRepository
-    name: cillflux
+    name: home-kubernetes
   dependsOn:
     - name: cluster-apps
   wait: true
