@@ -41,10 +41,6 @@ spec:
       username: "vernemq"
       #password: "vernemqpass"
       password: ${VERNEMQ_FLUX_PASSWORD}
-    rabbitmq:
-      host: "rabbitmq-0.rabbitmq-headless.rabbitmq.svc.cluster.local"
-      username: "user"
-      password: ${RABBITMQ_FLUX_PASSWORD}
     turn:
       host: "turn:turn.gs-farm.net:8443"
     kerberosvault:
