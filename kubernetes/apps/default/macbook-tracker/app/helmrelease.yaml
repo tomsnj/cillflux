@@ -45,6 +45,19 @@ spec:
     service:
       app:
         controller: macbook-tracker
+        containers:
+          app:
+            image:
+              repository: nginx
+              tag: alpine
+            securityContext:
+              allowPrivilegeEscalation: false
+              runAsNonRoot: true
+              runAsUser: 101        # nginx unprivileged user
+              capabilities:
+                drop: ["ALL"]
+              seccompProfile:
+                type: RuntimeDefault
         ports:
           http:
             port: 80
