@@ -71,7 +71,7 @@ spec:
         annotations:
           cert-manager.io/cluster-issuer: letsencrypt-production
           kubernetes.io/tls-acme: "true"
-          cert-manager.io/cluster-issuer: "letsencrypt-production"
+          nginx.ingress.kubernetes.io/ssl-redirect: "true"
         hosts:
           - host: &externalHost mactrack.gs-farm.net
             paths:
