@@ -5,7 +5,7 @@ metadata:
   name: gsks0
 provisioner: nfs.csi.k8s.io
 parameters:
-  server: 10.10.10.110
+  server: 10.0.0.169
   share: /mnt/storage1/home_nfs
 reclaimPolicy: Delete
 volumeBindingMode: Immediate
@@ -17,7 +17,7 @@ metadata:
   name: gsks1
 provisioner: nfs.csi.k8s.io
 parameters:
-  server: 10.10.10.110
+  server: 10.0.0.169
   share: /mnt/storage1/home_nfs/knfs
 reclaimPolicy: Delete
 volumeBindingMode: Immediate

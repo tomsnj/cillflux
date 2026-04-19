@@ -10,7 +10,7 @@ spec:
   accessModes: ["ReadWriteMany"]
   persistentVolumeReclaimPolicy: Retain
   nfs:
-    server: 10.10.10.110
+    server: 10.0.0.169
     path: /mnt/storage1/home_nfs/nginx/www/gs-farm
   # Note: The first two options are strictly for NFSv4.2
   #mountOptions: ["nfsvers=4.2", "nconnect=8", "hard", "noatime"]
