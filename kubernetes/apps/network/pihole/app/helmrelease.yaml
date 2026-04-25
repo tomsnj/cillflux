@@ -33,11 +33,11 @@ spec:
       annotations:
         io.cilium/lb-ipam-ips: 10.0.10.5
       loadBalancerIP: 10.0.10.5
-      ports:
-        - name: http
-          port: 80
-          targetPort: http
-          protocol: TCP
+#      ports:
+#        - name: http
+#          port: 80
+#          targetPort: http
+#          protocol: TCP
 #      http:
 #        enabled: true
 #        port: 80
@@ -59,7 +59,7 @@ spec:
       annotations:
         hajimari.io/icon: simple-icons:pihole
       hosts:
-        - "pihole.${SECRET_DOMAIN}"
+        - host: "pihole.${SECRET_DOMAIN}"
       tls:
         - hosts:
             - "pihole.${SECRET_DOMAIN}"
