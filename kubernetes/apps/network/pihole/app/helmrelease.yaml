@@ -58,7 +58,7 @@ spec:
       tls:
         - hosts:
             - "pihole.${SECRET_DOMAIN}"
-    persistentVolumeClaim:
+    persistence:
       enabled: true
       storageClass: gsks0
       size: 1Gi
