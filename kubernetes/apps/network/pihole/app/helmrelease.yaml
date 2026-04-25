@@ -26,7 +26,7 @@ spec:
   values:
     replicaCount: 1
     image:
-      repository: pihole/pihole
+      repository: docker.io/pihole/pihole
       tag: 2026.04.1
     serviceWeb:
       type: LoadBalancer
