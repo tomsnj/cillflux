@@ -66,8 +66,8 @@ spec:
       size: 1Gi
     adminPassword: "${PIHOLE_ADMIN_PASSWORD}"
     adlists: {}
-    dnsmasq:
-      customDnsEntries:
+    dns:
+      customDnsmasq:
         - "address=/gs-farm.net/10.0.10.1"
     resources:
       requests:
