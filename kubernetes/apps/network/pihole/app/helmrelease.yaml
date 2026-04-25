@@ -32,12 +32,12 @@ spec:
       type: LoadBalancer
       annotations:
         io.cilium/lb-ipam-ips: 10.0.10.5
-      loadBalancerIP: 10.0.10.5
-#      ports:
-#        - name: http
-#          port: 80
-#          targetPort: http
-#          protocol: TCP
+#      loadBalancerIP: 10.0.10.5
+      ports:
+        - name: http
+          port: 80
+          targetPort: http
+          protocol: TCP
 #      http:
 #        enabled: true
 #        port: 80
