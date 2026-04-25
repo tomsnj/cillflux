@@ -63,7 +63,7 @@ spec:
       storageClass: gsks0
       size: 1Gi
     adminPassword: "${PIHOLE_ADMIN_PASSWORD}"
-    upstreamDns: "1.1.1.1; 8.8.8.8"
+    upstreamDns: "1.1.1.1;8.8.8.8"
     adlists: {}
     dnsmasq:
       customDnsEntries:
