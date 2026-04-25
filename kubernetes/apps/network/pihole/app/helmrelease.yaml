@@ -4,7 +4,7 @@ kind: HelmRelease
 metadata:
   name: pihole
 spec:
-  interval: 30m
+  interval: 5m
   chart:
     spec:
       chart: pihole
@@ -28,6 +28,8 @@ spec:
     image:
       repository: docker.io/pihole/pihole
       tag: 2026.04.1
+    pihole:
+      upstreamDns: "1.1.1.1;8.8.8.8"
     serviceWeb:
       type: LoadBalancer
       annotations:
@@ -63,7 +65,6 @@ spec:
       storageClass: gsks0
       size: 1Gi
     adminPassword: "${PIHOLE_ADMIN_PASSWORD}"
-    upstreamDns: "1.1.1.1;8.8.8.8"
     adlists: {}
     dnsmasq:
       customDnsEntries:
