@@ -16,21 +16,18 @@
   "flux": {
     "fileMatch": [
       "(^|/)addons/.+\\.ya?ml(\\.j2)?(\\.j2)?$",
-      "(^|/)ansible/.+\\.ya?ml(\\.j2)?(\\.j2)?$",
       "(^|/)kubernetes/.+\\.ya?ml(\\.j2)?(\\.j2)?$"
     ]
   },
   "helm-values": {
     "fileMatch": [
       "(^|/)addons/.+\\.ya?ml(\\.j2)?(\\.j2)?$",
-      "(^|/)ansible/.+\\.ya?ml(\\.j2)?(\\.j2)?$",
       "(^|/)kubernetes/.+\\.ya?ml(\\.j2)?(\\.j2)?$"
     ]
   },
   "kubernetes": {
     "fileMatch": [
       "(^|/)addons/.+\\.ya?ml(\\.j2)?(\\.j2)?$",
-      "(^|/)ansible/.+\\.ya?ml(\\.j2)?(\\.j2)?$",
       "(^|/)kubernetes/.+\\.ya?ml(\\.j2)?(\\.j2)?$"
     ]
   },
@@ -65,23 +62,6 @@
         "commitMessageTopic": "{{{groupName}}} group"
       },
       "separateMinorPatch": true
-    },
-    {
-      "description": "System Upgrade Controller Group",
-      "groupName": "System Upgrade Controller",
-      "matchPackagePatterns": ["rancher/system-upgrade-controller"],
-      "matchDatasources": ["docker", "github-releases"],
-      "group": {
-        "commitMessageTopic": "{{{groupName}}} group"
-      },
-      "separateMinorPatch": true
-    },
-    // custom versioning
-    {
-      "description": "Use custom versioning for k3s",
-      "matchDatasources": ["github-releases"],
-      "versioning": "regex:^v(?<major>\\d+)\\.(?<minor>\\d+)\\.(?<patch>\\d+)(?<compatibility>\\+k3s)(?<build>\\d+)$",
-      "matchPackagePatterns": ["k3s"]
     },
     // commit message topics
     {
@@ -132,23 +112,6 @@
       "matchUpdateTypes": ["patch"],
       "semanticCommitType": "fix",
       "semanticCommitScope": "helm"
-    },
-    {
-      "matchDatasources": ["galaxy", "galaxy-collection"],
-      "matchUpdateTypes": ["major"],
-      "commitMessagePrefix": "feat(ansible)!: "
-    },
-    {
-      "matchDatasources": ["galaxy", "galaxy-collection"],
-      "matchUpdateTypes": ["minor"],
-      "semanticCommitType": "feat",
-      "semanticCommitScope": "ansible"
-    },
-    {
-      "matchDatasources": ["galaxy", "galaxy-collection"],
-      "matchUpdateTypes": ["patch"],
-      "semanticCommitType": "fix",
-      "semanticCommitScope": "ansible"
     },
     {
       "matchDatasources": ["github-releases", "github-tags"],
@@ -206,10 +169,6 @@
       "addLabels": ["renovate/helm"]
     },
     {
-      "matchDatasources": ["galaxy", "galaxy-collection"],
-      "addLabels": ["renovate/ansible"]
-    },
-    {
       "matchDatasources": ["github-releases", "github-tags"],
       "addLabels": ["renovate/github-release"]
     },
@@ -225,7 +184,6 @@
       "description": "Process various other dependencies",
       "fileMatch": [
         "(^|/)addons/.+\\.ya?ml(\\.j2)?(\\.j2)?$",
-        "(^|/)ansible/.+\\.ya?ml(\\.j2)?(\\.j2)?$",
         "(^|/)kubernetes/.+\\.ya?ml(\\.j2)?(\\.j2)?$"
       ],
       "matchStrings": [
