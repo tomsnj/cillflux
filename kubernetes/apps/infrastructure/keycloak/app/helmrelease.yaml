@@ -14,7 +14,10 @@ spec:
         name: bjw-s-labs
         namespace: flux-system
       version: 4.6.2
-  interval: 12h
+  interval: 30m
+  timeout: 10m
+  upgrade:
+    timeout: 5m
   install:
     remediation:
       retries: 3
