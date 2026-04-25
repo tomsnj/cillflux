@@ -69,20 +69,7 @@ spec:
     dnsmasq:
       customDnsEntries:
         - "address=/gs-farm.net/10.0.10.1"
-    probes:
-      liveness:
-        enabled: true
-        initialDelaySeconds: 60
-        failureThreshold: 10
-        timeoutSeconds: 5
-        path: /admin/login
-      readiness:
-        enabled: true
-        initialDelaySeconds: 60
-        failureThreshold: 3
-        timeoutSeconds: 5
-        path: /admin/login
-        resources:
+    resources:
       requests:
         cpu: 50m
         memory: 128Mi
