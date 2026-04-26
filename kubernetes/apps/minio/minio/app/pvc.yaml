@@ -11,3 +11,4 @@ spec:
     requests:
       storage: 500Gi
   storageClassName: gsks0
+  volumeName: minio-nfs-legacy
