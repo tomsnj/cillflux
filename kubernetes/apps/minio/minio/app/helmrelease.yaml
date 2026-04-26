@@ -153,4 +153,7 @@ spec:
         type: secret
         name: minio-tls
         globalMounts:
-          - path: /root/.minio/certs
+          - path: /root/.minio/certs/public.crt
+            subPath: tls.crt
+          - path: /root/.minio/certs/private.key
+            subPath: tls.key
