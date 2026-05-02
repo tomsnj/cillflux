@@ -24,6 +24,7 @@ spec:
         repoName: repo1
         options:
          - --type=full
+         - --no-archive-check
       metadata:
         labels:
           app.kubernetes.io/name: ${APP}-local-crunchy-postgres-backup
