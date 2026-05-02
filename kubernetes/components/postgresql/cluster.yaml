@@ -86,6 +86,8 @@ spec:
         parameters:
           max_wal_size: 5GB
           synchronous_commit: 'on'
+          archive_mode: 'on'
+          archive_command: pgbackrest --stanza=db archive-push %p
         pg_hba:
           - hostnossl all all 127.0.0.1/8 md5 # port forwarding without ssl
           - hostssl all all all md5
