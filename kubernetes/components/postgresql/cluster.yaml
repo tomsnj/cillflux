@@ -134,12 +134,3 @@ spec:
         - ${APP}
       password: *password
 
-  monitoring:
-    pgmonitor:
-      exporter:
-        resources:
-          requests:
-            cpu: 10m
-            memory: 64Mi
-          limits:
-            memory: 512Mi
