@@ -1,0 +1,13 @@
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: grafana
+  namespace: observability
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: gsks0
+  resources:
+    requests:
+      storage: 10Gi
