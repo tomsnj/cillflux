@@ -168,6 +168,6 @@ spec:
             - *host
     persistence:
       enabled: true
-      storageClassName: local-hostpath
+      storageClassName: gsks0
     testFramework:
       enabled: false
