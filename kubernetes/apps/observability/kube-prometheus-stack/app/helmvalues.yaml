@@ -94,7 +94,7 @@ data:
         storageSpec:
           volumeClaimTemplate:
             spec:
-              storageClassName: local-hostpath
+              storageClassName: gsks0
               resources:
                 requests:
                   storage: 10Gi
