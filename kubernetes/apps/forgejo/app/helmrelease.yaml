@@ -24,7 +24,6 @@ spec:
         username: fjmaster
         # Password injected from SOPS secret via env
         existingSecret: forgejo-admin-secret
-        existingSecretKey: adminPassword
 
       # ── app.ini config ──────────────────────────────────────────────────────
       config:
