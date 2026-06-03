@@ -1,0 +1,146 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: forgejo
+  namespace: forgejo
+spec:
+  interval: 10m
+  chart:
+    spec:
+      chart: forgejo
+      version: ">=9.0.0 <10.0.0"
+      sourceRef:
+        kind: HelmRepository
+        name: forgejo
+        namespace: forgejo
+  values:
+    # ── Replica / deployment ──────────────────────────────────────────────────
+    replicaCount: 1
+
+    # ── Admin user ────────────────────────────────────────────────────────────
+    gitea:
+      admin:
+        username: fjmaster
+        # Password injected from SOPS secret via env
+        existingSecret: forgejo-admin-secret
+        existingSecretKey: adminPassword
+
+      # ── app.ini config ──────────────────────────────────────────────────────
+      config:
+        server:
+          DOMAIN: susan.gs-farm.net
+          ROOT_URL: https://susan.gs-farm.net
+          SSH_DOMAIN: susan.gs-farm.net
+          SSH_PORT: 22
+          HTTP_PORT: 3000
+
+        database:
+          DB_TYPE: postgres
+          # HOST/NAME/USER/PASSWD injected via additionalConfigFromEnvs below
+          SSL_MODE: disable
+
+        service:
+          DISABLE_REGISTRATION: true
+          REQUIRE_SIGNIN_VIEW: true
+          ALLOW_ONLY_INTERNAL_REGISTRATION: false
+
+        security:
+          INSTALL_LOCK: true
+
+        cache:
+          ADAPTER: memory
+
+        session:
+          PROVIDER: memory
+
+        queue:
+          TYPE: level
+
+      # Inject PGO-generated DB credentials as env vars → app.ini
+      additionalConfigFromEnvs:
+        - name: FORGEJO__DATABASE__HOST
+          valueFrom:
+            secretKeyRef:
+              name: postgres-forgejo-pguser-forgejo
+              key: host
+        - name: FORGEJO__DATABASE__NAME
+          valueFrom:
+            secretKeyRef:
+              name: postgres-forgejo-pguser-forgejo
+              key: dbname
+        - name: FORGEJO__DATABASE__USER
+          valueFrom:
+            secretKeyRef:
+              name: postgres-forgejo-pguser-forgejo
+              key: user
+        - name: FORGEJO__DATABASE__PASSWD
+          valueFrom:
+            secretKeyRef:
+              name: postgres-forgejo-pguser-forgejo
+              key: password
+
+    # ── Persistence ───────────────────────────────────────────────────────────
+    persistence:
+      enabled: true
+      storageClass: gsks1
+      size: 20Gi
+      accessModes:
+        - ReadWriteOnce
+
+    # ── Disable built-in DB subcharts ─────────────────────────────────────────
+    postgresql:
+      enabled: false
+    postgresql-ha:
+      enabled: false
+    redis-cluster:
+      enabled: false
+
+    # ── Services ──────────────────────────────────────────────────────────────
+    service:
+      http:
+        type: ClusterIP
+        port: 3000
+      ssh:
+        type: ClusterIP
+        port: 22
+
+    # ── Ingress (internal) ────────────────────────────────────────────────────
+    ingress:
+      enabled: true
+      className: nginx
+      annotations:
+        cert-manager.io/cluster-issuer: letsencrypt-production
+      hosts:
+        - host: susan-int.gs-farm.net
+          paths:
+            - path: /
+              pathType: Prefix
+      tls:
+        - secretName: forgejo-internal-tls
+          hosts:
+            - susan-int.gs-farm.net
+
+    # ── Extra ingress (external) ──────────────────────────────────────────────
+    extraIngress:
+      - metadata:
+          name: forgejo-external
+          annotations:
+            cert-manager.io/cluster-issuer: letsencrypt-production
+        spec:
+          ingressClassName: nginx-external
+          rules:
+            - host: susan.gs-farm.net
+              http:
+                paths:
+                  - path: /
+                    pathType: Prefix
+                    backend:
+                      service:
+                        name: forgejo-http
+                        port:
+                          number: 3000
+          tls:
+            - secretName: forgejo-external-tls
+              hosts:
+                - susan.gs-farm.net
