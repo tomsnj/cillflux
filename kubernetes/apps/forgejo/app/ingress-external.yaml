@@ -1,0 +1,25 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: forgejo-external
+  namespace: forgejo
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-production
+spec:
+  ingressClassName: external
+  rules:
+    - host: susan.gs-farm.net
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: forgejo-http
+                port:
+                  number: 3000
+  tls:
+    - secretName: forgejo-external-tls
+      hosts:
+        - susan.gs-farm.net
