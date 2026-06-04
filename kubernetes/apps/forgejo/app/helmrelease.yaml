@@ -57,6 +57,14 @@ spec:
         queue:
           TYPE: level
 
+        mailer:
+          ENABLED: true
+          PROTOCOL: smtp+starttls
+          SMTP_ADDR: smtp.gmail.com
+          SMTP_PORT: 587
+          FROM: "Forgejo <tfs05jhu@gmail.com>"
+          USER: tfs05jhu@gmail.com
+
       # Inject PGO-generated DB credentials as env vars → app.ini
       additionalConfigFromEnvs:
         - name: FORGEJO__DATABASE__HOST
@@ -79,6 +87,11 @@ spec:
             secretKeyRef:
               name: postgres-forgejo-pguser-forgejo
               key: password
+        - name: FORGEJO__MAILER__PASSWD
+          valueFrom:
+            secretKeyRef:
+              name: forgejo-admin-secret
+              key: gmailAppPassword
 
     # ── Persistence ───────────────────────────────────────────────────────────
     persistence:
