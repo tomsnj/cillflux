@@ -55,7 +55,7 @@ spec:
           PROVIDER: memory
 
         queue:
-          TYPE: level
+          TYPE: memory
 
         mailer:
           ENABLED: true
