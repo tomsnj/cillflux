@@ -41,6 +41,9 @@
       '/(^|/)kustomization\\.ya?ml(\\.j2)?$/',
     ],
   },
+  ansible: {
+    enabled: false,
+  },
   commitMessageTopic: '{{depName}}',
   commitMessageExtra: 'to {{newVersion}}',
   commitMessageSuffix: '',
