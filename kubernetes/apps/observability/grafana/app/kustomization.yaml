@@ -5,3 +5,4 @@ resources:
   - ./secret.sops.yaml
   - ./helmrelease.yaml
   - ./pvc.yaml
+  - ./grafana-dashboard-backup-health.yaml
