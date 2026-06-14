@@ -38,10 +38,10 @@ data:
                 "lastNotNull"
               ]
             },
-            "orientation": "auto",
-            "textMode": "auto",
             "colorMode": "background",
-            "graphMode": "none"
+            "graphMode": "none",
+            "textMode": "auto",
+            "orientation": "auto"
           },
           "fieldConfig": {
             "defaults": {
@@ -61,15 +61,14 @@ data:
                   }
                 ]
               },
-              "unit": "short",
-              "mappings": []
+              "unit": "short"
             }
           },
           "targets": [
             {
               "expr": "count(backup_success{job=\"storage1-node-exporter\"} == 1)",
-              "legendFormat": "Healthy",
-              "refId": "A"
+              "refId": "A",
+              "legendFormat": "Healthy"
             }
           ]
         },
@@ -89,10 +88,10 @@ data:
                 "lastNotNull"
               ]
             },
-            "orientation": "auto",
-            "textMode": "auto",
             "colorMode": "background",
-            "graphMode": "none"
+            "graphMode": "none",
+            "textMode": "auto",
+            "orientation": "auto"
           },
           "fieldConfig": {
             "defaults": {
@@ -112,15 +111,14 @@ data:
                   }
                 ]
               },
-              "unit": "short",
-              "mappings": []
+              "unit": "short"
             }
           },
           "targets": [
             {
               "expr": "count(backup_success{job=\"storage1-node-exporter\"} == 0)",
-              "legendFormat": "Failing",
-              "refId": "A"
+              "refId": "A",
+              "legendFormat": "Failing"
             }
           ]
         },
@@ -135,12 +133,6 @@ data:
             "h": 8
           },
           "options": {
-            "sortBy": [
-              {
-                "displayName": "Job",
-                "desc": false
-              }
-            ],
             "footer": {
               "show": false
             }
@@ -156,9 +148,13 @@ data:
               {
                 "matcher": {
                   "id": "byName",
-                  "options": "Status"
+                  "options": "Value #A"
                 },
                 "properties": [
+                  {
+                    "id": "displayName",
+                    "value": "Status"
+                  },
                   {
                     "id": "custom.displayMode",
                     "value": "color-background"
@@ -186,9 +182,13 @@ data:
               {
                 "matcher": {
                   "id": "byName",
-                  "options": "Days Since Backup"
+                  "options": "Value #B"
                 },
                 "properties": [
+                  {
+                    "id": "displayName",
+                    "value": "Days Since Backup"
+                  },
                   {
                     "id": "custom.displayMode",
                     "value": "color-background"
@@ -220,6 +220,54 @@ data:
                     }
                   }
                 ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "backup_job"
+                },
+                "properties": [
+                  {
+                    "id": "displayName",
+                    "value": "Job"
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "job"
+                },
+                "properties": [
+                  {
+                    "id": "custom.hidden",
+                    "value": true
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "instance"
+                },
+                "properties": [
+                  {
+                    "id": "custom.hidden",
+                    "value": true
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Time"
+                },
+                "properties": [
+                  {
+                    "id": "custom.hidden",
+                    "value": true
+                  }
+                ]
               }
             ]
           },
@@ -227,38 +275,22 @@ data:
             {
               "id": "merge",
               "options": {}
-            },
-            {
-              "id": "organize",
-              "options": {
-                "renameByName": {
-                  "backup_job": "Job",
-                  "Value #A": "Status",
-                  "Value #B": "Days Since Backup"
-                },
-                "excludeByName": {
-                  "Time": true,
-                  "instance": true,
-                  "job": true,
-                  "__name__": true
-                }
-              }
             }
           ],
           "targets": [
             {
               "expr": "backup_success{job=\"storage1-node-exporter\"}",
-              "legendFormat": "{{backup_job}}",
               "refId": "A",
               "instant": true,
-              "format": "table"
+              "format": "table",
+              "legendFormat": ""
             },
             {
               "expr": "backup_last_success_days{job=\"storage1-node-exporter\"}",
-              "legendFormat": "{{backup_job}}",
               "refId": "B",
               "instant": true,
-              "format": "table"
+              "format": "table",
+              "legendFormat": ""
             }
           ]
         },
@@ -280,9 +312,7 @@ data:
             },
             "orientation": "horizontal",
             "displayMode": "gradient",
-            "showUnfilled": true,
-            "minVizWidth": 0,
-            "minVizHeight": 10
+            "showUnfilled": true
           },
           "fieldConfig": {
             "defaults": {
@@ -314,9 +344,9 @@ data:
           "targets": [
             {
               "expr": "backup_last_success_days{job=\"storage1-node-exporter\"}",
-              "legendFormat": "{{backup_job}}",
               "refId": "A",
-              "instant": true
+              "instant": true,
+              "legendFormat": "{{backup_job}}"
             }
           ]
         }
