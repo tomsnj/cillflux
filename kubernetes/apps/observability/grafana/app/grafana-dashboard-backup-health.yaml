@@ -273,8 +273,32 @@ data:
           },
           "transformations": [
             {
-              "id": "merge",
-              "options": {}
+              "id": "joinByField",
+              "options": {
+                "byField": "backup_job",
+                "mode": "outer"
+              }
+            },
+            {
+              "id": "organize",
+              "options": {
+                "excludeByName": {
+                  "Time": true,
+                  "Time 1": true,
+                  "Time 2": true,
+                  "job": true,
+                  "job 1": true,
+                  "job 2": true,
+                  "instance": true,
+                  "instance 1": true,
+                  "instance 2": true
+                },
+                "renameByName": {
+                  "backup_job": "Job",
+                  "Value #A": "Status",
+                  "Value #B": "Days Since Backup"
+                }
+              }
             }
           ],
           "targets": [
