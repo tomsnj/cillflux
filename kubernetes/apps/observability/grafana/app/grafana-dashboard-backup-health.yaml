@@ -275,7 +275,7 @@ data:
             {
               "id": "joinByField",
               "options": {
-                "byField": "backup_job",
+                "byField": "exported_job",
                 "mode": "outer"
               }
             },
@@ -283,6 +283,9 @@ data:
               "id": "organize",
               "options": {
                 "excludeByName": {
+                  "__name__": true,
+                  "__name__ 1": true,
+                  "__name__ 2": true,
                   "Time": true,
                   "Time 1": true,
                   "Time 2": true,
@@ -294,7 +297,7 @@ data:
                   "instance 2": true
                 },
                 "renameByName": {
-                  "backup_job": "Job",
+                  "exported_job": "Job",
                   "Value #A": "Status",
                   "Value #B": "Days Since Backup"
                 }
