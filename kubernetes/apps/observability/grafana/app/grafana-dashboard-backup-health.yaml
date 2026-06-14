@@ -275,29 +275,23 @@ data:
             {
               "id": "joinByField",
               "options": {
-                "byField": "exported_job",
-                "mode": "outer"
+                "byField": "backup_job",
+                "mode": "outerTabular"
               }
             },
             {
               "id": "organize",
               "options": {
                 "excludeByName": {
-                  "__name__": true,
-                  "__name__ 1": true,
-                  "__name__ 2": true,
-                  "Time": true,
                   "Time 1": true,
                   "Time 2": true,
-                  "job": true,
-                  "job 1": true,
-                  "job 2": true,
-                  "instance": true,
                   "instance 1": true,
-                  "instance 2": true
+                  "instance 2": true,
+                  "job 1": true,
+                  "job 2": true
                 },
                 "renameByName": {
-                  "exported_job": "Job",
+                  "backup_job": "Job",
                   "Value #A": "Status",
                   "Value #B": "Days Since Backup"
                 }
