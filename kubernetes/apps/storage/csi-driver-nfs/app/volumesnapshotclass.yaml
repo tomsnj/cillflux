@@ -10,6 +10,3 @@ deletionPolicy: Delete
 parameters:
   server: 10.0.0.169
   share: /mnt/storage1/home_nfs
-  csi.storage.k8s.io/volumesnapshot/name: $${volumesnapshot.name}
-  csi.storage.k8s.io/volumesnapshot/namespace: $${volumesnapshot.namespace}
-  csi.storage.k8s.io/volumesnapshotcontent/name: $${volumesnapshotcontent.name}
