@@ -1,0 +1,42 @@
+---
+apiVersion: volsync.backube/v1alpha1
+kind: ReplicationSource
+metadata:
+  name: vaultwarden-config
+  namespace: vaultwarden
+spec:
+  sourcePVC: vaultwarden-config
+  trigger:
+    schedule: "0 3 * * *"
+  restic:
+    copyMethod: Snapshot
+    pruneIntervalDays: 7
+    repository: volsync-minio-secret
+    volumeSnapshotClassName: nfs-csi-snapclass
+    storageClassName: gsks0
+    cacheStorageClassName: local-hostpath
+    retain:
+      daily: 7
+      weekly: 4
+      monthly: 3
+---
+apiVersion: volsync.backube/v1alpha1
+kind: ReplicationSource
+metadata:
+  name: vaultwarden-data
+  namespace: vaultwarden
+spec:
+  sourcePVC: vaultwarden-data
+  trigger:
+    schedule: "0 3 * * *"
+  restic:
+    copyMethod: Snapshot
+    pruneIntervalDays: 7
+    repository: volsync-minio-secret
+    volumeSnapshotClassName: nfs-csi-snapclass
+    storageClassName: gsks0
+    cacheStorageClassName: local-hostpath
+    retain:
+      daily: 7
+      weekly: 4
+      monthly: 3
