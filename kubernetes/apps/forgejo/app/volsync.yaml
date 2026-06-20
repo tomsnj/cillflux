@@ -1,0 +1,63 @@
+---
+apiVersion: volsync.backube/v1alpha1
+kind: ReplicationSource
+metadata:
+  name: gitea-shared-storage
+  namespace: forgejo
+spec:
+  sourcePVC: gitea-shared-storage
+  trigger:
+    schedule: "0 3 * * *"
+  restic:
+    copyMethod: Snapshot
+    pruneIntervalDays: 7
+    repository: volsync-minio-secret
+    volumeSnapshotClassName: nfs-csi-snapclass
+    storageClassName: gsks1
+    cacheStorageClassName: local-hostpath
+    retain:
+      daily: 7
+      weekly: 4
+      monthly: 3
+---
+apiVersion: volsync.backube/v1alpha1
+kind: ReplicationSource
+metadata:
+  name: postgres-forgejo-pgdata
+  namespace: forgejo
+spec:
+  sourcePVC: postgres-forgejo-instance1-wz59-pgdata
+  trigger:
+    schedule: "0 3 * * *"
+  restic:
+    copyMethod: Snapshot
+    pruneIntervalDays: 7
+    repository: volsync-minio-secret
+    volumeSnapshotClassName: nfs-csi-snapclass
+    storageClassName: gsks1
+    cacheStorageClassName: local-hostpath
+    retain:
+      daily: 7
+      weekly: 4
+      monthly: 3
+---
+apiVersion: volsync.backube/v1alpha1
+kind: ReplicationSource
+metadata:
+  name: postgres-forgejo-repo1
+  namespace: forgejo
+spec:
+  sourcePVC: postgres-forgejo-repo1
+  trigger:
+    schedule: "0 3 * * *"
+  restic:
+    copyMethod: Snapshot
+    pruneIntervalDays: 7
+    repository: volsync-minio-secret
+    volumeSnapshotClassName: nfs-csi-snapclass
+    storageClassName: gsks1
+    cacheStorageClassName: local-hostpath
+    retain:
+      daily: 7
+      weekly: 4
+      monthly: 3
