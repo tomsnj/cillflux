@@ -15,9 +15,6 @@ spec:
     volumeSnapshotClassName: nfs-csi-snapclass
     storageClassName: gsks0
     cacheStorageClassName: local-hostpath
-    customCA:
-      secretName: minio-ca
-      key: ca.crt
     retain:
       daily: 7
       weekly: 4
@@ -39,9 +36,6 @@ spec:
     volumeSnapshotClassName: nfs-csi-snapclass
     storageClassName: gsks0
     cacheStorageClassName: local-hostpath
-    customCA:
-      secretName: minio-ca
-      key: ca.crt
     retain:
       daily: 7
       weekly: 4
