@@ -9,10 +9,9 @@ spec:
   trigger:
     schedule: "0 3 * * *"
   restic:
-    copyMethod: Snapshot
+    copyMethod: Direct
     pruneIntervalDays: 7
     repository: volsync-minio-secret
-    volumeSnapshotClassName: nfs-csi-snapclass
     storageClassName: gsks1
     cacheStorageClassName: local-hostpath
     retain:
@@ -30,10 +29,9 @@ spec:
   trigger:
     schedule: "0 3 * * *"
   restic:
-    copyMethod: Snapshot
+    copyMethod: Direct
     pruneIntervalDays: 7
     repository: volsync-minio-secret
-    volumeSnapshotClassName: nfs-csi-snapclass
     storageClassName: gsks1
     cacheStorageClassName: local-hostpath
     retain:
@@ -51,10 +49,9 @@ spec:
   trigger:
     schedule: "0 3 * * *"
   restic:
-    copyMethod: Snapshot
+    copyMethod: Direct
     pruneIntervalDays: 7
     repository: volsync-minio-secret
-    volumeSnapshotClassName: nfs-csi-snapclass
     storageClassName: gsks1
     cacheStorageClassName: local-hostpath
     retain:
