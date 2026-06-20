@@ -1,0 +1,21 @@
+---
+apiVersion: volsync.backube/v1alpha1
+kind: ReplicationSource
+metadata:
+  name: pihole
+  namespace: pihole
+spec:
+  sourcePVC: pihole
+  trigger:
+    schedule: "0 3 * * *"
+  restic:
+    copyMethod: Snapshot
+    pruneIntervalDays: 7
+    repository: volsync-minio-secret
+    volumeSnapshotClassName: nfs-csi-snapclass
+    storageClassName: gsks0
+    cacheStorageClassName: local-hostpath
+    retain:
+      daily: 7
+      weekly: 4
+      monthly: 3
