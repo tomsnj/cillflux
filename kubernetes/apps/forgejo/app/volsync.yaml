@@ -11,7 +11,7 @@ spec:
   restic:
     copyMethod: Direct
     pruneIntervalDays: 7
-    repository: volsync-minio-secret
+    repository: volsync-gitea-shared-storage
     storageClassName: gsks1
     cacheStorageClassName: local-hostpath
     retain:
@@ -31,7 +31,7 @@ spec:
   restic:
     copyMethod: Direct
     pruneIntervalDays: 7
-    repository: volsync-minio-secret
+    repository: volsync-postgres-forgejo-pgdata
     storageClassName: gsks1
     cacheStorageClassName: local-hostpath
     retain:
@@ -51,7 +51,7 @@ spec:
   restic:
     copyMethod: Direct
     pruneIntervalDays: 7
-    repository: volsync-minio-secret
+    repository: volsync-postgres-forgejo-repo1
     storageClassName: gsks1
     cacheStorageClassName: local-hostpath
     retain:
