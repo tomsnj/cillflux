@@ -7,3 +7,4 @@ resources:
   - ./secret.sops.yaml
   - ./volsync-secret.sops.yaml
   - ./volsync.yaml
+  - ./minio-ca.yaml
