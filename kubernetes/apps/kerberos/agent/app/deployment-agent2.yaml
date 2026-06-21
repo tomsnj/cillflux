@@ -20,7 +20,7 @@ spec:
             claimName: kerberos-data
       initContainers:
         - name: download-config
-          image: kerberos/agent:v3.7.2
+          image: kerberos/agent:v3.7.4
           volumeMounts:
             - name: kerberos-data
               mountPath: /home/agent/data/config
@@ -51,7 +51,7 @@ spec:
                 chmod 666 /home/agent/data/config/config.json
       containers:
         - name: agent2
-          image: kerberos/agent:v3.7.2
+          image: kerberos/agent:v3.7.4
           volumeMounts:
             - name: kerberos-data
               mountPath: /home/agent/data/config
