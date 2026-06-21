@@ -8,35 +8,32 @@ spec:
   selector:
     matchLabels:
       app: agent2
-
   replicas: 1
   template:
     metadata:
       labels:
         app: agent2
     spec:
-
       volumes:
         - name: kerberos-data
           persistentVolumeClaim:
             claimName: kerberos-data
-
       initContainers:
         - name: download-config
           image: kerberos/agent:v3.7.2
           volumeMounts:
             - name: kerberos-data
               mountPath: /home/agent/data/config
-              subPath: config
+              subPath: barnNorth/config
             - name: kerberos-data
               mountPath: /home/agent/data/recordings
-              subPath: recordings
+              subPath: barnNorth/recordings
             - name: kerberos-data
               mountPath: /home/agent/data/snapshots
-              subPath: snapshots
+              subPath: barnNorth/snapshots
             - name: kerberos-data
               mountPath: /home/agent/data/cloud
-              subPath: cloud
+              subPath: barnNorth/cloud
           securityContext:
             runAsUser: 0
             allowPrivlegeEscalation: false
@@ -52,23 +49,22 @@ spec:
                 chmod 777 /home/agent/data/snapshots &&
                 chmod 777 /home/agent/data/cloud &&
                 chmod 666 /home/agent/data/config/config.json
-
       containers:
         - name: agent2
-          image: kerberos/agent:v3.7.2 
+          image: kerberos/agent:v3.7.2
           volumeMounts:
             - name: kerberos-data
               mountPath: /home/agent/data/config
-              subPath: config
+              subPath: barnNorth/config
             - name: kerberos-data
               mountPath: /home/agent/data/recordings
-              subPath: recordings
+              subPath: barnNorth/recordings
             - name: kerberos-data
               mountPath: /home/agent/data/snapshots
-              subPath: snapshots
+              subPath: barnNorth/snapshots
             - name: kerberos-data
               mountPath: /home/agent/data/cloud
-              subPath: cloud
+              subPath: barnNorth/cloud
           ports:
             - containerPort: 80
               protocol: TCP
@@ -84,7 +80,7 @@ spec:
                 name: agent2
           env:
             - name: AGENT_NAME
-              value: agent2
+              value: barnNorth
             - name: AGENT_CAPTURE_IPCAMERA_ONVIF
               value: onvif
             - name: AGENT_CAPTURE_IPCAMERA_ONVIF_XADDR
@@ -101,7 +97,6 @@ spec:
               value: turn:10.10.0.9:8443
             - name: AGENT_CAPTURE_CONTINUOUS
               value: "true"
-            # find full list of environment variables here: https://github.com/kerberos-io/agent#override-with-environment-variables
 ---
 apiVersion: v1
 kind: Service
@@ -110,7 +105,6 @@ metadata:
   labels:
     name: agent2-svc
 spec:
-  #type: LoadBalancer
   ports:
     - port: 80
       targetPort: 80
@@ -121,12 +115,8 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: agent2-ingress
-  labels:
-    name: agent2-ingress
   annotations:
     external-dns.alpha.kubernetes.io/target: external.gs-farm.net
-    kubernetes.io/ingress.class: external
-    kubernetes.io/tls-acme: "true"
     nginx.ingress.kubernetes.io/ssl-redirect: "true"
     cert-manager.io/cluster-issuer: "letsencrypt-production"
 spec:
@@ -136,17 +126,16 @@ spec:
         - "agent2.gs-farm.net"
       secretName: agent2-secret
   rules:
-  - host: agent2.gs-farm.net
-    http:
-      paths:
-      - pathType: Prefix
-        path: "/"
-        backend:
-          service:
-            name: agent2-svc
-            port: 
-              number: 80
-   
+    - host: agent2.gs-farm.net
+      http:
+        paths:
+          - pathType: Prefix
+            path: "/"
+            backend:
+              service:
+                name: agent2-svc
+                port:
+                  number: 80
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress

@@ -1,0 +1,34 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+    name: agent3
+    namespace: kerberos
+data:
+    AGENT_CAPTURE_IPCAMERA_ONVIF_USERNAME: ENC[AES256_GCM,data:XtPRmH3L,iv:AmFfTjyQhoCjLHGBMLVndpaqg4ch1yI3La4oL68O7Xc=,tag:tJTwd2iwiXLzAzVrIIdQiQ==,type:str]
+    AGENT_CAPTURE_IPCAMERA_ONVIF_PASSWORD: ENC[AES256_GCM,data:tUSlf+nD0BPpEg==,iv:gNidXqpQAYtEt6ev949uA1KLsECjaUEL8gyr3W4581g=,tag:dZeCnBWFiHw68wnjpOR2bg==,type:str]
+    AGENT_CAPTURE_IPCAMERA_RTSP: ENC[AES256_GCM,data:RHGLl8+lz2PhlEfTIVLdZhxKXPVcr5JqGJuTfWFIxPVQ900qFBpKwgOBpX8bVVIpy445jwkxXIcI,iv:zdtMleeH0YyLspb3bR49NGHZjupWWzVMFS6xatWMUzo=,tag:QZsLoqpgLD6uUPb3nt4eZw==,type:str]
+    AGENT_CAPTURE_IPCAMERA_SUB_RTSP: ENC[AES256_GCM,data:tjBSd6RVEvYO2r/xbDoxEOO4XSd9UeaOv1rXU3cveY0GPWvEfbj8wzhbfHhXhKxUi/uuMktf+wOa,iv:AH80t5J6kYyfcq6GyNHBRrwUX/0MrPSICukKwtfaLkU=,tag:q1OigPv2rxpfoz2EuKcerg==,type:str]
+    AGENT_MQTT_PASSWORD: ENC[AES256_GCM,data:bqsqUsLFvQHqso3RWA==,iv:ZhKQDLFYfpAfayIFi+uV9mmylsKXIJYCA7U9J4Ap1tE=,tag:k/CYcPFR9rCcT7F8RhfdcA==,type:str]
+    AGENT_PASSWORD: ENC[AES256_GCM,data:L/+Ci46Ku54a/4VsFiGtzRJRrMOvpFUlDroEuUcmoe3gJJGaNQUYBw==,iv:UOtqTl4wskkelunP6fNbzUynfWPLshkWvf1hvn4T3oU=,tag:VvNTyvtUCMCixgs5kXGKsw==,type:str]
+    AGENT_TURN_PASSWORD: ENC[AES256_GCM,data:mpNXXKcSa5xzMUk3yg==,iv:1ucGk33gLu6mThVsLFCZw/KMCYKUFgRJzdPNRiP3VhM=,tag:7WfQJAV/EN6mTm/f3K+MFQ==,type:str]
+    AGENT_USERNAME: ENC[AES256_GCM,data:9xQsT1WD,iv:JIbOOavMN762IgoMmolFJ9bsmMmSb99FvKSdsvL/t2c=,tag:r4tuBf+qbMufPV8aOOVjkw==,type:str]
+sops:
+    kms: []
+    gcp_kms: []
+    azure_kv: []
+    hc_vault: []
+    age:
+        - recipient: age1puse8jhtwqw87w9qr9j4g8dajqccn0899vpyc0wnn9y2e6wz0cms2g895x
+          enc: |
+            -----BEGIN AGE ENCRYPTED FILE-----
+            YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSB6L1VkT3V1Mm0xMEM4cWRT
+            am4vRHlKNFExUHBrR1VtaGIvYThiZG5MMDJ3CiszeE00Zkp0UDUrSUFROW5vWFlt
+            SFFMZlRBQnNZUWFzL2x5ejV3ZEZweU0KLS0tIG5HcGZmaW5YR2RvL0x6Z0V1MTc0
+            SjFOSGRraWRiUEtxZEdHaE5SczF0R2cKXwJuiE4X7UAWdwY4niDBKV7ypo6T7C5I
+            rr8ZaxjaZLyGvuLKYe94uEEyxvaZ0Ty37FOlCBfeQ54zrylD5lKj2A==
+            -----END AGE ENCRYPTED FILE-----
+    lastmodified: "2026-06-21T00:34:07Z"
+    mac: ENC[AES256_GCM,data:ZbKc+1uOXbwgIvDFEzPS4uC2PqCsf4cMLeV068YDYAH3peHwQAhBWjAcQqwjD9El8oBxrkHyTfi8TzKKzWkj7UsyN3r6HWpD/Lq/g9+/gjwMVCPPa2UjMY5eh+VB5gUXSaSjW5u0xLRWpnIzSRU7j+8p2j9+GIFPt199luLyio8=,iv:q40cMLyu+5PdIY+6qFUBVaMnxr2dxVu08H60XI6c3GM=,tag:hXWNCbqh2MKYtELqRqmM5Q==,type:str]
+    pgp: []
+    encrypted_regex: ^(data|stringData)$
+    version: 3.9.4

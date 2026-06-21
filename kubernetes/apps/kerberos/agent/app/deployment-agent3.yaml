@@ -1,42 +1,39 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: agent
+  name: agent3
   labels:
-    name: agent
+    name: agent3
 spec:
   selector:
     matchLabels:
-      app: agent
-
+      app: agent3
   replicas: 1
   template:
     metadata:
       labels:
-        app: agent
+        app: agent3
     spec:
-
       volumes:
         - name: kerberos-data
           persistentVolumeClaim:
             claimName: kerberos-data
-
       initContainers:
         - name: download-config
           image: kerberos/agent:v3.7.2
           volumeMounts:
             - name: kerberos-data
               mountPath: /home/agent/data/config
-              subPath: config
+              subPath: backdoor/config
             - name: kerberos-data
               mountPath: /home/agent/data/recordings
-              subPath: recordings
+              subPath: backdoor/recordings
             - name: kerberos-data
               mountPath: /home/agent/data/snapshots
-              subPath: snapshots
+              subPath: backdoor/snapshots
             - name: kerberos-data
               mountPath: /home/agent/data/cloud
-              subPath: cloud
+              subPath: backdoor/cloud
           securityContext:
             runAsUser: 0
             allowPrivlegeEscalation: false
@@ -52,23 +49,22 @@ spec:
                 chmod 777 /home/agent/data/snapshots &&
                 chmod 777 /home/agent/data/cloud &&
                 chmod 666 /home/agent/data/config/config.json
-
       containers:
-        - name: agent
-          image: kerberos/agent:v3.7.2 
+        - name: agent3
+          image: kerberos/agent:v3.7.2
           volumeMounts:
             - name: kerberos-data
               mountPath: /home/agent/data/config
-              subPath: config
+              subPath: backdoor/config
             - name: kerberos-data
               mountPath: /home/agent/data/recordings
-              subPath: recordings
+              subPath: backdoor/recordings
             - name: kerberos-data
               mountPath: /home/agent/data/snapshots
-              subPath: snapshots
+              subPath: backdoor/snapshots
             - name: kerberos-data
               mountPath: /home/agent/data/cloud
-              subPath: cloud
+              subPath: backdoor/cloud
           ports:
             - containerPort: 80
               protocol: TCP
@@ -81,14 +77,14 @@ spec:
               memory: 128Mi
           envFrom:
             - configMapRef:
-                name: agent
+                name: agent3
           env:
             - name: AGENT_NAME
-              value: agent
+              value: backdoor
             - name: AGENT_CAPTURE_IPCAMERA_ONVIF
               value: onvif
             - name: AGENT_CAPTURE_IPCAMERA_ONVIF_XADDR
-              value: 10.0.0.88:2020
+              value: 10.0.0.91:2020
             - name: AGENT_TIMEZONE
               value: "America/New_York"
             - name: AGENT_MQTT_USERNAME
@@ -101,57 +97,50 @@ spec:
               value: turn:10.10.0.9:8443
             - name: AGENT_CAPTURE_CONTINUOUS
               value: "true"
-            # find full list of environment variables here: https://github.com/kerberos-io/agent#override-with-environment-variables
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: agent-svc
+  name: agent3-svc
   labels:
-    name: agent-svc
+    name: agent3-svc
 spec:
-  #type: LoadBalancer
   ports:
     - port: 80
       targetPort: 80
   selector:
-    app: agent
+    app: agent3
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: agent-ingress
-  labels:
-    name: agent-ingress
+  name: agent3-ingress
   annotations:
     external-dns.alpha.kubernetes.io/target: external.gs-farm.net
-    kubernetes.io/ingress.class: external
-    kubernetes.io/tls-acme: "true"
     nginx.ingress.kubernetes.io/ssl-redirect: "true"
     cert-manager.io/cluster-issuer: "letsencrypt-production"
 spec:
   ingressClassName: external
   tls:
     - hosts:
-        - "agent1.gs-farm.net"
-      secretName: agent1-secret
+        - "agent3.gs-farm.net"
+      secretName: agent3-secret
   rules:
-  - host: agent1.gs-farm.net
-    http:
-      paths:
-      - pathType: Prefix
-        path: "/"
-        backend:
-          service:
-            name: agent-svc
-            port: 
-              number: 80
-   
+    - host: agent3.gs-farm.net
+      http:
+        paths:
+          - pathType: Prefix
+            path: "/"
+            backend:
+              service:
+                name: agent3-svc
+                port:
+                  number: 80
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: agent-internal-ingress
+  name: agent3-internal-ingress
   namespace: kerberos
   annotations:
     nginx.ingress.kubernetes.io/ssl-redirect: "true"
@@ -160,16 +149,16 @@ spec:
   ingressClassName: internal
   tls:
     - hosts:
-        - "agent1.gs-farm.net"
-      secretName: agent1-secret
+        - "agent3.gs-farm.net"
+      secretName: agent3-secret
   rules:
-    - host: agent1.gs-farm.net
+    - host: agent3.gs-farm.net
       http:
         paths:
           - pathType: Prefix
             path: "/"
             backend:
               service:
-                name: agent-svc
+                name: agent3-svc
                 port:
                   number: 80

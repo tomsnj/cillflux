@@ -1,0 +1,164 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: agent4
+  labels:
+    name: agent4
+spec:
+  selector:
+    matchLabels:
+      app: agent4
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: agent4
+    spec:
+      volumes:
+        - name: kerberos-data
+          persistentVolumeClaim:
+            claimName: kerberos-data
+      initContainers:
+        - name: download-config
+          image: kerberos/agent:v3.7.2
+          volumeMounts:
+            - name: kerberos-data
+              mountPath: /home/agent/data/config
+              subPath: barnCharmer/config
+            - name: kerberos-data
+              mountPath: /home/agent/data/recordings
+              subPath: barnCharmer/recordings
+            - name: kerberos-data
+              mountPath: /home/agent/data/snapshots
+              subPath: barnCharmer/snapshots
+            - name: kerberos-data
+              mountPath: /home/agent/data/cloud
+              subPath: barnCharmer/cloud
+          securityContext:
+            runAsUser: 0
+            allowPrivlegeEscalation: false
+          command: ["/bin/sh"]
+          args:
+            - -c
+            - >-
+                cp /home/agent/data/config.template.json /home/agent/data/config/config.json &&
+                whoami &&
+                ls -al /home/agent/data &&
+                ls -al /home/agent/data/config &&
+                chmod 777 /home/agent/data/recordings &&
+                chmod 777 /home/agent/data/snapshots &&
+                chmod 777 /home/agent/data/cloud &&
+                chmod 666 /home/agent/data/config/config.json
+      containers:
+        - name: agent4
+          image: kerberos/agent:v3.7.2
+          volumeMounts:
+            - name: kerberos-data
+              mountPath: /home/agent/data/config
+              subPath: barnCharmer/config
+            - name: kerberos-data
+              mountPath: /home/agent/data/recordings
+              subPath: barnCharmer/recordings
+            - name: kerberos-data
+              mountPath: /home/agent/data/snapshots
+              subPath: barnCharmer/snapshots
+            - name: kerberos-data
+              mountPath: /home/agent/data/cloud
+              subPath: barnCharmer/cloud
+          ports:
+            - containerPort: 80
+              protocol: TCP
+          resources:
+            limits:
+              cpu: 1000m
+              memory: 512Mi
+            requests:
+              cpu: 120m
+              memory: 128Mi
+          envFrom:
+            - configMapRef:
+                name: agent4
+          env:
+            - name: AGENT_NAME
+              value: barnCharmer
+            - name: AGENT_CAPTURE_IPCAMERA_ONVIF
+              value: onvif
+            - name: AGENT_CAPTURE_IPCAMERA_ONVIF_XADDR
+              value: 10.0.0.92:2020
+            - name: AGENT_TIMEZONE
+              value: "America/New_York"
+            - name: AGENT_MQTT_USERNAME
+              value: vernemq
+            - name: AGENT_MQTT_URI
+              value: tcp://vernemq-0.vernemq-headless.vernemq.svc.cluster.local:1883
+            - name: AGENT_STUN_URI
+              value: stun:10.10.0.9:8443
+            - name: AGENT_TURN_URI
+              value: turn:10.10.0.9:8443
+            - name: AGENT_CAPTURE_CONTINUOUS
+              value: "true"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: agent4-svc
+  labels:
+    name: agent4-svc
+spec:
+  ports:
+    - port: 80
+      targetPort: 80
+  selector:
+    app: agent4
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: agent4-ingress
+  annotations:
+    external-dns.alpha.kubernetes.io/target: external.gs-farm.net
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    cert-manager.io/cluster-issuer: "letsencrypt-production"
+spec:
+  ingressClassName: external
+  tls:
+    - hosts:
+        - "agent4.gs-farm.net"
+      secretName: agent4-secret
+  rules:
+    - host: agent4.gs-farm.net
+      http:
+        paths:
+          - pathType: Prefix
+            path: "/"
+            backend:
+              service:
+                name: agent4-svc
+                port:
+                  number: 80
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: agent4-internal-ingress
+  namespace: kerberos
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    cert-manager.io/cluster-issuer: "letsencrypt-production"
+spec:
+  ingressClassName: internal
+  tls:
+    - hosts:
+        - "agent4.gs-farm.net"
+      secretName: agent4-secret
+  rules:
+    - host: agent4.gs-farm.net
+      http:
+        paths:
+          - pathType: Prefix
+            path: "/"
+            backend:
+              service:
+                name: agent4-svc
+                port:
+                  number: 80
