@@ -11,4 +11,3 @@ resources:
   - ./agent3.config.sops.yaml
   - ./agent4.config.sops.yaml
   - ./minio-secret.sops.yaml
-  - ./minio-mirror-cronjob.yaml
