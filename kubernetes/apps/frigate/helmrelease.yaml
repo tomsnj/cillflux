@@ -29,11 +29,19 @@ spec:
       repository: ghcr.io/blakeblackshear/frigate
       tag: stable
 
-    # Inject RTSP credentials from SOPS secret as env vars
-    # Frigate resolves {FRIGATE_*} placeholders in config.yaml at runtime
-    envFrom:
-      - secretRef:
-          name: frigate-secret
+    # Explicit env var injection — envFrom/secretRef is unreliable for go2rtc substitution.
+    # Explicit entries ensure FRIGATE_* vars are visible to go2rtc's config preprocessor.
+    env:
+      FRIGATE_RTSP_PASSWORD:
+        valueFrom:
+          secretKeyRef:
+            name: frigate-secret
+            key: FRIGATE_RTSP_PASSWORD
+      FRIGATE_ADMIN_PASSWORD:
+        valueFrom:
+          secretKeyRef:
+            name: frigate-secret
+            key: FRIGATE_ADMIN_PASSWORD
 
     # Frigate config — cameras connect via go2rtc restream for efficiency.
     # go2rtc opens one connection per camera; record + detect + live view
