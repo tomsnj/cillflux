@@ -29,19 +29,11 @@ spec:
       repository: ghcr.io/blakeblackshear/frigate
       tag: stable
 
-    # Explicit env var injection — envFrom/secretRef is unreliable for go2rtc substitution.
-    # Explicit entries ensure FRIGATE_* vars are visible to go2rtc's config preprocessor.
-    env:
-      FRIGATE_RTSP_PASSWORD:
-        valueFrom:
-          secretKeyRef:
-            name: frigate-secret
-            key: FRIGATE_RTSP_PASSWORD
-      FRIGATE_ADMIN_PASSWORD:
-        valueFrom:
-          secretKeyRef:
-            name: frigate-secret
-            key: FRIGATE_ADMIN_PASSWORD
+    # envFrom mounts all secret keys as env vars.
+    # go2rtc substitution works with FRIGATE_* vars injected this way.
+    envFrom:
+      - secretRef:
+          name: frigate-secret
 
     # Frigate config — cameras connect via go2rtc restream for efficiency.
     # go2rtc opens one connection per camera; record + detect + live view
