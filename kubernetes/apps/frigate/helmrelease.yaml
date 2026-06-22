@@ -81,18 +81,19 @@ spec:
           type: cpu
           num_threads: 2
 
-      # Global record defaults — all recordings retained, continuous.
-      # Mode: all = record everything, not just motion events.
-      # This gives you the "what was on the other cameras at that moment" use case.
+      # Global record defaults — continuous recording for 7 days.
+      # continuous.days keeps all footage regardless of motion/detection,
+      # giving you the "what was on the other cameras at that moment" use case.
       record:
         enabled: true
-        retain:
+        continuous:
           days: 7
-          mode: all
-        events:
+        alerts:
           retain:
-            default: 30
-            mode: motion
+            days: 30
+        detections:
+          retain:
+            days: 30
 
       snapshots:
         enabled: true
