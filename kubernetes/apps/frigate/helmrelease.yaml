@@ -49,22 +49,22 @@ spec:
       go2rtc:
         streams:
           barnSouth:
-            - rtsp://{FRIGATE_BARNSOUTH_USER}:{FRIGATE_RTSP_PASSWORD}@10.0.0.88:554/stream1
+            - rtsp://gsfarmTapoBarn1:{FRIGATE_RTSP_PASSWORD}@10.0.0.88:554/stream1
           barnNorth:
-            - rtsp://{FRIGATE_BARNNORTH_USER}:{FRIGATE_RTSP_PASSWORD}@10.0.0.97:554/stream1
+            - rtsp://gsfarmTapoBarn2:{FRIGATE_RTSP_PASSWORD}@10.0.0.97:554/stream1
           backdoor:
-            - rtsp://{FRIGATE_BACKDOOR_USER}:{FRIGATE_RTSP_PASSWORD}@10.0.0.91:554/stream1
+            - rtsp://gsfarm:{FRIGATE_RTSP_PASSWORD}@10.0.0.91:554/stream1
           barnCharmer:
-            - rtsp://{FRIGATE_BARNCHARMER_USER}:{FRIGATE_RTSP_PASSWORD}@10.0.0.92:554/stream1
+            - rtsp://gsfarm:{FRIGATE_RTSP_PASSWORD}@10.0.0.92:554/stream1
           # Low-res substreams for detect (less CPU than decoding the full stream)
           barnSouth_sub:
-            - rtsp://{FRIGATE_BARNSOUTH_USER}:{FRIGATE_RTSP_PASSWORD}@10.0.0.88:554/stream2
+            - rtsp://gsfarmTapoBarn1:{FRIGATE_RTSP_PASSWORD}@10.0.0.88:554/stream2
           barnNorth_sub:
-            - rtsp://{FRIGATE_BARNNORTH_USER}:{FRIGATE_RTSP_PASSWORD}@10.0.0.97:554/stream2
+            - rtsp://gsfarmTapoBarn2:{FRIGATE_RTSP_PASSWORD}@10.0.0.97:554/stream2
           backdoor_sub:
-            - rtsp://{FRIGATE_BACKDOOR_USER}:{FRIGATE_RTSP_PASSWORD}@10.0.0.91:554/stream2
+            - rtsp://gsfarm:{FRIGATE_RTSP_PASSWORD}@10.0.0.91:554/stream2
           barnCharmer_sub:
-            - rtsp://{FRIGATE_BARNCHARMER_USER}:{FRIGATE_RTSP_PASSWORD}@10.0.0.92:554/stream2
+            - rtsp://gsfarm:{FRIGATE_RTSP_PASSWORD}@10.0.0.92:554/stream2
 
       # Object detection disabled initially — CPU-only, no Coral/GPU yet.
       # Enable and tune once cameras are confirmed recording cleanly.
