@@ -29,11 +29,9 @@ spec:
       repository: ghcr.io/blakeblackshear/frigate
       tag: stable
 
-    # envFrom mounts all secret keys as env vars.
-    # go2rtc substitution works with FRIGATE_* vars injected this way.
-    envFrom:
-      - secretRef:
-          name: frigate-secret
+    # envFromSecrets is the correct chart mechanism for injecting secrets as env vars.
+    envFromSecrets:
+      - frigate-secret
 
     # Frigate config — cameras connect via go2rtc restream for efficiency.
     # go2rtc opens one connection per camera; record + detect + live view
