@@ -164,18 +164,6 @@ spec:
         cpu: 4000m
         memory: 4Gi
 
-    # Internal ingress only — frigate.gs-farm.net via nginx-internal
+    # Ingress managed separately in ingress.yaml — not via chart
     ingress:
-      enabled: true
-      ingressClassName: internal
-      annotations:
-        nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
-        nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
-      hosts:
-        - host: frigate.gs-farm.net
-          paths:
-            - path: /
-              pathType: Prefix
-      tls:
-        - hosts:
-            - frigate.gs-farm.net
+      enabled: false

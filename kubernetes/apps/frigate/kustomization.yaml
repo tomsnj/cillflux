@@ -6,3 +6,4 @@ resources:
   - pvc.yaml
   - frigate-secret.sops.yaml
   - helmrelease.yaml
+  - ingress.yaml
