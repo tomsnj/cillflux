@@ -17,7 +17,6 @@ resources:
   - ./ingress-nginx.yaml
   - ./jetstack.yaml
   - ./k8s-gateway.yaml
-  - ./kerberos.yaml
   - ./metrics-server.yaml
   - ./pihole.yaml
   - ./piraeus.yaml
