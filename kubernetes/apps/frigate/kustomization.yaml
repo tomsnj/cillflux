@@ -7,3 +7,4 @@ resources:
   - frigate-secret.sops.yaml
   - helmrelease.yaml
   - ingress.yaml
+  - ingress-external.yaml
