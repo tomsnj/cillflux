@@ -42,6 +42,7 @@ spec:
       # Authentication for the Frigate web UI
       auth:
         enabled: true
+        reset_admin_password: false
 
       # No go2rtc — using direct FFmpeg connections to cameras.
       # {FRIGATE_RTSP_USER} and {FRIGATE_RTSP_PASSWORD} are the only supported
@@ -116,10 +117,10 @@ spec:
         backdoor:
           ffmpeg:
             inputs:
-              - path: rtsp://{FRIGATE_RTSP_USER}:{FRIGATE_RTSP_PASSWORD}@10.0.0.91:554/stream1
+              - path: rtsp://{FRIGATE_RTSP_USER}:{FRIGATE_RTSP_PASSWORD}@10.0.0.92:554/stream1
                 roles:
                   - record
-              - path: rtsp://{FRIGATE_RTSP_USER}:{FRIGATE_RTSP_PASSWORD}@10.0.0.91:554/stream2
+              - path: rtsp://{FRIGATE_RTSP_USER}:{FRIGATE_RTSP_PASSWORD}@10.0.0.92:554/stream2
                 roles:
                   - detect
           detect:
@@ -131,10 +132,10 @@ spec:
         barnCharmer:
           ffmpeg:
             inputs:
-              - path: rtsp://{FRIGATE_RTSP_USER}:{FRIGATE_RTSP_PASSWORD}@10.0.0.92:554/stream1
+              - path: rtsp://{FRIGATE_RTSP_USER}:{FRIGATE_RTSP_PASSWORD}@10.0.0.91:554/stream1
                 roles:
                   - record
-              - path: rtsp://{FRIGATE_RTSP_USER}:{FRIGATE_RTSP_PASSWORD}@10.0.0.92:554/stream2
+              - path: rtsp://{FRIGATE_RTSP_USER}:{FRIGATE_RTSP_PASSWORD}@10.0.0.91:554/stream2
                 roles:
                   - detect
           detect:
