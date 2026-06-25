@@ -45,6 +45,7 @@ spec:
       auth:
         enabled: true
         reset_admin_password: false
+        cookie_secure: true
         trusted_proxies:
           - 10.42.0.0/16
           - 10.43.0.0/16
