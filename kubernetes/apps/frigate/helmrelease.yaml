@@ -1,170 +1,57 @@
 ---
-apiVersion: source.toolkit.fluxcd.io/v1
-kind: HelmRepository
+apiVersion: networking.k8s.io/v1
+kind: Ingress
 metadata:
-  name: blakeblackshear
+  name: frigate-internal
   namespace: frigate
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+    cert-manager.io/cluster-issuer: "letsencrypt-production"
 spec:
-  interval: 12h
-  url: https://blakeblackshear.github.io/blakeshome-charts/
+  ingressClassName: internal
+  rules:
+    - host: frigate.gs-farm.net
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: frigate
+                port:
+                  number: 8971
+  tls:
+    - hosts:
+        - frigate.gs-farm.net
+      secretName: frigate-tls
 ---
-apiVersion: helm.toolkit.fluxcd.io/v2
-kind: HelmRelease
+apiVersion: networking.k8s.io/v1
+kind: Ingress
 metadata:
-  name: frigate
+  name: frigate-external
   namespace: frigate
+  annotations:
+    external-dns.alpha.kubernetes.io/target: external.gs-farm.net
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+    cert-manager.io/cluster-issuer: "letsencrypt-production"
 spec:
-  interval: 30m
-  chart:
-    spec:
-      chart: frigate
-      version: ">=7.0.0 <8.0.0"
-      sourceRef:
-        kind: HelmRepository
-        name: blakeblackshear
-        namespace: frigate
-      interval: 12h
-  values:
-    image:
-      repository: ghcr.io/blakeblackshear/frigate
-      tag: stable
-
-    # envFromSecrets is the correct chart mechanism for injecting secrets as env vars.
-    envFromSecrets:
-      - frigate-secret
-
-    # Frigate config — cameras connect via go2rtc restream for efficiency.
-    # go2rtc opens one connection per camera; record + detect + live view
-    # all draw from the internal restream rather than hitting the camera directly.
-    # Tapo cameras are accessed at their direct LAN IPs (not the router-forwarded
-    # ports, which were only needed by Kerberos Agent running outside the cluster).
-    config: |
-      # Authentication for the Frigate web UI
-      auth:
-        enabled: true
-        reset_admin_password: false
-
-      # No go2rtc — using direct FFmpeg connections to cameras.
-      # {FRIGATE_RTSP_USER} and {FRIGATE_RTSP_PASSWORD} are the only supported
-      # substitution variables for camera stream URLs per Frigate docs.
-      # All cameras use username 'gsfarm' to allow a single shared variable.
-
-      # Object detection disabled initially — CPU-only, no Coral/GPU yet.
-      # Enable and tune once cameras are confirmed recording cleanly.
-      detectors:
-        cpu1:
-          type: cpu
-          num_threads: 2
-
-      # Global record defaults — continuous recording for 7 days.
-      # continuous.days keeps all footage regardless of motion/detection,
-      # giving you the "what was on the other cameras at that moment" use case.
-      record:
-        enabled: true
-        continuous:
-          days: 7
-        alerts:
-          retain:
-            days: 30
-        detections:
-          retain:
-            days: 30
-
-      snapshots:
-        enabled: true
-        retain:
-          default: 30
-
-      # Disable MQTT — not running a broker, not needed for basic recording/review
-      mqtt:
-        enabled: false
-
-      # Global detect defaults — disabled until you want motion/object detection
-      detect:
-        enabled: false
-
-      cameras:
-        barnSouth:
-          ffmpeg:
-            inputs:
-              - path: rtsp://{FRIGATE_RTSP_USER}:{FRIGATE_RTSP_PASSWORD}@10.0.0.88:554/stream1
-                roles:
-                  - record
-              - path: rtsp://{FRIGATE_RTSP_USER}:{FRIGATE_RTSP_PASSWORD}@10.0.0.88:554/stream2
-                roles:
-                  - detect
-          detect:
-            enabled: false
-            width: 640
-            height: 360
-            fps: 5
-
-        barnNorth:
-          ffmpeg:
-            inputs:
-              - path: rtsp://{FRIGATE_RTSP_USER}:{FRIGATE_RTSP_PASSWORD}@10.0.0.97:554/stream1
-                roles:
-                  - record
-              - path: rtsp://{FRIGATE_RTSP_USER}:{FRIGATE_RTSP_PASSWORD}@10.0.0.97:554/stream2
-                roles:
-                  - detect
-          detect:
-            enabled: false
-            width: 640
-            height: 360
-            fps: 5
-
-        backdoor:
-          ffmpeg:
-            inputs:
-              - path: rtsp://{FRIGATE_RTSP_USER}:{FRIGATE_RTSP_PASSWORD}@10.0.0.92:554/stream1
-                roles:
-                  - record
-              - path: rtsp://{FRIGATE_RTSP_USER}:{FRIGATE_RTSP_PASSWORD}@10.0.0.92:554/stream2
-                roles:
-                  - detect
-          detect:
-            enabled: false
-            width: 640
-            height: 360
-            fps: 5
-
-        barnCharmer:
-          ffmpeg:
-            inputs:
-              - path: rtsp://{FRIGATE_RTSP_USER}:{FRIGATE_RTSP_PASSWORD}@10.0.0.91:554/stream1
-                roles:
-                  - record
-              - path: rtsp://{FRIGATE_RTSP_USER}:{FRIGATE_RTSP_PASSWORD}@10.0.0.91:554/stream2
-                roles:
-                  - detect
-          detect:
-            enabled: false
-            width: 640
-            height: 360
-            fps: 5
-
-    # Persist recordings and the Frigate SQLite database to NFS
-    persistence:
-      media:
-        enabled: true
-        existingClaim: frigate-media
-      # Separate small PVC for the SQLite DB — keeps it off NFS for performance
-      # (NFS + SQLite under write load can cause locking issues)
-      data:
-        enabled: true
-        storageClass: gsks0
-        accessMode: ReadWriteOnce
-        size: 5Gi
-
-    resources:
-      requests:
-        cpu: 500m
-        memory: 512Mi
-      limits:
-        cpu: 4000m
-        memory: 4Gi
-
-    # Ingress managed separately in ingress.yaml — not via chart
-    ingress:
-      enabled: false
+  ingressClassName: external
+  rules:
+    - host: frigate.gs-farm.net
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: frigate
+                port:
+                  number: 8971
+  tls:
+    - hosts:
+        - frigate.gs-farm.net
+      secretName: frigate-tls
