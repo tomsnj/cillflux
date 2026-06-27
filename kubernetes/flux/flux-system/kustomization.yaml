@@ -3,3 +3,10 @@ kind: Kustomization
 resources:
 - gotk-components.yaml
 - gotk-sync.yaml
+patches:
+  - patch: |
+      - op: add
+        path: /metadata/annotations/kustomize.toolkit.fluxcd.io~1substitute
+        value: "disabled"
+    target:
+      kind: CustomResourceDefinition
