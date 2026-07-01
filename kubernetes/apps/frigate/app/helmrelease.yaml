@@ -77,6 +77,9 @@ spec:
           default: 30
 
       # Disable MQTT — not running a broker, not needed for basic recording/review
+      database:
+        path: /data/frigate.db
+
       mqtt:
         enabled: false
 
