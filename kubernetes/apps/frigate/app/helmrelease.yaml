@@ -33,11 +33,6 @@ spec:
     envFromSecrets:
       - frigate-secret
 
-    # Frigate config — cameras connect via go2rtc restream for efficiency.
-    # go2rtc opens one connection per camera; record + detect + live view
-    # all draw from the internal restream rather than hitting the camera directly.
-    # Tapo cameras are accessed at their direct LAN IPs (not the router-forwarded
-    # ports, which were only needed by Kerberos Agent running outside the cluster).
     config: |
       # Authentication for the Frigate web UI.
       # trusted_proxies must include the pod/service subnet so nginx ingress
@@ -142,6 +137,51 @@ spec:
                 roles:
                   - record
               - path: rtsp://{FRIGATE_RTSP_USER}:{FRIGATE_RTSP_PASSWORD}@10.0.0.91:554/stream2
+                roles:
+                  - detect
+          detect:
+            enabled: false
+            width: 640
+            height: 360
+            fps: 5
+
+        gsfarmGarageSouth:
+          ffmpeg:
+            inputs:
+              - path: rtsp://{FRIGATE_RTSP_USER}:{FRIGATE_RTSP_PASSWORD}@10.0.0.90:554/stream1
+                roles:
+                  - record
+              - path: rtsp://{FRIGATE_RTSP_USER}:{FRIGATE_RTSP_PASSWORD}@10.0.0.90:554/stream2
+                roles:
+                  - detect
+          detect:
+            enabled: false
+            width: 640
+            height: 360
+            fps: 5
+
+        gsfarmMiles:
+          ffmpeg:
+            inputs:
+              - path: rtsp://{FRIGATE_RTSP_USER}:{FRIGATE_RTSP_PASSWORD}@10.0.100.248:554/Streaming/Channels/101
+                roles:
+                  - record
+              - path: rtsp://{FRIGATE_RTSP_USER}:{FRIGATE_RTSP_PASSWORD}@10.0.100.248:554/Streaming/Channels/102
+                roles:
+                  - detect
+          detect:
+            enabled: false
+            width: 640
+            height: 360
+            fps: 5
+
+        gsfarmBarnSide:
+          ffmpeg:
+            inputs:
+              - path: rtsp://{FRIGATE_RTSP_USER}:{FRIGATE_RTSP_PASSWORD}@10.0.100.248:554/Streaming/Channels/301
+                roles:
+                  - record
+              - path: rtsp://{FRIGATE_RTSP_USER}:{FRIGATE_RTSP_PASSWORD}@10.0.100.248:554/Streaming/Channels/302
                 roles:
                   - detect
           detect:
