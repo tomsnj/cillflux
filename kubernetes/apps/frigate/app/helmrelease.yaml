@@ -63,18 +63,18 @@ spec:
       record:
         enabled: true
         continuous:
-          days: 7
+          days: 3
         alerts:
           retain:
-            days: 30
+            days: 7
         detections:
           retain:
-            days: 30
+            days: 7
 
       snapshots:
         enabled: true
         retain:
-          default: 30
+          default: 7
 
       # Disable MQTT — not running a broker, not needed for basic recording/review
       database:
