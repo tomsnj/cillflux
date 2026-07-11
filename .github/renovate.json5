@@ -44,6 +44,9 @@
   ansible: {
     enabled: false,
   },
+  ansible-galaxy: {
+    enabled: false,
+  },
   commitMessageTopic: '{{depName}}',
   commitMessageExtra: 'to {{newVersion}}',
   commitMessageSuffix: '',
