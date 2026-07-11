@@ -44,7 +44,7 @@
   ansible: {
     enabled: false,
   },
-  ansible-galaxy: {
+  'ansible-galaxy': {
     enabled: false,
   },
   commitMessageTopic: '{{depName}}',
