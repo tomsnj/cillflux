@@ -22,3 +22,27 @@ parameters:
 reclaimPolicy: Delete
 volumeBindingMode: Immediate
 mountOptions: ["hard", "noatime", "nolock", "nfsvers=3"]
+---
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: gsks0-fast
+provisioner: nfs.csi.k8s.io
+parameters:
+  server: 172.16.99.2
+  share: /mnt/storage1/home_nfs
+reclaimPolicy: Delete
+volumeBindingMode: Immediate
+mountOptions: ["hard", "noatime", "nolock", "nfsvers=3"]
+---
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: gsks1-fast
+provisioner: nfs.csi.k8s.io
+parameters:
+  server: 172.16.99.2
+  share: /mnt/storage1/home_nfs/knfs
+reclaimPolicy: Delete
+volumeBindingMode: Immediate
+mountOptions: ["hard", "noatime", "nolock", "nfsvers=3"]
