@@ -1,0 +1,20 @@
+# fio-nfs-test-special-vdev.yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: fio-nfs-test-special
+  namespace: default
+spec:
+  restartPolicy: Never
+  containers:
+  - name: fio
+    image: xridge/fio:latest
+    command: ["sleep", "3600"]
+    volumeMounts:
+    - name: nfs-test
+      mountPath: /mnt/test
+  volumes:
+  - name: nfs-test
+    nfs:
+      server: 10.0.0.169
+      path: /mnt/storage1/fio-test

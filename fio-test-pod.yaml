@@ -1,0 +1,26 @@
+# fio-test-pod.yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: fio-nfs-test
+  namespace: default
+spec:
+  restartPolicy: Never
+  containers:
+    - name: fio
+      image: ljishen/fio          # small image, fio pre-installed
+      command: ["sleep", "3600"]
+      volumeMounts:
+        - name: nfs-base
+          mountPath: /mnt/nfs-base
+        - name: nfs-fast
+          mountPath: /mnt/nfs-fast
+  volumes:
+    - name: nfs-base
+      nfs:
+        server: 10.0.0.169
+        path: /mnt/storage1/fio-test
+    - name: nfs-fast
+      nfs:
+        server: 172.16.99.2
+        path: /mnt/storage1/fio-test
