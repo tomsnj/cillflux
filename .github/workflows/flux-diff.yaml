@@ -32,6 +32,18 @@ jobs:
           ref: "${{ github.event.repository.default_branch }}"
           path: default
 
+     - name: Diff Resources
+        run: |
+          docker run --rm \
+            -v "${{ github.workspace }}:/github/workspace" \
+            -w /github/workspace \
+            ghcr.io/home-operations/flate:v0.5.0 \
+            diff ${{ matrix.resources }} \
+            -o diff \
+            --path /github/workspace/pull/${{ matrix.paths }} \
+            --path-orig /github/workspace/default/${{ matrix.paths }} \
+            > diff.patch
+
       - name: Diff Resources
         run: |
           docker run --rm \
