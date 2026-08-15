@@ -37,7 +37,7 @@ jobs:
           docker run --rm \
             -v "${{ github.workspace }}:/github/workspace" \
             -w /github/workspace \
-            flate@sha256:91c31f5d64c82be1d252637ec512302120e49e19831093f2907d5679c3136d17 \
+            ghcr.io/home-operations/flate@sha256:91c31f5d64c82be1d252637ec512302120e49e19831093f2907d5679c3136d17 \
             diff ${{ matrix.resources }} \
             -o diff \
             --path /github/workspace/pull/${{ matrix.paths }} \
