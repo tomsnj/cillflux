@@ -38,7 +38,7 @@ spec:
           app:
             image:
               repository: quay.io/keycloak/keycloak
-              tag: "26.7.1"
+              tag: "26.7.2"
             env:
               - name: TZ
                 value: ${TIMEZONE}
