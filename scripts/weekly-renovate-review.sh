@@ -64,8 +64,17 @@ fetch_open_prs() {
 }
 
 fetch_pr() {
-  local pr="$1"
-  gh pr view "$pr" --repo "$REPO_SLUG" --json "$pr_json_fields"
+  # GitHub computes mergeStateStatus asynchronously — a cold request can
+  # come back "UNKNOWN" even for a perfectly mergeable PR. Retry a few
+  # times before accepting it as a real value.
+  local pr="$1" data status attempt
+  for attempt in 1 2 3 4; do
+    data=$(gh pr view "$pr" --repo "$REPO_SLUG" --json "$pr_json_fields")
+    status=$(jq -r '.mergeStateStatus' <<<"$data")
+    [[ "$status" != "UNKNOWN" ]] && break
+    [[ "$attempt" -lt 4 ]] && sleep 2
+  done
+  printf '%s' "$data"
 }
 
 update_type_of() {
@@ -320,15 +329,25 @@ cmd_merge() {
   log "==> merging PR #$pr"
   gh pr merge "$pr" --repo "$REPO_SLUG" --squash
 
-  log "==> flux reconcile source git cillflux"
-  flux reconcile source git cillflux -n flux-system
+  log "==> flux reconcile source git flux-system"
+  flux reconcile source git flux-system -n flux-system
 
-  log "==> snapshotting pods after merge"
-  sleep 5
-  after=$(pod_snapshot)
+  # A Helm upgrade can take well over a minute to even start rolling pods,
+  # so a single snapshot right after `flux reconcile source` mostly just
+  # proves nothing broke *yet*. Poll instead: keep checking until healthy,
+  # or until the unhealthy set stops changing (a real, non-transient
+  # problem) or we hit the timeout.
+  log "==> waiting for pods to settle (up to 3m)"
+  local prev_unhealthy="" unhealthy=""
+  for _ in $(seq 1 12); do
+    after=$(pod_snapshot)
+    unhealthy=$(not_healthy <<<"$after")
+    [[ -z "$unhealthy" ]] && break
+    [[ -n "$prev_unhealthy" && "$unhealthy" == "$prev_unhealthy" ]] && break
+    prev_unhealthy="$unhealthy"
+    sleep 15
+  done
 
-  local unhealthy
-  unhealthy=$(not_healthy <<<"$after")
   if [[ -n "$unhealthy" ]]; then
     echo "Pods not Running/Completed after merge of #$pr:"
     echo "$unhealthy"
