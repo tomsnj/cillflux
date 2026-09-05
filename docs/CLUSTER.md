@@ -1,6 +1,6 @@
 # gs-farm.net Cluster Documentation
 
-> **Last updated**: 2026-06-06  
+> **Last updated**: 2026-09-05  
 > **Purpose**: Living reference for the Talos Linux Kubernetes homelab. Upload to this Claude Project to give Claude full cluster context in every chat.
 
 ---
@@ -87,8 +87,8 @@ Services needing internal LAN access require **both** an `external` and `interna
 | Service           | Notes                                                       |
 |-------------------|-------------------------------------------------------------|
 | CrunchyData PGO   | PostgreSQL operator                                         |
-| Keycloak          | SSO — currently crashing, blocked on PGO/Patroni stability |
-| Vaultwarden       | Password manager — SSO temporarily disabled, local auth OK  |
+| Keycloak          | Deployed and healthy (26.7.3); not wired up as SSO for anything yet — see below |
+| Vaultwarden       | Password manager — local auth only, SSO not enabled          |
 | Grafana           | Observability dashboards                                    |
 | Prometheus        | Metrics                                                     |
 | Loki              | Logs                                                        |
@@ -119,14 +119,10 @@ Services needing internal LAN access require **both** an `external` and `interna
 
 ### 🔴 High Priority
 
-**PostgreSQL (PGO) — Patroni crash recovery**
-- pgBackRest cannot archive WAL: TLS error (`packet length too long`) connecting to its own sidecar
-- Blocks Patroni from recovering, which blocks Keycloak entirely
-- **Dependency chain**: PostgreSQL → Keycloak → Vaultwarden SSO
-
-**MinIO kustomization — PVC immutability error**
-- `pvc.yaml` in git is clean (no `volumeName`)
-- Error likely originates in `helmrelease.yaml` — investigation in progress
+*(The PostgreSQL/PGO Patroni crash-recovery issue and the MinIO PVC
+immutability error from the previous update have both been resolved
+or are no longer reproducing — Postgres and MinIO have been stable
+for 6+ days as of 2026-09-05. Nothing currently open here.)*
 
 ### 🟡 Medium Priority
 
@@ -135,14 +131,27 @@ Services needing internal LAN access require **both** an `external` and `interna
 - Pod itself is healthy (`1/1 Running`)
 - Fix: resume the suspended HelmRelease to let Flux retry
 
-**Vaultwarden SSO**
-- Disabled as workaround; local auth working
-- Re-enable once Keycloak is stable
+**Keycloak / SSO — not a stability blocker anymore, but still off**
+- Keycloak itself is healthy: HelmRelease `Ready`, pod running
+  (`26.7.3` as of 2026-09-05), no crash-loop. The Postgres instance it
+  depends on has also been stable for 6+ days.
+- SSO is nonetheless not enabled anywhere: Vaultwarden has a realm/
+  client configured (`post_logout_redirect_uri` correctly set to its
+  own app URL, not looped through Keycloak) but SSO is off on the
+  Vaultwarden side; Grafana and Forgejo were never configured to use
+  Keycloak at all.
+- Reason it's still off: Tom never got Keycloak to a state he trusted
+  working reliably both internally and externally, so it was
+  deliberately left unused rather than turned on partially confident.
+  This is a "flip it on when ready" decision, not a bug to fix.
 
 ### 🔵 On the Horizon
 
 - Evaluate k8s-gateway as longer-term replacement for per-host Pi-hole DNS overrides
-- Restore dependency chain: PostgreSQL → Keycloak → Vaultwarden SSO
+- Decide whether/when to actually enable Keycloak SSO for Vaultwarden
+  (and optionally Grafana/Forgejo) now that the underlying stack is
+  stable — this is a readiness decision, not blocked on any known
+  outstanding issue
 
 ---
 
@@ -178,7 +187,9 @@ Before removing HelmReleases: verify no ConfigMaps/Secrets reference the service
 
 - Apps live under `kubernetes/apps/` with per-app subdirectories
 - Flux `suspend`/`resume` used deliberately for maintenance windows and forced reconciliation
-- Dependency restoration order: **PostgreSQL → Keycloak → Vaultwarden/MinIO**
+- Postgres → Keycloak → Vaultwarden/MinIO was the recovery order while
+  the PGO/Patroni issue was open; no longer a live dependency chain
+  since all four are independently stable now
 - All cluster state managed through `cillflux`; manual changes are temporary and should be committed back
 
 ---
