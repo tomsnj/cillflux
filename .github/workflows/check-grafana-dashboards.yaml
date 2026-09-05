@@ -80,7 +80,7 @@ jobs:
 
       - name: Open or update issue on failure
         if: steps.check.outputs.has_failures == 'true'
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         with:
           script: |
             const failures = `${{ steps.check.outputs.failures }}`;
@@ -126,7 +126,7 @@ jobs:
 
       - name: Close stale issue on success
         if: steps.check.outputs.has_failures == 'false'
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         with:
           script: |
             const { data: existing } = await github.rest.issues.listForRepo({
