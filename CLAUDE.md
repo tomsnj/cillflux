@@ -100,3 +100,97 @@ file covers working conventions, not the full reference.
 For anything not covered above — hardware inventory, exact tool versions,
 disk layouts, backup/restore procedures, and the outstanding-items list —
 see `CLUSTER.md` and the dated `CLUSTER-doc-updates-*.md` files.
+## Weekly Renovate Review
+
+Renovate opens PRs on a Saturday schedule. Most patch/digest bumps are
+handled by `renovate.json` automerge rules and never need review — what
+shows up here is the remainder: minors, majors, and anything automerge
+rules excluded.
+
+**Entry point:** `~/cillflux/scripts/weekly-renovate-review.sh`
+Run `--dry-run` first if it's been a while since the last review, or if
+`renovate.json` automerge rules changed recently.
+
+### Workflow
+
+Tom reviews at the end of the run, not per-PR — the whole point is to
+walk away and come back to one summary, not baby-sit each PR. That
+means nothing in this workflow blocks mid-run waiting on an answer.
+
+1. `git pull --ff-only` before touching anything (avoids push conflicts
+   if a PR needs a manual tweak mid-review).
+2. For each open Renovate PR:
+   - Read the PR diff **and** the linked changelog/release notes — not
+     just the file diff. The diff shows *what* changed; the changelog
+     shows *whether it's safe*.
+   - Classify as one of:
+     - **Auto-mergeable** — see criteria below. Merge immediately, no
+       need to wait for anything.
+     - **Needs Tom** — do NOT merge. Add it to a queue with a 1-3
+       sentence risk summary and move on to the next PR. Don't guess
+       "to save time" — a wrong guess here costs more than the time
+       saved, and queuing costs nothing since no one's waiting on it.
+   - Snapshot `kubectl get pods -A` before and after each auto-merge.
+   - `flux reconcile source git cillflux` after each auto-merge so
+     status reflects the new commit, not stale state.
+3. Run `flux get kustomizations -A` at the end (always, regardless of
+   how many PRs were merged) and report anything not `Ready`.
+4. `git pull --ff-only` again at the end to sync local `main` — no push
+   needed, merges happen on GitHub.
+5. Present one consolidated end-of-run summary (see below). Then stop
+   and wait — don't act on the queued PRs until Tom responds.
+
+### End-of-run summary format
+
+- **Merged automatically:** PR list, one line each, with update type
+  (patch/minor) and package name.
+- **Queued — needs a decision:** PR list, each with the 1-3 sentence
+  risk summary from step 2. This is the only part Tom needs to read
+  closely.
+- **Pod/kustomization health:** anything not `Running`/`Ready`, with
+  what's already been investigated (see Post-merge investigation below).
+- **Nothing to report** is a valid summary — say so plainly rather than
+  padding the update with restated details.
+
+### Auto-merge criteria (ALL must be true)
+
+- Update type is `minor` or `patch` (never auto-merge `major`)
+- All CI checks green, including `flux-diff`
+- Changelog contains no mention of breaking changes, config schema
+  changes, or required manual migration steps
+- PR does **not** touch any of:
+  - `kubernetes/apps/database/**` (CrunchyData PGO / postgres-infra)
+  - `kubernetes/apps/vaultwarden/**`
+  - `kubernetes/apps/forgejo/**`
+  - `kubernetes/apps/minio/**`
+  - `kubernetes/apps/keycloak/**`
+  - any `*.sops.yaml` file
+  - any CRD definition
+- PR does not change a HelmRelease's `chart.spec.version` major number
+
+If any of these is false, it's "Needs Tom" — no exceptions, even if the
+diff looks trivial. The namespace list above is deliberately broader
+than "things that are currently stateful," because misjudging that
+boundary is exactly the failure mode this guardrail exists to prevent.
+
+### Post-merge investigation
+
+If the after-merge pod snapshot shows anything not `Running`/`Completed`:
+- Don't just flag it and move on — investigate immediately, in the same
+  run. `kubectl describe` the pod, `kubectl logs --previous` if it's
+  restarted, and correlate against the PR that just merged.
+- If it's a transient rollout (pod still starting, image pulling),
+  keep going — recheck it before the run ends and only report it if
+  it's still not settled.
+- If it's a genuine failure, do NOT roll back or patch anything
+  unprompted. Put it in the summary's health section with what you
+  found and a proposed fix, and wait for Tom's go-ahead — this applies
+  even if the merge that caused it was auto-mergeable.
+
+### Hard rules (apply regardless of the above)
+
+- Never print decrypted SOPS contents or the age private key.
+- Never `git push --force` to `main`.
+- GitOps-only: no direct `kubectl apply`/`kubectl edit` as a substitute
+  for a committed change, except documented break-glass recovery.
+- All commands run from `gsfarmctl`, never the MacBook.
