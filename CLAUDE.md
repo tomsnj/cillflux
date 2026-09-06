@@ -105,6 +105,19 @@ file covers working conventions, not the full reference.
   '"KEY":[^,]*' /data/config.json` (skip `admin_token`,
   `smtp_password`, `sso_client_secret`) — if a setting's ever been
   touched in the Admin Panel, change it there too, not just in git.
+- Pi-hole's `address=/domain/ip` (in `customDnsmasq`) only overrides
+  A/AAAA queries — it does nothing for the newer HTTPS/SVCB record
+  type. Without a matching `local=/domain/` entry, a query for that
+  type falls through to the public upstream and returns Cloudflare's
+  real HTTPS record (advertising ECH + HTTP/3 for their actual edge),
+  which internal nginx supports neither. Chrome-family browsers
+  (Brave) use that record for connection setup and fail in confusing,
+  seemingly-unrelated ways (`ERR_ADDRESS_UNREACHABLE`,
+  `ERR_QUIC_PROTOCOL_ERROR`, `ERR_ECH_FALLBACK_CERTIFICATE_INVALID`)
+  — Safari doesn't, which is why "it works in Safari but not Brave"
+  doesn't necessarily mean a Brave-specific setting is at fault.
+  Always pair `address=/domain/ip` with `local=/domain/` for any
+  internally-overridden `*.gs-farm.net` domain.
 
 ## Where things live
 

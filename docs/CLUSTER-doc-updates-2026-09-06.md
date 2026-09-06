@@ -101,3 +101,45 @@ this as a leftover SSO problem next time.
   (`200 OK`) → master password unlock → vault contents visible.
 - Grafana and Forgejo are still not wired to Keycloak — no blocker,
   just not done.
+
+## Pi-hole: HTTPS/SVCB DNS record leak breaking Brave on kumar.gs-farm.net
+
+While testing the above, Brave (MacBook Pro) hit three separate-
+looking failures reaching `kumar.gs-farm.net`: `ERR_ADDRESS_UNREACHABLE`
+(chased as a macOS Local Network permission issue, which was real but
+turned out to be a different, unrelated problem seen earlier the same
+day), `ERR_QUIC_PROTOCOL_ERROR`, and
+`ERR_ECH_FALLBACK_CERTIFICATE_INVALID`. All three traced back to one
+root cause, found via Brave's `net-internals/#dns` page showing an
+"alternative endpoint" with a Cloudflare `ech_config_list`
+(`cloudflare-ech.com`) and `alpns: [h3, h2, http/1.1]` — i.e. a
+Cloudflare-published HTTPS/SVCB DNS record advertising ECH + HTTP/3,
+paired with the internally-resolved IP (`10.0.10.1`).
+
+**Root cause**: Pi-hole's `customDnsmasq` override —
+```
+address=/gs-farm.net/10.0.10.1
+```
+— only answers A/AAAA queries. It has no effect on the HTTPS (SVCB,
+type 65) record type, so that query type wasn't matched locally and
+fell through to Pi-hole's public upstream (`1.1.1.1`/`8.8.8.8`),
+which returned Cloudflare's real, public HTTPS record for the domain.
+Chrome-family browsers use that record for connection setup: Brave
+tried to speak Cloudflare's ECH-encrypted HTTP/3 to `nginx-internal`,
+which supports neither ECH nor QUIC — producing exactly these errors.
+Safari doesn't use HTTPS-record-driven ECH/QUIC as aggressively, which
+is why it worked the whole time and made this look Brave-specific.
+
+**Fix**: added `local=/gs-farm.net/` alongside the existing
+`address=` line (`kubernetes/apps/network/pihole/app/helmrelease.yaml`,
+commit `bddbf81f`). This marks the domain authoritative in dnsmasq, so
+any record type without an explicit local answer returns no-data
+instead of being forwarded upstream. Verified directly:
+```
+dig TYPE65 kumar.gs-farm.net @10.0.10.6 +short   # now blank (was leaking Cloudflare's record)
+dig kumar.gs-farm.net @10.0.10.6 +short          # still 10.0.10.1, unaffected
+```
+Fixes this for every device on the network, not just the one Mac/
+browser it was noticed on. Also added to `CLAUDE.md` gotchas — any
+future `address=/domain/ip` override for a new internal `*.gs-farm.net`
+subdomain needs a matching `local=/domain/` line or this will recur.
