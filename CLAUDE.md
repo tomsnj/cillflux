@@ -84,6 +84,17 @@ file covers working conventions, not the full reference.
   workload — the real ceiling is HDD mirror vdev IOPS (~78 combined). The
   ZFS special vdev doesn't help HDD-seek-bound workloads like Frigate
   recording.
+- A new Mac (or freshly installed browser) failing to reach any
+  `*.gs-farm.net` admin console with a low-level error
+  (`ERR_ADDRESS_UNREACHABLE`), while `curl`/`ping`/`dig` from Terminal
+  work fine — check System Settings → Privacy & Security → Local
+  Network for that browser before chasing DNS/VLAN theories. Terminal
+  gets this macOS permission by default; browsers often don't until
+  granted. Also: `ping` failing to a Cilium L2-announced LB IP
+  (redirect, then "Destination Host Unreachable") is expected and not
+  a real problem — Cilium only load-balances TCP/UDP on real Service
+  ports, not ICMP; test with `curl`/`nc` against the actual port
+  instead.
 
 ## Where things live
 
