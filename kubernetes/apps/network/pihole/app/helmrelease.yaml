@@ -68,6 +68,7 @@ spec:
     adlists: {}
     dns:
       customDnsmasq:
+        - "local=/gs-farm.net/"
         - "address=/gs-farm.net/10.0.10.1"
     resources:
       requests:
