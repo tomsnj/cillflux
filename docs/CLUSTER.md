@@ -146,8 +146,11 @@ for 6+ days as of 2026-09-05. Nothing currently open here.)*
 ### 🔵 On the Horizon
 
 - Evaluate k8s-gateway as longer-term replacement for per-host Pi-hole DNS overrides
-- Decide whether/when to wire Grafana and/or Forgejo to Keycloak SSO
-  now that the Vaultwarden integration is proven working
+- **Planned**: wire Grafana and Forgejo to Keycloak SSO in a future
+  session, following the pattern proven with Vaultwarden
+  (`CLUSTER-doc-updates-2026-09-06.md`) — watch for each app's own
+  version of the `config.json`-style "UI setting silently overrides
+  git" gotcha before assuming a HelmRelease env var change took effect
 
 ---
 
