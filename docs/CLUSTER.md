@@ -1,6 +1,6 @@
 # gs-farm.net Cluster Documentation
 
-> **Last updated**: 2026-09-05  
+> **Last updated**: 2026-09-06  
 > **Purpose**: Living reference for the Talos Linux Kubernetes homelab. Upload to this Claude Project to give Claude full cluster context in every chat.
 
 ---
@@ -87,8 +87,8 @@ Services needing internal LAN access require **both** an `external` and `interna
 | Service           | Notes                                                       |
 |-------------------|-------------------------------------------------------------|
 | CrunchyData PGO   | PostgreSQL operator                                         |
-| Keycloak          | Deployed and healthy (26.7.3); not wired up as SSO for anything yet — see below |
-| Vaultwarden       | Password manager — local auth only, SSO not enabled          |
+| Keycloak          | Deployed and healthy (26.7.3); SSO live for Vaultwarden as of 2026-09-06, see below |
+| Vaultwarden       | Password manager — Keycloak SSO enabled (`vaultwarden` realm), local email/password login still available as fallback (`SSO_ONLY` not set) |
 | Grafana           | Observability dashboards                                    |
 | Prometheus        | Metrics                                                     |
 | Loki              | Logs                                                        |
@@ -131,27 +131,23 @@ for 6+ days as of 2026-09-05. Nothing currently open here.)*
 - Pod itself is healthy (`1/1 Running`)
 - Fix: resume the suspended HelmRelease to let Flux retry
 
-**Keycloak / SSO — not a stability blocker anymore, but still off**
+**Keycloak / SSO — live for Vaultwarden as of 2026-09-06**
 - Keycloak itself is healthy: HelmRelease `Ready`, pod running
-  (`26.7.3` as of 2026-09-05), no crash-loop. The Postgres instance it
-  depends on has also been stable for 6+ days.
-- SSO is nonetheless not enabled anywhere: Vaultwarden has a realm/
-  client configured (`post_logout_redirect_uri` correctly set to its
-  own app URL, not looped through Keycloak) but SSO is off on the
-  Vaultwarden side; Grafana and Forgejo were never configured to use
-  Keycloak at all.
-- Reason it's still off: Tom never got Keycloak to a state he trusted
-  working reliably both internally and externally, so it was
-  deliberately left unused rather than turned on partially confident.
-  This is a "flip it on when ready" decision, not a bug to fix.
+  (`26.7.3`), no crash-loop. The Postgres instance it depends on has
+  also been stable for 6+ days.
+- Vaultwarden SSO is enabled and confirmed working end-to-end
+  (Keycloak auth → Vaultwarden token exchange → vault master password
+  unlock). See `CLUSTER-doc-updates-2026-09-06.md` for the full
+  troubleshooting trail and root causes. Local email/password login
+  is still available as a fallback (`SSO_ONLY` intentionally not set).
+- Grafana and Forgejo still not configured to use Keycloak — no
+  technical blocker, just not done yet.
 
 ### 🔵 On the Horizon
 
 - Evaluate k8s-gateway as longer-term replacement for per-host Pi-hole DNS overrides
-- Decide whether/when to actually enable Keycloak SSO for Vaultwarden
-  (and optionally Grafana/Forgejo) now that the underlying stack is
-  stable — this is a readiness decision, not blocked on any known
-  outstanding issue
+- Decide whether/when to wire Grafana and/or Forgejo to Keycloak SSO
+  now that the Vaultwarden integration is proven working
 
 ---
 
