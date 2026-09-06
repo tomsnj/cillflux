@@ -51,7 +51,7 @@ spec:
                     name: vw-secret
                     key: SSO_CLIENT_SECRET
               SSO_AUTHORITY: "https://elvis.gs-farm.net/realms/vaultwarden"
-              SSO_SCOPES: "email profile"
+              SSO_SCOPES: "email profile offline_access"
               SSO_PKCE_ENABLED: "true"
               ROCKET_SECRET_KEY:
                 valueFrom:
