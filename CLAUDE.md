@@ -95,6 +95,16 @@ file covers working conventions, not the full reference.
   a real problem — Cilium only load-balances TCP/UDP on real Service
   ports, not ICMP; test with `curl`/`nc` against the actual port
   instead.
+- Vaultwarden persists any setting ever changed via its Admin Panel to
+  `config.json` on its PVC, and that **silently overrides the
+  matching HelmRelease env var from then on** — Vaultwarden logs a
+  `[WARNING]` listing the overridden vars on startup, easy to miss. A
+  git change to one of these env vars can look like it deployed fine
+  (pod healthy, no errors) while having zero actual effect. Check what's
+  really live with `kubectl exec -n vaultwarden <pod> -- grep -o
+  '"KEY":[^,]*' /data/config.json` (skip `admin_token`,
+  `smtp_password`, `sso_client_secret`) — if a setting's ever been
+  touched in the Admin Panel, change it there too, not just in git.
 
 ## Where things live
 
