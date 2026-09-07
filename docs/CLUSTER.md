@@ -182,6 +182,17 @@ for 6+ days as of 2026-09-05. Nothing currently open here.)*
 ### 🔵 On the Horizon
 
 - Evaluate k8s-gateway as longer-term replacement for per-host Pi-hole DNS overrides
+- **Frigate SSO** — Frigate has no native OIDC/OAuth2 client, unlike
+  Vaultwarden/Grafana/Forgejo. It only supports proxy-based header
+  auth (trusts `X-Forwarded-User`/`Remote-User`-style headers from an
+  upstream forward-auth proxy, with `header_map` config to translate
+  proxy group claims into its `admin`/`viewer`/custom-role model).
+  Getting this to Keycloak means deploying a new piece of
+  infrastructure — most likely `oauth2-proxy` configured against
+  Keycloak, wired into nginx-ingress via `auth-url`/`auth-signin`
+  annotations in front of the Frigate Ingress — not just a
+  HelmRelease values change like the other three apps. Bigger scope,
+  not started.
 
 ---
 
