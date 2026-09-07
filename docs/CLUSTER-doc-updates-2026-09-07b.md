@@ -80,17 +80,21 @@ realms. This time, created the `stecktf` user directly in the new
 temporary password (forced change on first login) — avoiding a repeat
 of the Grafana debugging cycle.
 
-### Known limitation: no account linking
+### Correction: Forgejo *does* offer account linking by email
 
-Forgejo has no existing account matching Keycloak's `stecktf`
-identity by email/username — the first SSO login will create a
-**new, separate** Forgejo user, not merge into the existing
-`fjmaster` admin account. This is expected chart/Forgejo behavior
-(OAuth2 login sources don't auto-link to existing local accounts
-here), not a bug. Flagged as an open question in `CLUSTER.md`'s
-"On the Horizon" section: whether to reconcile these into one
-identity later, or intentionally keep local admin (`fjmaster`) and
-SSO daily-driver (`stecktf`) as two separate accounts long-term.
+**This section originally said the wrong thing** — written before
+Tom actually completed the login flow. Corrected after testing:
+
+On first Keycloak login, Forgejo detected that the `stecktf`
+Keycloak identity's email (`tfs05jhu@gmail.com`) matched the existing
+local `fjmaster` admin account's email, and prompted an account-link
+step (enter the existing local account's password to confirm
+ownership) instead of silently creating a duplicate user. Tom
+completed this with `fjmaster`'s local password — `fjmaster` now logs
+in via either Keycloak SSO or the local password, still the sole
+admin either way. No separate `stecktf` account was created; the
+"reconcile two identities later" question this section originally
+raised doesn't apply and was removed from `CLUSTER.md`.
 
 ### Current SSO state across the cluster
 

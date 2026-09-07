@@ -163,10 +163,13 @@ for 6+ days as of 2026-09-05. Nothing currently open here.)*
   dedicated `forgejo` Keycloak realm + client, configured
   declaratively via the chart's native `gitea.oauth` values block
   (no admin-panel clicking needed, unlike Vaultwarden/Grafana). No
-  admin-group mapping, so SSO logins land as normal (non-admin) users
-  — `fjmaster` stays the only admin, via local login. New SSO logins
-  create a separate Forgejo account (no auto-link to `fjmaster`/`max`
-  by email). Local login form left enabled as fallback.
+  admin-group mapping, so a brand-new SSO login would land as a
+  normal (non-admin) user. In practice Forgejo detected the Keycloak
+  account's email matched the existing local `fjmaster` admin and
+  offered an account-link flow (confirmed with `fjmaster`'s local
+  password) instead of creating a duplicate — `fjmaster` now logs in
+  via Keycloak *or* local password, still admin either way. Local
+  login form left enabled as fallback.
 
 **Max not on Pi-hole DNS**
 - Tom's son (`max`, the other active Forgejo user) likely isn't
@@ -179,10 +182,6 @@ for 6+ days as of 2026-09-05. Nothing currently open here.)*
 ### 🔵 On the Horizon
 
 - Evaluate k8s-gateway as longer-term replacement for per-host Pi-hole DNS overrides
-- Evaluate whether the new SSO `stecktf` Forgejo account (created
-  2026-09-07) should be reconciled/merged with the existing local
-  `fjmaster` admin account, or left as two separate identities
-  long-term.
 
 ---
 
