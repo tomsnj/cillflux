@@ -70,6 +70,24 @@ spec:
           FROM: "Forgejo <tfs05jhu@gmail.com>"
           USER: tfs05jhu@gmail.com
 
+      # ── Keycloak SSO ────────────────────────────────────────────────────────
+      # Declarative OAuth2 login source - chart's init container idempotently
+      # runs `forgejo admin auth add-oauth`/`update-oauth` on every reconcile,
+      # so this is safe to reapply. Client id/secret come from
+      # forgejo-oauth-secret (keys "key"/"secret" - hardcoded by the chart,
+      # same pattern as gitea.admin.existingSecret). No admin-group/
+      # restricted-group mapping configured, so every SSO login lands as a
+      # normal (non-admin) user - matches the flat-role approach used for
+      # Grafana. Local login form stays enabled (DISABLE_REGISTRATION only
+      # blocks self-registration, not this OAuth source) as a fallback for
+      # the fjmaster admin account.
+      oauth:
+        - name: Keycloak
+          provider: openidConnect
+          existingSecret: forgejo-oauth-secret
+          autoDiscoverUrl: "https://elvis.gs-farm.net/realms/forgejo/.well-known/openid-configuration"
+          scopes: "openid profile email"
+
       # Inject PGO-generated DB credentials as env vars → app.ini
       additionalConfigFromEnvs:
         - name: FORGEJO__DATABASE__HOST

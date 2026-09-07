@@ -5,6 +5,7 @@ resources:
   - helmrepository.yaml
   - helmrelease.yaml
   - secret.sops.yaml
+  - oauth-secret.sops.yaml
   - ingress-internal.yaml
   - ingress-external.yaml
   - volsync-gitea-shared-storage.sops.yaml
