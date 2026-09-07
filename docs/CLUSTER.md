@@ -87,7 +87,7 @@ Services needing internal LAN access require **both** an `external` and `interna
 | Service           | Notes                                                       |
 |-------------------|-------------------------------------------------------------|
 | CrunchyData PGO   | PostgreSQL operator                                         |
-| Keycloak          | Deployed and healthy (26.7.3); SSO live for Vaultwarden as of 2026-09-06, see below |
+| Keycloak          | Deployed and healthy (26.7.3); SSO live for Vaultwarden (2026-09-06), Grafana (2026-09-07), Forgejo (2026-09-07), see below |
 | Vaultwarden       | Password manager — Keycloak SSO enabled (`vaultwarden` realm), local email/password login still available as fallback (`SSO_ONLY` not set) |
 | Grafana           | Observability dashboards                                    |
 | Prometheus        | Metrics                                                     |
@@ -159,11 +159,14 @@ for 6+ days as of 2026-09-05. Nothing currently open here.)*
   `Editor` for all SSO logins, local admin/password login left
   enabled as fallback). See `CLUSTER-doc-updates-2026-09-07.md` for
   setup details and the empty-realm gotcha hit along the way.
-- Forgejo still not configured to use Keycloak — no technical
-  blocker, just not done yet. Now on chart 17.1.5, which has a native
-  `gitea.oauth` values block for configuring an OAuth2 login source
-  declaratively — worth checking before falling back to the
-  admin-panel-click approach used for Vaultwarden/Grafana.
+- Forgejo SSO is enabled and confirmed working (2026-09-07) —
+  dedicated `forgejo` Keycloak realm + client, configured
+  declaratively via the chart's native `gitea.oauth` values block
+  (no admin-panel clicking needed, unlike Vaultwarden/Grafana). No
+  admin-group mapping, so SSO logins land as normal (non-admin) users
+  — `fjmaster` stays the only admin, via local login. New SSO logins
+  create a separate Forgejo account (no auto-link to `fjmaster`/`max`
+  by email). Local login form left enabled as fallback.
 
 **Max not on Pi-hole DNS**
 - Tom's son (`max`, the other active Forgejo user) likely isn't
@@ -176,16 +179,10 @@ for 6+ days as of 2026-09-05. Nothing currently open here.)*
 ### 🔵 On the Horizon
 
 - Evaluate k8s-gateway as longer-term replacement for per-host Pi-hole DNS overrides
-- **Planned**: wire Forgejo to Keycloak SSO in a future session,
-  following the pattern proven with Vaultwarden and Grafana
-  (`CLUSTER-doc-updates-2026-09-06.md`, `CLUSTER-doc-updates-2026-09-07.md`)
-  — watch for each app's own version of the `config.json`-style "UI
-  setting silently overrides git" gotcha before assuming a
-  HelmRelease env var change took effect, and remember that a new
-  Keycloak realm starts with zero users regardless of who's in other
-  realms. Hostname is now settled (`susan.gs-farm.net`, unified
-  2026-09-07), so the redirect URI/web origin can be set once and
-  won't need revisiting.
+- Evaluate whether the new SSO `stecktf` Forgejo account (created
+  2026-09-07) should be reconciled/merged with the existing local
+  `fjmaster` admin account, or left as two separate identities
+  long-term.
 
 ---
 
