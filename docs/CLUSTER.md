@@ -130,6 +130,13 @@ Services needing internal LAN access require **both** an `external` and `interna
   Ingress, old hostname now cleanly 404s instead of serving stale
   content. Fixes the canonical-URL mismatch banner from browsing
   Forgejo internally.
+- Max's Windows laptop pointed at Pi-hole for DNS, 2026-09-07.
+  Network's UniFi DHCP hands out `10.0.100.1` as DNS by default —
+  same as every other device in the house, all on manual overrides.
+  Set manual DNS to Pi-hole's DNS service IP `10.0.10.6` (not the
+  `10.0.10.5` web UI or `10.0.10.1` HTTP ingress IP — three different
+  IPs, easy to mix up). See gotcha below re: leaving an alternate DNS
+  server configured.
 
 ### 🔴 High Priority
 
@@ -171,14 +178,6 @@ for 6+ days as of 2026-09-05. Nothing currently open here.)*
   via Keycloak *or* local password, still admin either way. Local
   login form left enabled as fallback.
 
-**Max not on Pi-hole DNS**
-- Tom's son (`max`, the other active Forgejo user) likely isn't
-  pointed at Pi-hole for DNS — needs figuring out how to get his
-  device(s) using it, otherwise he won't get the internal-network
-  routing/overrides everyone else relies on (and would hit the same
-  kind of hostname confusion described above, or worse, if Forgejo's
-  hostnames ever get consolidated without his DNS being fixed first).
-
 ### 🔵 On the Horizon
 
 - Evaluate k8s-gateway as longer-term replacement for per-host Pi-hole DNS overrides
@@ -197,6 +196,23 @@ for 6+ days as of 2026-09-05. Nothing currently open here.)*
 ---
 
 ## Key Learnings & Gotchas
+
+**Windows + manual DNS + a fallback server = split-horizon breaks silently**  
+Windows' "Smart Multi-Homed Name Resolution" queries every configured
+DNS server in parallel for normal app lookups (`ping`, browsers) and
+accepts whichever answers first — it does not go primary-then-fallback
+like `nslookup` does. Pointing a Windows client at Pi-hole
+(`10.0.10.6`) with a public resolver like `1.1.1.1` as the alternate
+means any `*.gs-farm.net` split-horizon override is a race: if the
+public resolver's answer (the real public/Cloudflare-tunnel IP) comes
+back before Pi-hole's, that's what apps use, even though Pi-hole is
+listed first and `nslookup` shows the correct internal IP. Fix: don't
+configure a second DNS server on clients that need split-horizon
+overrides to work — Pi-hole already forwards non-overridden queries
+upstream (`1.1.1.1`/`8.8.8.8`) on its own, so a single-DNS setup loses
+nothing except a fallback if Pi-hole itself goes down (a tradeoff
+already accepted everywhere else on this network). Hit this getting
+Max's laptop onto Pi-hole, 2026-09-07.
 
 **SOPS / Flux decryption**  
 The `flux-system` kustomization in `gotk-sync.yaml` must include a `decryption` block. Without it, every reconcile cycle overwrites decrypted secrets with raw ciphertext.
