@@ -9,7 +9,7 @@ spec:
   chart:
     spec:
       chart: forgejo
-      version: ">=9.0.0 <10.0.0"
+      version: ">=17.0.0 <18.0.0"
       sourceRef:
         kind: HelmRepository
         name: forgejo
@@ -22,9 +22,14 @@ spec:
     gitea:
       admin:
         username: fjmaster
-        # Password injected from SOPS secret via env
+        # Password injected from SOPS secret via env (secret key is
+        # always "password" - the chart hardcodes this, existingSecretKey
+        # is not a real option despite appearing in older docs)
         existingSecret: forgejo-admin-secret
-        existingSecretKey: adminPassword
+        # Never let the chart reset the live admin password back to
+        # whatever's in forgejo-admin-secret on pod restart - the
+        # chart's own default (keepUpdated) does exactly that.
+        passwordMode: initialOnlyNoReset
 
       # ── app.ini config ──────────────────────────────────────────────────────
       config:
@@ -118,42 +123,12 @@ spec:
         type: ClusterIP
         port: 22
 
-    # ── Ingress (internal) ────────────────────────────────────────────────────
+    # ── Ingress ────────────────────────────────────────────────────────────────
+    # Both internal (susan-int) and external (susan) ingresses are managed as
+    # standalone manifests (ingress-internal.yaml / ingress-external.yaml),
+    # not via the chart - the chart's own ingress/extraIngress values only
+    # ever produced a third, non-functional Ingress here (no valid
+    # ingressClassName, no address assigned) and chart v14+ dropped
+    # extraIngress support entirely anyway.
     ingress:
-      enabled: true
-      className: nginx
-      annotations:
-        cert-manager.io/cluster-issuer: letsencrypt-production
-      hosts:
-        - host: susan-int.gs-farm.net
-          paths:
-            - path: /
-              pathType: Prefix
-      tls:
-        - secretName: forgejo-internal-tls
-          hosts:
-            - susan-int.gs-farm.net
-
-    # ── Extra ingress (external) ──────────────────────────────────────────────
-    extraIngress:
-      - metadata:
-          name: forgejo-external
-          annotations:
-            cert-manager.io/cluster-issuer: letsencrypt-production
-        spec:
-          ingressClassName: nginx-external
-          rules:
-            - host: susan.gs-farm.net
-              http:
-                paths:
-                  - path: /
-                    pathType: Prefix
-                    backend:
-                      service:
-                        name: forgejo-http
-                        port:
-                          number: 3000
-          tls:
-            - secretName: forgejo-external-tls
-              hosts:
-                - susan.gs-farm.net
+      enabled: false
