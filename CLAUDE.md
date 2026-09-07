@@ -118,6 +118,16 @@ file covers working conventions, not the full reference.
   doesn't necessarily mean a Brave-specific setting is at fault.
   Always pair `address=/domain/ip` with `local=/domain/` for any
   internally-overridden `*.gs-farm.net` domain.
+- Wiring a new app to Keycloak SSO (per-app realm pattern, e.g.
+  `vaultwarden`, `grafana`) means creating a **brand new, empty**
+  realm — it has zero users even though `master`/other realms have
+  yours. Creating the client and getting a valid OIDC handshake is not
+  enough; login will keep silently rejecting correct-looking
+  credentials until a user is created *in that specific realm*
+  (`kcadm.sh create users -r <realm> ...` + `set-password ... --temporary`
+  to hand off a one-time password without ever knowing the user's real
+  one). Hit this with Grafana on 2026-09-07; will hit it again for
+  Forgejo unless remembered.
 
 ## Where things live
 

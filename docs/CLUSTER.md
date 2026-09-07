@@ -131,7 +131,7 @@ for 6+ days as of 2026-09-05. Nothing currently open here.)*
 - Pod itself is healthy (`1/1 Running`)
 - Fix: resume the suspended HelmRelease to let Flux retry
 
-**Keycloak / SSO — live for Vaultwarden as of 2026-09-06**
+**Keycloak / SSO — live for Vaultwarden (2026-09-06) and Grafana (2026-09-07)**
 - Keycloak itself is healthy: HelmRelease `Ready`, pod running
   (`26.7.3`), no crash-loop. The Postgres instance it depends on has
   also been stable for 6+ days.
@@ -140,17 +140,25 @@ for 6+ days as of 2026-09-05. Nothing currently open here.)*
   unlock). See `CLUSTER-doc-updates-2026-09-06.md` for the full
   troubleshooting trail and root causes. Local email/password login
   is still available as a fallback (`SSO_ONLY` intentionally not set).
-- Grafana and Forgejo still not configured to use Keycloak — no
-  technical blocker, just not done yet.
+- Grafana SSO is enabled and confirmed working end-to-end (dedicated
+  `grafana` Keycloak realm + client, `role_attribute_path` fixed to
+  `Editor` for all SSO logins, local admin/password login left
+  enabled as fallback). See `CLUSTER-doc-updates-2026-09-07.md` for
+  setup details and the empty-realm gotcha hit along the way.
+- Forgejo still not configured to use Keycloak — no technical
+  blocker, just not done yet.
 
 ### 🔵 On the Horizon
 
 - Evaluate k8s-gateway as longer-term replacement for per-host Pi-hole DNS overrides
-- **Planned**: wire Grafana and Forgejo to Keycloak SSO in a future
-  session, following the pattern proven with Vaultwarden
-  (`CLUSTER-doc-updates-2026-09-06.md`) — watch for each app's own
-  version of the `config.json`-style "UI setting silently overrides
-  git" gotcha before assuming a HelmRelease env var change took effect
+- **Planned**: wire Forgejo to Keycloak SSO in a future session,
+  following the pattern proven with Vaultwarden and Grafana
+  (`CLUSTER-doc-updates-2026-09-06.md`, `CLUSTER-doc-updates-2026-09-07.md`)
+  — watch for each app's own version of the `config.json`-style "UI
+  setting silently overrides git" gotcha before assuming a
+  HelmRelease env var change took effect, and remember that a new
+  Keycloak realm starts with zero users regardless of who's in other
+  realms.
 
 ---
 
