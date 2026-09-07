@@ -116,6 +116,12 @@ Services needing internal LAN access require **both** an `external` and `interna
 - ESXi → Talos migration largely complete
 - Most HelmReleases reconciling successfully
 - Cleaned up unused releases: `echo-server`, `hajimari`, `mongodb`, `rabbitmq`, `vernemq`
+- Forgejo upgraded chart `9.0.0` → `17.1.5` (app `8.0.3` → `15.0.7`),
+  2026-09-07 — see `CLUSTER-doc-updates-2026-09-07.md`. Fixed a
+  live `passwordMode: keepUpdated` risk along the way (chart default
+  since day one, would silently reset the admin password to
+  `forgejo-admin-secret`'s value on any pod restart) and retired a
+  dead duplicate Ingress the chart was generating.
 
 ### 🔴 High Priority
 
@@ -146,7 +152,39 @@ for 6+ days as of 2026-09-05. Nothing currently open here.)*
   enabled as fallback). See `CLUSTER-doc-updates-2026-09-07.md` for
   setup details and the empty-realm gotcha hit along the way.
 - Forgejo still not configured to use Keycloak — no technical
-  blocker, just not done yet.
+  blocker, just not done yet. Now on chart 17.1.5, which has a native
+  `gitea.oauth` values block for configuring an OAuth2 login source
+  declaratively — worth checking before falling back to the
+  admin-panel-click approach used for Vaultwarden/Grafana.
+
+**Forgejo hostname split (susan vs susan-int) — decide before or alongside SSO**
+- Forgejo is the one app in the cluster using two different hostnames
+  for internal vs external access (`susan-int.gs-farm.net` /
+  `susan.gs-farm.net`), instead of the single-hostname split-horizon
+  pattern every other app uses (Keycloak's `elvis`, Vaultwarden's
+  `kumar` — one hostname, two Ingress objects, Pi-hole's domain-wide
+  override routes internal clients to the internal ingress IP
+  automatically). `ROOT_URL` is set to the external hostname, so
+  browsing Forgejo internally always shows a canonical-URL mismatch
+  banner. Not urgent, not broken — cosmetic (wrong hostname in
+  copy-clone-url buttons, webhook default URLs, email links).
+- Confirmed the fix is cheap: `susan.gs-farm.net` already resolves to
+  the internal ingress IP from the LAN (same Pi-hole override), it
+  just 404s today because no Ingress on the `internal` class listens
+  for that host yet. Fix is adding that host to
+  `ingress-internal.yaml` (matching the Keycloak/Vaultwarden pattern)
+  and retiring `susan-int.gs-farm.net`.
+- Tom's call, deferred to next session: do this before Forgejo SSO
+  (so SSO redirect URIs are configured against the final hostname
+  from the start) or after. Either order works.
+
+**Max not on Pi-hole DNS**
+- Tom's son (`max`, the other active Forgejo user) likely isn't
+  pointed at Pi-hole for DNS — needs figuring out how to get his
+  device(s) using it, otherwise he won't get the internal-network
+  routing/overrides everyone else relies on (and would hit the same
+  kind of hostname confusion described above, or worse, if Forgejo's
+  hostnames ever get consolidated without his DNS being fixed first).
 
 ### 🔵 On the Horizon
 
