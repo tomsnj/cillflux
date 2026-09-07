@@ -122,6 +122,14 @@ Services needing internal LAN access require **both** an `external` and `interna
   since day one, would silently reset the admin password to
   `forgejo-admin-secret`'s value on any pod restart) and retired a
   dead duplicate Ingress the chart was generating.
+- Forgejo internal/external hostnames unified on `susan.gs-farm.net`,
+  2026-09-07 — matches the single-hostname split-horizon pattern used
+  by Keycloak (`elvis`) and Vaultwarden (`kumar`). Retired
+  `susan-int.gs-farm.net`; `ROOT_URL`/`DOMAIN` confirmed live-matching
+  in `app.ini`, new TLS cert issued and verified for the internal
+  Ingress, old hostname now cleanly 404s instead of serving stale
+  content. Fixes the canonical-URL mismatch banner from browsing
+  Forgejo internally.
 
 ### 🔴 High Priority
 
@@ -157,27 +165,6 @@ for 6+ days as of 2026-09-05. Nothing currently open here.)*
   declaratively — worth checking before falling back to the
   admin-panel-click approach used for Vaultwarden/Grafana.
 
-**Forgejo hostname split (susan vs susan-int) — decide before or alongside SSO**
-- Forgejo is the one app in the cluster using two different hostnames
-  for internal vs external access (`susan-int.gs-farm.net` /
-  `susan.gs-farm.net`), instead of the single-hostname split-horizon
-  pattern every other app uses (Keycloak's `elvis`, Vaultwarden's
-  `kumar` — one hostname, two Ingress objects, Pi-hole's domain-wide
-  override routes internal clients to the internal ingress IP
-  automatically). `ROOT_URL` is set to the external hostname, so
-  browsing Forgejo internally always shows a canonical-URL mismatch
-  banner. Not urgent, not broken — cosmetic (wrong hostname in
-  copy-clone-url buttons, webhook default URLs, email links).
-- Confirmed the fix is cheap: `susan.gs-farm.net` already resolves to
-  the internal ingress IP from the LAN (same Pi-hole override), it
-  just 404s today because no Ingress on the `internal` class listens
-  for that host yet. Fix is adding that host to
-  `ingress-internal.yaml` (matching the Keycloak/Vaultwarden pattern)
-  and retiring `susan-int.gs-farm.net`.
-- Tom's call, deferred to next session: do this before Forgejo SSO
-  (so SSO redirect URIs are configured against the final hostname
-  from the start) or after. Either order works.
-
 **Max not on Pi-hole DNS**
 - Tom's son (`max`, the other active Forgejo user) likely isn't
   pointed at Pi-hole for DNS — needs figuring out how to get his
@@ -196,7 +183,9 @@ for 6+ days as of 2026-09-05. Nothing currently open here.)*
   setting silently overrides git" gotcha before assuming a
   HelmRelease env var change took effect, and remember that a new
   Keycloak realm starts with zero users regardless of who's in other
-  realms.
+  realms. Hostname is now settled (`susan.gs-farm.net`, unified
+  2026-09-07), so the redirect URI/web origin can be set once and
+  won't need revisiting.
 
 ---
 
