@@ -124,7 +124,9 @@ spec:
         port: 22
 
     # ── Ingress ────────────────────────────────────────────────────────────────
-    # Both internal (susan-int) and external (susan) ingresses are managed as
+    # Both internal and external ingresses use the single hostname
+    # susan.gs-farm.net (split-horizon via Pi-hole, same pattern as
+    # Keycloak's elvis and Vaultwarden's kumar) and are managed as
     # standalone manifests (ingress-internal.yaml / ingress-external.yaml),
     # not via the chart - the chart's own ingress/extraIngress values only
     # ever produced a third, non-functional Ingress here (no valid

@@ -9,7 +9,7 @@ metadata:
 spec:
   ingressClassName: internal
   rules:
-    - host: susan-int.gs-farm.net
+    - host: susan.gs-farm.net
       http:
         paths:
           - path: /
@@ -22,4 +22,4 @@ spec:
   tls:
     - secretName: forgejo-internal-tls
       hosts:
-        - susan-int.gs-farm.net
+        - susan.gs-farm.net
