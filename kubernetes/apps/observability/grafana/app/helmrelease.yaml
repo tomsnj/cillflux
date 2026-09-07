@@ -34,11 +34,28 @@ spec:
     env:
       GF_EXPLORE_ENABLED: true
       GF_SERVER_ROOT_URL: "https://grafana.${SECRET_DOMAIN}"
+    envValueFrom:
+      GF_AUTH_GENERIC_OAUTH_CLIENT_SECRET:
+        secretKeyRef:
+          name: grafana-oauth-secret
+          key: client-secret
     grafana.ini:
       analytics:
         check_for_updates: false
         check_for_plugin_updates: false
         reporting_enabled: false
+      auth.generic_oauth:
+        enabled: true
+        name: Keycloak
+        client_id: grafana
+        scopes: "openid email profile"
+        auth_url: "https://elvis.${SECRET_DOMAIN}/realms/grafana/protocol/openid-connect/auth"
+        token_url: "https://elvis.${SECRET_DOMAIN}/realms/grafana/protocol/openid-connect/token"
+        api_url: "https://elvis.${SECRET_DOMAIN}/realms/grafana/protocol/openid-connect/userinfo"
+        login_attribute_path: preferred_username
+        role_attribute_path: "'Editor'"
+        allow_sign_up: true
+        auto_login: false
     dashboardProviders:
       dashboardproviders.yaml:
         apiVersion: 1
