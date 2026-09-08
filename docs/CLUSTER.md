@@ -97,6 +97,7 @@ Services needing internal LAN access require **both** an `external` and `interna
 | MinIO             | S3 object storage                                           |
 | Kerberos agents   | Security cameras — file-based on `gsks1`, no MongoDB/RabbitMQ dependency |
 | Cilium            | CNI                                                         |
+| Immich            | Self-hosted photo/video library (`major.gs-farm.net`), live since 2026-09-07. Standalone Postgres (not PGO), see below |
 
 ---
 
@@ -137,6 +138,21 @@ Services needing internal LAN access require **both** an `external` and `interna
   `10.0.10.5` web UI or `10.0.10.1` HTTP ingress IP — three different
   IPs, easy to mix up). See gotcha below re: leaving an alternate DNS
   server configured.
+- Immich (self-hosted photo/video library) stood up, 2026-09-07 —
+  `kubernetes/apps/immich/`, following the research in
+  `docs/photo-storage-strategy-research.md`. Server + machine-learning
+  + bundled valkey via the official `immich-charts` Helm chart
+  (0.12.0 / app v2.6.3), standalone Postgres (see gotcha below — not
+  CrunchyData PGO), `immich-library` PVC on `gsks0` at 1Ti, single
+  hostname `major.gs-farm.net` matching the cluster's split-horizon
+  pattern. Both the Postgres data and library PVCs back up nightly
+  via Volsync into the existing shared `volsync-backups` MinIO
+  bucket. Verified live: pods healthy, TLS certs issued for both
+  ingresses, `/api/server/ping` returns `200` internally and
+  externally. Keycloak SSO deliberately deferred — see On the
+  Horizon. Not yet done: initial admin account setup (first user to
+  register becomes admin), content migration from Google/Amazon
+  Photos.
 
 ### 🔴 High Priority
 
@@ -192,10 +208,34 @@ for 6+ days as of 2026-09-05. Nothing currently open here.)*
   annotations in front of the Frigate Ingress — not just a
   HelmRelease values change like the other three apps. Bigger scope,
   not started.
+- **Immich follow-ups**: Keycloak SSO (Immich has native OAuth
+  support, unlike Frigate — should be a straightforward values
+  addition once ready, same shape as Grafana/Forgejo); log into
+  `major.gs-farm.net` and complete first-run admin setup; migrate
+  content in from Google Photos/Amazon Photos per the staged plan in
+  `docs/photo-storage-strategy-research.md` (local/network drives
+  first, then Google Takeout, then Amazon Photos export, checking
+  duplicate detection after each batch); decide what happens to
+  Google Photos/Drive and Amazon Photos subscriptions once migration
+  is verified.
 
 ---
 
 ## Key Learnings & Gotchas
+
+**Not every app's Postgres fits the CrunchyData PGO pattern**  
+Immich requires a Postgres image with the `vectorchord`/`pgvecto.rs`
+vector-search extension compiled in
+(`ghcr.io/immich-app/postgres:14-vectorchord...`) — a custom image,
+not an extension you install into a stock Postgres. PGO's own images
+bundle its own Patroni/pgBackRest tooling that this image doesn't
+have, so pointing a `PostgresCluster` at it isn't a supported
+combination. Immich's database runs as a standalone single-pod
+Deployment instead (`kubernetes/apps/immich/postgres/`), backed up
+via Volsync/restic rather than pgBackRest. Worth checking this early
+for any future app that needs a database extension PGO's images
+don't ship — don't assume every app's Postgres can go through the
+shared `postgres-infra` pattern.
 
 **Windows + manual DNS + a fallback server = split-horizon breaks silently**  
 Windows' "Smart Multi-Homed Name Resolution" queries every configured
