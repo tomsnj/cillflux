@@ -1,0 +1,23 @@
+---
+# Main photo/video library - the immich-charts chart does not create this
+# PVC itself (immich.persistence.library.existingClaim must point at an
+# already-existing claim), so it's managed here directly. Only the
+# immich-server component (single replica) mounts this, so ReadWriteOnce
+# on gsks0 is fine - no ReadWriteMany requirement despite some
+# community guidance suggesting otherwise for older chart versions.
+#
+# Sized per the storage-sizing research in docs/photo-storage-strategy-
+# research.md: ~180-230GB realistic unique total today, provisioned at
+# 1TB for multi-year headroom.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: immich-library
+  namespace: immich
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: gsks0
+  resources:
+    requests:
+      storage: 1Ti

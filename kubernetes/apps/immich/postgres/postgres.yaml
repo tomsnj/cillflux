@@ -1,0 +1,89 @@
+---
+# Standalone Postgres for Immich - NOT managed by CrunchyData PGO like the
+# rest of the cluster's databases. Immich requires a Postgres image with the
+# vectorchord/pgvecto.rs extension compiled in (ghcr.io/immich-app/postgres),
+# which is not compatible with PGO's image expectations (PGO's own tooling -
+# Patroni, pgBackRest - assumes its own crunchy-postgres image layout).
+# Single pod, no HA (this is a single-node cluster anyway, so PGO's Patroni
+# failover isn't providing real HA today either). Backed up via Volsync
+# instead of pgBackRest - see volsync.yaml.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: immich-postgres-data
+  namespace: immich
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: gsks0
+  resources:
+    requests:
+      storage: 20Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: immich-postgres
+  namespace: immich
+spec:
+  replicas: 1
+  # Recreate, not RollingUpdate - this is a single RWO PVC, two postgres
+  # pods must never mount it at once.
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: immich-postgres
+  template:
+    metadata:
+      labels:
+        app: immich-postgres
+    spec:
+      containers:
+        - name: postgres
+          image: ghcr.io/immich-app/postgres:14-vectorchord0.4.3-pgvectors0.2.0@sha256:bcf63357191b76a916ae5eb93464d65c07511da41e3bf7a8416db519b40b1c23
+          envFrom:
+            - secretRef:
+                name: immich-postgres-secret
+          env:
+            - name: POSTGRES_INITDB_ARGS
+              value: "--data-checksums"
+          ports:
+            - containerPort: 5432
+              name: postgres
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/postgresql/data
+            - name: dshm
+              mountPath: /dev/shm
+          readinessProbe:
+            exec:
+              command: ["pg_isready", "-U", "immich"]
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            exec:
+              command: ["pg_isready", "-U", "immich"]
+            initialDelaySeconds: 30
+            periodSeconds: 30
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: immich-postgres-data
+        # Matches upstream docker-compose's shm_size: 128mb
+        - name: dshm
+          emptyDir:
+            medium: Memory
+            sizeLimit: 128Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: immich-postgres
+  namespace: immich
+spec:
+  selector:
+    app: immich-postgres
+  ports:
+    - port: 5432
+      targetPort: 5432

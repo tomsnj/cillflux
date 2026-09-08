@@ -1,0 +1,27 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: immich-internal
+  namespace: immich
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-production
+    # No body-size limit - large photo/video uploads.
+    nginx.ingress.kubernetes.io/proxy-body-size: "0"
+spec:
+  ingressClassName: internal
+  rules:
+    - host: major.gs-farm.net
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: immich-server
+                port:
+                  number: 2283
+  tls:
+    - secretName: immich-internal-tls
+      hosts:
+        - major.gs-farm.net

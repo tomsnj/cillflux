@@ -1,0 +1,70 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: immich
+  namespace: immich
+spec:
+  interval: 30m
+  chart:
+    spec:
+      chart: immich
+      version: ">=0.12.0 <0.13.0"
+      sourceRef:
+        kind: HelmRepository
+        name: immich
+        namespace: immich
+  values:
+    # ── Database connection ─────────────────────────────────────────────────
+    # Shared between all components (server + machine-learning both pick this
+    # up, machine-learning just doesn't use it - harmless). Points at the
+    # standalone Postgres in ../postgres/, not PGO - see postgres.yaml for why.
+    controllers:
+      main:
+        containers:
+          main:
+            env:
+              DB_HOSTNAME: immich-postgres.immich.svc.cluster.local
+              DB_USERNAME:
+                valueFrom:
+                  secretKeyRef:
+                    name: immich-postgres-secret
+                    key: DB_USERNAME
+              DB_PASSWORD:
+                valueFrom:
+                  secretKeyRef:
+                    name: immich-postgres-secret
+                    key: DB_PASSWORD
+              DB_DATABASE_NAME:
+                valueFrom:
+                  secretKeyRef:
+                    name: immich-postgres-secret
+                    key: DB_DATABASE_NAME
+
+    immich:
+      persistence:
+        library:
+          # Chart does not create this PVC - see library-pvc.yaml.
+          existingClaim: immich-library
+
+    # ── Redis/Valkey (job queue) ────────────────────────────────────────────
+    # Bundled subchart, default emptyDir - losing the queue on a pod restart
+    # just means in-flight background jobs (thumbnails, ML) get requeued, not
+    # data loss. Revisit with persistent storage if that proves noisy.
+    valkey:
+      enabled: true
+
+    # ── Ingress ──────────────────────────────────────────────────────────────
+    # Both internal and external ingresses use the single hostname
+    # major.gs-farm.net (split-horizon via Pi-hole, same pattern as Keycloak's
+    # elvis / Vaultwarden's kumar / Forgejo's susan) and are managed as
+    # standalone manifests (ingress-internal.yaml / ingress-external.yaml),
+    # not via the chart.
+    server:
+      enabled: true
+      ingress:
+        main:
+          enabled: false
+
+    machine-learning:
+      enabled: true

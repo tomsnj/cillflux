@@ -1,0 +1,20 @@
+---
+apiVersion: volsync.backube/v1alpha1
+kind: ReplicationSource
+metadata:
+  name: immich-library
+  namespace: immich
+spec:
+  sourcePVC: immich-library
+  trigger:
+    schedule: "0 3 * * *"
+  restic:
+    copyMethod: Direct
+    pruneIntervalDays: 7
+    repository: volsync-immich-library
+    storageClassName: gsks1
+    cacheStorageClassName: local-hostpath
+    retain:
+      daily: 7
+      weekly: 4
+      monthly: 3
