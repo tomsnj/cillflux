@@ -6,6 +6,14 @@ metadata:
   namespace: forgejo
   annotations:
     cert-manager.io/cluster-issuer: letsencrypt-production
+    # This record already exists (created 2026-06-03, predates this
+    # being enforced) so it wasn't broken - but without this
+    # annotation external-dns would default to an A record pointing
+    # at nginx-external's private LAN IP, which Cloudflare rejects
+    # for a proxied record. Matches every other app's external
+    # ingress (Keycloak, Grafana, Vaultwarden, Frigate, Immich) -
+    # see the 2026-09-08 Immich DNS incident in CLUSTER.md.
+    external-dns.alpha.kubernetes.io/target: external.gs-farm.net
 spec:
   ingressClassName: external
   rules:
