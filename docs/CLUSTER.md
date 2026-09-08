@@ -207,11 +207,11 @@ Services needing internal LAN access require **both** an `external` and `interna
   annotation). Fixed by adding it; external-dns created the correct
   CNAME within a minute, external access confirmed working
   (`curl https://major.gs-farm.net/api/server/ping` → `200`, real
-  public DNS, no `--resolve` needed). **Forgejo's external ingress is
-  missing this same annotation** — it currently works only because
-  its DNS record predates this being enforced (created 2026-06-03),
-  not because its ingress config is self-sufficient; flagged, not
-  fixed, since it's not currently broken.
+  public DNS, no `--resolve` needed). Forgejo's external ingress had
+  the same gap — fixed same day (commit `c39b0b44`), confirmed
+  external-dns treated it as a no-op (record already matched the
+  annotation's target, no change attempted) and `susan.gs-farm.net`
+  kept resolving/responding throughout.
 
 ### 🔴 High Priority
 
@@ -273,11 +273,6 @@ for 6+ days as of 2026-09-05. Nothing currently open here.)*
   then Amazon Photos export, checking duplicate detection after each
   batch); decide what happens to Google Photos/Drive and Amazon
   Photos subscriptions once migration is verified.
-- Align Forgejo's external ingress with the `external-dns.alpha.
-  kubernetes.io/target: external.gs-farm.net` annotation every other
-  app's external ingress has (see the 2026-09-08 Immich DNS incident)
-  — not urgent, its current record still works, but it's one deleted
-  DNS record away from silently breaking the same way.
 
 ---
 
