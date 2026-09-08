@@ -166,11 +166,20 @@ Services needing internal LAN access require **both** an `external` and `interna
   night Immich went live. Fixed by pointing both secrets at
   `s3.gs-farm.net` instead (verified with a real TLS handshake).
   Commit `6a6d78e0`.
-- Confirmed Immich v3.0.0 exists upstream but is not yet worth
-  chasing: no v3-compatible chart published in `immich-charts` yet,
-  and v3 drops support for `pgvecto.rs` — the exact extension this
-  deployment's Postgres image uses — so it won't be a simple image
-  bump when it does land. Revisit once the chart catches up.
+- Upgraded to Immich v3.1.0 the same day, 2026-09-08 — correcting an
+  earlier "wait for the chart to catch up" call after Tom pushed
+  back: the postgres image already deployed
+  (`vectorchord0.4.3-pgvectors0.2.0`) turned out to already be the
+  documented post-VectorChord-migration target, so no image swap was
+  needed at all — just an app version bump, with Immich's own
+  automatic startup DB migration handling the rest. Overrode the
+  chart's default image tag directly in the HelmRelease rather than
+  waiting on a new `immich-charts` release (confirmed via `helm
+  template` this chart has no v2-vs-v3-specific logic to need one).
+  Took a fresh manual Volsync backup immediately before, as an extra
+  safety net. Verified live: `/api/server/version` reports
+  `3.1.0`, clean startup logs, zero errors, zero new restarts.
+  Caught and fixed a real YAML bug while editing — see gotcha below.
 
 ### 🔴 High Priority
 
@@ -240,6 +249,21 @@ for 6+ days as of 2026-09-05. Nothing currently open here.)*
 ---
 
 ## Key Learnings & Gotchas
+
+**A duplicate top-level YAML key silently discards the first one - no error**  
+A HelmRelease's `spec.values` is one YAML mapping. Adding a second
+top-level key with the same name as one already present later in the
+file (e.g. two separate `controllers:` blocks meant to be merged) is
+valid YAML syntax but not valid *data* - the parser silently keeps
+only the last occurrence and drops the first entirely, no warning
+from `kubectl apply`, Flux, or Helm. Caught this adding an image tag
+override to Immich's HelmRelease: the new `controllers:` block landed
+above an existing one for DB env vars, and the DB one silently won,
+discarding the version bump with zero indication anything was wrong
+until `helm template` was checked. When adding a new top-level key to
+an existing values block, grep the file for that key name first, and
+merge into the existing block rather than assume a second same-named
+key will combine with the first.
 
 **A failed Volsync backup Job retries forever, not just once**  
 When a Volsync `ReplicationSource`'s restic backup fails immediately
