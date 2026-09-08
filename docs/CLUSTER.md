@@ -153,6 +153,24 @@ Services needing internal LAN access require **both** an `external` and `interna
   Horizon. Not yet done: initial admin account setup (first user to
   register becomes admin), content migration from Google/Amazon
   Photos.
+- **Incident, found and fixed same day (2026-09-08)**: Immich's two
+  Volsync `ReplicationSource`s were pointed at the wrong S3 endpoint
+  (`minio.minio.svc.cluster.local`, which doesn't match MinIO's real
+  cert — see gotcha below). Every backup attempt failed instantly on
+  TLS verification and retried continuously from the first 3am
+  trigger for 8+ hours, saturating the shared `gsks0` NFS pool the
+  whole time. This is almost certainly what caused Max's "Pi-hole is
+  too laggy" report that morning — Pi-hole's own PVC lives on that
+  same pool, confirmed via Prometheus: `iowait` was flat 2-4% the
+  night before, spiked to 25-64% for hours starting right at 3am the
+  night Immich went live. Fixed by pointing both secrets at
+  `s3.gs-farm.net` instead (verified with a real TLS handshake).
+  Commit `6a6d78e0`.
+- Confirmed Immich v3.0.0 exists upstream but is not yet worth
+  chasing: no v3-compatible chart published in `immich-charts` yet,
+  and v3 drops support for `pgvecto.rs` — the exact extension this
+  deployment's Postgres image uses — so it won't be a simple image
+  bump when it does land. Revisit once the chart catches up.
 
 ### 🔴 High Priority
 
@@ -222,6 +240,35 @@ for 6+ days as of 2026-09-05. Nothing currently open here.)*
 ---
 
 ## Key Learnings & Gotchas
+
+**A failed Volsync backup Job retries forever, not just once**  
+When a Volsync `ReplicationSource`'s restic backup fails immediately
+(e.g. a bad S3 endpoint), Kubernetes' Job controller keeps recreating
+failed pods indefinitely from that same scheduled trigger — it does
+not back off to "try again next scheduled run." A backup broken at
+3am can still be retrying at 11am, continuously hammering whatever
+storage the source/cache PVCs live on the entire time. Check for a
+Job stuck recreating pods (`kubectl get pods -n <ns> | grep volsync`
+showing many recent `Error` pods a few minutes apart) whenever a
+Volsync-adjacent app is acting slow long after its 3am backup window
+should have finished — don't assume a failure means it just stopped
+trying.
+
+**`mc --insecure` (or curl `-k`) can hide a real endpoint mismatch**  
+Testing MinIO connectivity with `--insecure`/`-k` skips TLS
+verification entirely, so a wrong hostname (e.g. the in-cluster
+`minio.minio.svc.cluster.local` vs the actual cert's
+`minio.gs-farm.net`/`s3.gs-farm.net`) will connect fine — but restic
+(used by every Volsync backup) verifies certs for real and refuses
+the same connection outright. A static `public.crt` file can also be
+stale documentation, not the live cert — check the actual
+`Certificate` resource (`kubernetes/apps/minio/minio/app/
+certificate.yaml`) for the real SAN list before writing a new
+`RESTIC_REPOSITORY` value, and verify with a real (non-`-k`)
+`curl`/`openssl s_client` handshake, not just a successful
+`--insecure` connection. Caused an 8+ hour disk-I/O incident when a
+new Immich Volsync secret used the internal hostname instead —
+see Immich's 2026-09-08 entry above.
 
 **Not every app's Postgres fits the CrunchyData PGO pattern**  
 Immich requires a Postgres image with the `vectorchord`/`pgvecto.rs`
