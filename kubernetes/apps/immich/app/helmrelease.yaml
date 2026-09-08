@@ -61,6 +61,20 @@ spec:
         library:
           # Chart does not create this PVC - see library-pvc.yaml.
           existingClaim: immich-library
+      # ── Keycloak SSO ─────────────────────────────────────────────────────
+      # Native OAuth support (unlike Forgejo/Frigate, no CLI/proxy needed) -
+      # config lives in a separate SOPS-encrypted Secret rather than inline
+      # here, since it embeds the Keycloak client secret and this file
+      # itself isn't encrypted. Mounted as /config/immich-config.yaml via
+      # IMMICH_CONFIG_FILE, same mechanism as Vaultwarden/Forgejo's
+      # config-file-not-env-vars pattern for this kind of setting.
+      # autoRegister: true (chart/Immich default) - first Keycloak login
+      # auto-creates a matching Immich user, no admin-panel step needed.
+      # No admin role-claim mapping configured, so SSO logins land as
+      # normal (non-admin) users - matches the flat-role approach used
+      # elsewhere; the existing admin account stays local-login only.
+      existingConfiguration: immich-oauth-config
+      configurationKind: Secret
 
     # ── Redis/Valkey (job queue) ────────────────────────────────────────────
     # Bundled subchart, default emptyDir - losing the queue on a pod restart

@@ -5,6 +5,7 @@ resources:
   - helmrepository.yaml
   - helmrelease.yaml
   - library-pvc.yaml
+  - oauth-config.sops.yaml
   - ingress-internal.yaml
   - ingress-external.yaml
   - volsync-secret.sops.yaml

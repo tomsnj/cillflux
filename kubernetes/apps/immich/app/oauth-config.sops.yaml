@@ -1,0 +1,28 @@
+apiVersion: v1
+kind: Secret
+metadata:
+    name: immich-oauth-config
+    namespace: immich
+type: Opaque
+stringData:
+    immich-config.yaml: ENC[AES256_GCM,data:aku2GlcIWwB+E7UdnEy0Cqj5uzqlvfKk/1cpf9zDAlnGZdK/jpHPfl5q+XFs4wvwcen0QxpWaZehXpy83UvLoPU7yjm1joid6vtEmYtb6HkRp98ylCWu9a2CSAteuFT6y2AAFRSIORe3xEfxxcdS8tPcgbuSFCOj4Bu7D6hSccrxo1MNXqeQHs+dFDgNs3EHqb7WxooF7HmtMuZLzKjkGOgi7rQGv6iVUihkXwzipL1z/V2ADCqVhYvvJNsZnO2xwE4QLsNcHLkJYxcBVZ6v2PSOZ2bKwtg1Rt8PxKBH8g6wWqgxU1P/mqktGenytY2gBokND6Yf4fSTlbh9EINnPbDi4r1etEhGpNAcgT65k4ZHW9fKokZBh03RyDGY8UZj6v5I2nFFhBsd0/AKTy5nqjvH/g7BiC5wkH5eS+gEucOf5+yxhr+4B2hMToSTvuMPz31VnrfTghA48Q==,iv:pu3MQQpQtdUmUr45q+2dAwC7ZpgwAhftOMcVegbOOOQ=,tag:lzyzjQLXA5Y3SduVXcVUEA==,type:str]
+sops:
+    kms: []
+    gcp_kms: []
+    azure_kv: []
+    hc_vault: []
+    age:
+        - recipient: age1puse8jhtwqw87w9qr9j4g8dajqccn0899vpyc0wnn9y2e6wz0cms2g895x
+          enc: |
+            -----BEGIN AGE ENCRYPTED FILE-----
+            YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSAvYWc3N2JvY0hyQldINU9y
+            RWJtcW56VTBuVVYzNkhGQTNQR3k3T1JBL2gwCmtOWGNKeG5BUUY3Q2hNaWdVMEdC
+            YlVVZ095WFpRdEFRejlmSnVkbXpnVFkKLS0tIDNYUmRkZkdLTlg3L2VGUmM1eVda
+            aXpZUUYwUUVkQTVMTUZnTDhkMXRCeU0KuEg/GeICZ6mhjRv0J8CS2sswCLVusDk1
+            hjgcWWdY0hMl5gIvbtZ/1QAxMQHExIXTusSnYtD0vQcvPO93SQ3t+A==
+            -----END AGE ENCRYPTED FILE-----
+    lastmodified: "2026-09-08T12:24:25Z"
+    mac: ENC[AES256_GCM,data:xoGaDhSQP6/2l5Spm0CA7Rw/CvY299ZM6Z/oJG1DlJaiCFRYUEnvqV2Alxwuj4NMdgz+GeuCTzN3tsL1g2fImqM78psXGLqg607QPv+pSoiTlq4UH4rN+UE0tsWPu1rjWYXghZ8TPQHPhgufkh1MXtLdJAgupxgsLbbT6YoSTWU=,iv:TQ0C9/L1Tx7gFC7vSWRRXSRRVdxWNq6/mkSgPoKfTLU=,tag:IKkS/1z8sTgitaWO00XvOQ==,type:str]
+    pgp: []
+    encrypted_regex: ^(data|stringData)$
+    version: 3.9.4
