@@ -180,6 +180,36 @@ Services needing internal LAN access require **both** an `external` and `interna
   safety net. Verified live: `/api/server/version` reports
   `3.1.0`, clean startup logs, zero errors, zero new restarts.
   Caught and fixed a real YAML bug while editing — see gotcha below.
+- Keycloak SSO enabled for Immich, 2026-09-08 — native OAuth support
+  (unlike Forgejo/Frigate, no CLI or forward-auth proxy needed).
+  Dedicated `immich` realm + client, config delivered via a SOPS
+  Secret mounted as `IMMICH_CONFIG_FILE` (`immich.existingConfiguration`
+  + `configurationKind: Secret`, not inline in the HelmRelease since
+  that file isn't SOPS-encrypted). `autoRegister: true`, no admin
+  role-claim mapping. Verified via `/api/oauth/authorize` returning a
+  correctly-formed Keycloak authorization URL. Whether it links to
+  the existing admin account by email (Forgejo-style) or creates a
+  separate one wasn't assumed this time — confirmed once tested,
+  see below.
+- **Second incident, found and fixed same day (2026-09-08)**:
+  `major.gs-farm.net` was unreachable externally because its Ingress
+  was missing the `external-dns.alpha.kubernetes.io/target:
+  external.gs-farm.net` annotation. Without it, external-dns
+  defaulted to an A record pointing at nginx-external's private LAN
+  IP (`10.0.10.2`), which Cloudflare rejects outright for a proxied
+  record — it had been retrying and failing every 60s for ~13 hours
+  straight since the ingress was first created, never producing a
+  usable DNS record. Confirmed via the Cloudflare API that every
+  working app's actual record is a CNAME to `external.gs-farm.net`
+  (matching Keycloak's own external ingress, which already had this
+  annotation). Fixed by adding it; external-dns created the correct
+  CNAME within a minute, external access confirmed working
+  (`curl https://major.gs-farm.net/api/server/ping` → `200`, real
+  public DNS, no `--resolve` needed). **Forgejo's external ingress is
+  missing this same annotation** — it currently works only because
+  its DNS record predates this being enforced (created 2026-06-03),
+  not because its ingress config is self-sufficient; flagged, not
+  fixed, since it's not currently broken.
 
 ### 🔴 High Priority
 
@@ -235,20 +265,44 @@ for 6+ days as of 2026-09-05. Nothing currently open here.)*
   annotations in front of the Frigate Ingress — not just a
   HelmRelease values change like the other three apps. Bigger scope,
   not started.
-- **Immich follow-ups**: Keycloak SSO (Immich has native OAuth
-  support, unlike Frigate — should be a straightforward values
-  addition once ready, same shape as Grafana/Forgejo); log into
-  `major.gs-farm.net` and complete first-run admin setup; migrate
-  content in from Google Photos/Amazon Photos per the staged plan in
-  `docs/photo-storage-strategy-research.md` (local/network drives
-  first, then Google Takeout, then Amazon Photos export, checking
-  duplicate detection after each batch); decide what happens to
-  Google Photos/Drive and Amazon Photos subscriptions once migration
-  is verified.
+- **Immich follow-ups**: migrate content in from Google Photos/Amazon
+  Photos per the staged plan in `docs/photo-storage-strategy-
+  research.md` (local/network drives first, then Google Takeout,
+  then Amazon Photos export, checking duplicate detection after each
+  batch); decide what happens to Google Photos/Drive and Amazon
+  Photos subscriptions once migration is verified.
+- Align Forgejo's external ingress with the `external-dns.alpha.
+  kubernetes.io/target: external.gs-farm.net` annotation every other
+  app's external ingress has (see the 2026-09-08 Immich DNS incident)
+  — not urgent, its current record still works, but it's one deleted
+  DNS record away from silently breaking the same way.
 
 ---
 
 ## Key Learnings & Gotchas
+
+**A new externally-exposed app needs the external-dns target annotation, or it just silently never gets DNS**  
+`external-dns` in this cluster watches `ingressClassName: external`
+Ingress objects and, with no override, defaults to an A record
+pointing at nginx-external's private LAN IP (`10.0.10.2`). Cloudflare
+rejects that outright for a proxied record (error code 9003, "Target
+... is not allowed for a proxied record") - and `external-dns` just
+retries the same failing create every 60 seconds forever, with no
+escalation, no visible failure anywhere except its own pod logs. The
+app's Ingress applies fine, TLS cert issues fine, everything *looks*
+healthy - it's simply unreachable from outside the LAN, with the only
+symptom being "I can't get to it" from off-network. Every actually-
+working external hostname in this cluster is a CNAME to
+`external.gs-farm.net` (verified via the Cloudflare API), which
+requires the Ingress annotation `external-dns.alpha.kubernetes.io/
+target: external.gs-farm.net` (Keycloak's external ingress has always
+had this; Grafana/Vaultwarden/Frigate do too). **Add this annotation
+to every new app's external Ingress from the start** - don't wait to
+discover it's missing when someone tries to reach the app remotely.
+If a new external hostname works from inside the LAN but not outside,
+check `kubectl logs -n network -l app.kubernetes.io/name=external-dns`
+for repeating `9003`/"not allowed for a proxied record" errors before
+looking anywhere else.
 
 **A duplicate top-level YAML key silently discards the first one - no error**  
 A HelmRelease's `spec.values` is one YAML mapping. Adding a second

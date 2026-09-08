@@ -156,3 +156,71 @@ API, not a stale/hallucinated date from a summarized fetch) same day:
   clean afterward.
 
 Commit `e26a98f3`.
+
+## Update (2026-09-08, later) — Keycloak SSO + a second incident
+
+### Immich Keycloak SSO
+
+Enabled using Immich's native OAuth support - no CLI/proxy needed,
+unlike Forgejo/Frigate:
+- New `immich` Keycloak realm + confidential client, redirect URIs
+  per Immich's own OAuth docs (`/auth/login`, `/user-settings`, and
+  the mobile `app.immich:///oauth-callback`).
+- Config delivered via a new SOPS-encrypted Secret
+  (`kubernetes/apps/immich/app/oauth-config.sops.yaml`) holding a
+  full `immich-config.yaml` oauth block, wired in via
+  `immich.existingConfiguration` + `configurationKind: Secret` -
+  kept out of `helmrelease.yaml` itself since that file isn't
+  SOPS-encrypted and this embeds the client secret.
+- Verified via `helm template` before applying (volume mount, secret
+  name, `IMMICH_CONFIG_FILE` env var), then live via
+  `/api/oauth/authorize` returning a correctly-formed Keycloak
+  authorization URL and the server's own feature-flags log showing
+  `"oauth": true, "configFile": true`.
+- Created the `stecktf` Keycloak user up front with a temp password,
+  same as every other realm - avoiding the empty-new-realm gotcha.
+- Deliberately did NOT assume whether this links to the existing
+  local admin account by email (like Forgejo did) or creates a
+  separate one (docs are silent) - waiting for an actual test rather
+  than repeating the mistake made documenting Forgejo's SSO
+  initially.
+
+### Second incident: major.gs-farm.net unreachable externally
+
+Tom reported it right after setup - off the LAN, `major.gs-farm.net`
+just didn't load at all.
+
+Root cause: the external Ingress was missing the
+`external-dns.alpha.kubernetes.io/target: external.gs-farm.net`
+annotation that Keycloak's own external ingress has always had.
+Without it, `external-dns` defaulted to creating a plain A record
+pointing at nginx-external's private LAN IP (`10.0.10.2`) -
+Cloudflare rejects this outright for a proxied record
+(`code: 9003, "Target ... is not allowed for a proxied record"`),
+and `external-dns` had been silently retrying the same failing
+create every 60 seconds for roughly 13 hours since the Ingress was
+first created (793+ consecutive soft errors in its logs) - `
+major.gs-farm.net` never had a public DNS record at all.
+
+Confirmed the correct pattern by querying the Cloudflare API
+directly (using `external-dns`'s own token from a throwaway debug
+pod) for `susan.gs-farm.net`'s actual live record: a CNAME to
+`external.gs-farm.net`, not an A record - matching Keycloak's
+existing annotation, not what a from-scratch Ingress gets by
+default.
+
+Fixed by adding the same annotation to Immich's external ingress;
+`external-dns` created the correct CNAME within a minute. Verified
+externally: `curl https://major.gs-farm.net/api/server/ping` → `200`,
+resolved via real public DNS (matching Cloudflare's edge IPs, same
+as every other app), no `--resolve` override needed.
+
+**Found in the process**: Forgejo's external ingress is *also*
+missing this annotation. It currently works only because its DNS
+record predates whatever changed to make this matter (created
+2026-06-03) - not because its own Ingress config is self-sufficient.
+It's one deleted/recreated DNS record away from failing exactly the
+way Immich just did. Flagged in `CLUSTER.md`'s On the Horizon list,
+not fixed yet since nothing is currently broken.
+
+Commits `e8a73fed` (SSO), `897c6e20` (DNS fix).
