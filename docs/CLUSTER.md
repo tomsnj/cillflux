@@ -187,10 +187,12 @@ Services needing internal LAN access require **both** an `external` and `interna
   + `configurationKind: Secret`, not inline in the HelmRelease since
   that file isn't SOPS-encrypted). `autoRegister: true`, no admin
   role-claim mapping. Verified via `/api/oauth/authorize` returning a
-  correctly-formed Keycloak authorization URL. Whether it links to
-  the existing admin account by email (Forgejo-style) or creates a
-  separate one wasn't assumed this time — confirmed once tested,
-  see below.
+  correctly-formed Keycloak authorization URL, and confirmed after
+  Tom's first login by querying the `user` table directly: it linked
+  to the existing local admin account by email (same row, same
+  `createdAt`, `oauthId` now populated) rather than creating a
+  separate one — same behavior as Forgejo, confirmed via DB query
+  this time instead of assumed.
 - **Second incident, found and fixed same day (2026-09-08)**:
   `major.gs-farm.net` was unreachable externally because its Ingress
   was missing the `external-dns.alpha.kubernetes.io/target:

@@ -179,11 +179,12 @@ unlike Forgejo/Frigate:
   `"oauth": true, "configFile": true`.
 - Created the `stecktf` Keycloak user up front with a temp password,
   same as every other realm - avoiding the empty-new-realm gotcha.
-- Deliberately did NOT assume whether this links to the existing
-  local admin account by email (like Forgejo did) or creates a
-  separate one (docs are silent) - waiting for an actual test rather
-  than repeating the mistake made documenting Forgejo's SSO
-  initially.
+- **Confirmed after Tom's first login** (queried the `user` table
+  directly rather than assume): it linked to the existing local
+  admin account by email - same row, same original `createdAt`,
+  `oauthId` now populated with the Keycloak user id. No duplicate
+  account. Same behavior as Forgejo turned out to be, this time
+  verified via the database instead of guessed.
 
 ### Second incident: major.gs-farm.net unreachable externally
 
