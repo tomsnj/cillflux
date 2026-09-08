@@ -8,6 +8,15 @@ metadata:
     cert-manager.io/cluster-issuer: letsencrypt-production
     # No body-size limit - large photo/video uploads.
     nginx.ingress.kubernetes.io/proxy-body-size: "0"
+    # Without this, external-dns defaults to an A record pointing at
+    # nginx-external's private LAN IP (10.0.10.2), which Cloudflare
+    # rejects outright for a proxied record ("Target ... is not allowed
+    # for a proxied record") - it retries and fails forever, every 60s.
+    # Every other externally-working app's DNS record is actually a
+    # CNAME to external.gs-farm.net (verified directly via the
+    # Cloudflare API against susan.gs-farm.net) - matching Keycloak's
+    # own external ingress, which already has this annotation.
+    external-dns.alpha.kubernetes.io/target: external.gs-farm.net
 spec:
   ingressClassName: external
   rules:
