@@ -393,6 +393,51 @@ nothing except a fallback if Pi-hole itself goes down (a tradeoff
 already accepted everywhere else on this network). Hit this getting
 Max's laptop onto Pi-hole, 2026-09-07.
 
+**macOS Local Network privacy blocks unbundled CLI binaries, and `curl` hides it**  
+Pi-hole's `address=/gs-farm.net/10.0.10.1` means every
+`*.gs-farm.net` host resolves to a **private** address on the LAN, so
+any tool reaching one is making a *local network* connection - which
+macOS (Sequoia and later) gates behind Local Network privacy and
+blocks **in the kernel, before a single packet is emitted**. The
+symptom is a tool that fails 100% of the time with zero packets
+leaving the machine and a kernel error in Console.app, while `curl`
+to the identical URL from the same shell succeeds 100% of the time.
+`curl` works because **Terminal.app** holds the grant; a bare Mach-O
+executable launched from that shell does **not** inherit it and is
+attributed its own TCC identity. Worse, a standalone binary has no
+bundle identifier, so macOS has nothing to register - it silently
+denies and **never appears** in System Settings -> Privacy & Security
+-> Local Network. An empty list is the bug, not evidence against the
+theory, and there is no toggle to flip. Quarantine is unrelated (the
+binary that hit this had no `com.apple.quarantine` xattr). Confirm in
+one step by pinning the host to its **public** Cloudflare IP
+(`dig +short @1.1.1.1 <host>`) in `/etc/hosts`: if the same binary
+suddenly works, it is Local Network privacy. Note this generalizes
+the browser-focused entry in `CLAUDE.md` - it applies to any
+unbundled CLI tool, and **`curl` succeeding proves nothing about
+whether another tool will**. Best fix is usually to take macOS out of
+the path: run the tool from `gsfarmctl` or TrueNAS over the LAN. Hit
+this with `immich-go`, 2026-09-08.
+
+**One corrupt input can fail many unrelated concurrent uploads (HTTP/2)**  
+An upload tool that parallelises over a single HTTP/2 connection will
+lose **every in-flight transfer** when the server rejects any one of
+them hard enough to tear the connection down. `immich-go` hit this:
+two 0-byte files produced `400 Bad Request` from Immich, which killed
+the shared connection and took seven healthy uploads (66KB-6.8MB)
+with it, then aborted the queue so another 30 files were never
+attempted. Removing the two 0-byte files fixed all of it in one run.
+The tool's own counters were misleading in both directions - it
+reported 9-10 errors when only **2** requests ever reached the
+server. Diagnose by correlating the client log against nginx access
+logs rather than trusting either alone: the giveaway was nginx
+logging exactly two `400`s with `request_length: ~1700` bytes (a
+multi-MB upload cannot be 1.7KB, so those requests carried no file
+content), and the client log showing a status code on only one error
+line while the rest had **no HTTP response at all**. When a bulk
+upload fails on a stable subset of files, check for 0-byte and
+truncated inputs first: `find <dir> -type f -size 0`.
+
 **SOPS / Flux decryption**  
 The `flux-system` kustomization in `gotk-sync.yaml` must include a `decryption` block. Without it, every reconcile cycle overwrites decrypted secrets with raw ciphertext.
 
