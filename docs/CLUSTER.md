@@ -273,6 +273,23 @@ for 6+ days as of 2026-09-05. Nothing currently open here.)*
   then Amazon Photos export, checking duplicate detection after each
   batch); decide what happens to Google Photos/Drive and Amazon
   Photos subscriptions once migration is verified.
+- **Apple Photos re-import (Immich)** — the 2026-09-08 first-batch
+  import pointed `immich-go` at all of `~/Pictures`, which walked
+  into the `Photos Library.photoslibrary` package (5,287 paths
+  scanned) and ingested 477 assets from inside it: **293 Photos
+  derivatives** (`…_1_105_c.jpeg` — downscaled renders whose
+  checksums never match their originals, so Immich's dedup can't
+  catch them) plus **184 UUID-named originals** carrying no album
+  membership or curated metadata. All 477 deleted 2026-09-08 (Tom's
+  call: "will fix later"). Redo properly via **Photos.app → File →
+  Export → Export Unmodified Originals** into a staging folder, then
+  point `immich-go` at *that folder* — never at the `.photoslibrary`
+  package, which is an opaque bundle, not a photo directory. The 359
+  normal-filename assets (`~/Pictures/pics` etc.) were clean and were
+  kept. Still outstanding from the same batch: the 114 MB
+  `WIN_20190505_07_44_26_Pro.mp4` in `~/immich-oversize` (exceeds
+  Cloudflare's 100 MiB proxy cap — needs the LAN/browser path), and
+  `~/Downloads` was never imported.
 
 ---
 
