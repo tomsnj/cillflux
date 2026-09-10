@@ -272,7 +272,11 @@ for 6+ days as of 2026-09-05. Nothing currently open here.)*
   research.md` (local/network drives first, then Google Takeout,
   then Amazon Photos export, checking duplicate detection after each
   batch); decide what happens to Google Photos/Drive and Amazon
-  Photos subscriptions once migration is verified.
+  Photos subscriptions once migration is verified. **Stage 2 (Google
+  Takeout) is planned in detail in
+  `docs/photo-migration-google-takeout-plan.md`** — including why
+  Google now goes before Amazon, and why the import runs from
+  `gsfarmctl` rather than the Mac.
 - **Apple Photos re-import (Immich)** — the 2026-09-08 first-batch
   import pointed `immich-go` at all of `~/Pictures`, which walked
   into the `Photos Library.photoslibrary` package (5,287 paths
