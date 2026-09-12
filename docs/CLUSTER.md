@@ -442,6 +442,35 @@ line while the rest had **no HTTP response at all**. When a bulk
 upload fails on a stable subset of files, check for 0-byte and
 truncated inputs first: `find <dir> -type f -size 0`.
 
+**On a single-replica app, an aggressive readiness probe turns slow storage into a hard 502**  
+bjw-s common (and plenty of other charts) default to
+`timeoutSeconds: 1`, `failureThreshold: 3` on liveness and readiness.
+That is fine on fast local disk and wrong on `gsks0`, whose HDD mirror
+vdev tops out around 78 IOPS: under sustained write load a health
+endpoint intermittently takes longer than a second to answer. Three
+misses and kubernetes marks the pod NotReady and removes it from the
+Service endpoints - and with **one replica there is no second endpoint
+to fall back to**, so nginx has no upstream at all and returns `502` to
+the client. The app itself is fine and answers normally seconds later,
+which makes this read like a flaky network or an overloaded server
+rather than a probe misconfiguration. The liveness probe compounds it
+by actually restarting a container that was only busy. Symptoms to
+recognise: intermittent `502`s at the ingress during bulk writes, a
+handful against thousands of `2xx`; `Liveness/Readiness probe failed:
+context deadline exceeded` in `kubectl get events`; the pod showing
+restarts while node CPU/memory sit low and **no resource limits are
+set** (so throttling is not the explanation). Fix is to widen the
+probe, not to throttle the client: `timeoutSeconds: 10`,
+`failureThreshold: 6` still catches a genuine hang within 60s. Hit
+this with `immich-server` during the 2026-09-11 Google Takeout import,
+where it silently aborted two bulk `immich-go` runs (its default
+`--on-errors stop` bails on the first error). When adding probe
+overrides to a chart that already has a top-level `controllers:` block,
+put them inside the component's own block (e.g. `server:`) and confirm
+with `helm template` that the existing overrides still render - a
+second top-level `controllers:` key would silently discard one of
+them.
+
 **SOPS / Flux decryption**  
 The `flux-system` kustomization in `gotk-sync.yaml` must include a `decryption` block. Without it, every reconcile cycle overwrites decrypted secrets with raw ciphertext.
 
