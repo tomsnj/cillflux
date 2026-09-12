@@ -91,6 +91,30 @@ spec:
     # not via the chart.
     server:
       enabled: true
+      # Probe timeouts raised from the bjw-s common defaults (1s timeout,
+      # 3 failures). The library PVC is on gsks0, whose HDD mirror vdev
+      # tops out around 78 IOPS - under sustained write load (a bulk
+      # immich-go import) /api/server/ping intermittently takes over a
+      # second. Three misses marked the single-replica pod NotReady,
+      # kubernetes pulled it from the Service endpoints, and nginx was
+      # left with no upstream at all -> 502 to the client, even though
+      # the server was healthy again seconds later. 10s/6 gives a full
+      # 60s of real unresponsiveness before acting, which still catches
+      # a genuine hang. Hit this during the 2026-09-11 Google Takeout
+      # import; see docs/photo-migration-google-takeout-plan.md.
+      controllers:
+        main:
+          containers:
+            main:
+              probes:
+                liveness:
+                  spec:
+                    timeoutSeconds: 10
+                    failureThreshold: 6
+                readiness:
+                  spec:
+                    timeoutSeconds: 10
+                    failureThreshold: 6
       ingress:
         main:
           enabled: false
