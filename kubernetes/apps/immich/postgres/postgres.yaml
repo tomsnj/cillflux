@@ -56,16 +56,30 @@ spec:
               mountPath: /var/lib/postgresql/data
             - name: dshm
               mountPath: /dev/shm
+          # timeoutSeconds/failureThreshold are explicit, not defaulted.
+          # k8s defaults these to 1s/3, and an exec probe on this NFS-
+          # backed PVC (gsks0, ~78 IOPS HDD mirror) blows past 1s under
+          # bulk write load - pg_isready then "fails", kubernetes pulls
+          # this single-replica pod from the Service endpoints, and
+          # immich-server loses its database mid-request, surfacing as
+          # 502 at the ingress. Cost 7 RAW uploads during the
+          # 2026-09-11 Google Takeout import; same root cause as the
+          # immich-server probe fix in the app HelmRelease. See the
+          # single-replica probe gotcha in docs/CLUSTER.md.
           readinessProbe:
             exec:
               command: ["pg_isready", "-U", "immich"]
             initialDelaySeconds: 5
             periodSeconds: 10
+            timeoutSeconds: 10
+            failureThreshold: 6
           livenessProbe:
             exec:
               command: ["pg_isready", "-U", "immich"]
             initialDelaySeconds: 30
             periodSeconds: 30
+            timeoutSeconds: 10
+            failureThreshold: 6
       volumes:
         - name: data
           persistentVolumeClaim:
