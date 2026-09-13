@@ -273,10 +273,24 @@ for 6+ days as of 2026-09-05. Nothing currently open here.)*
   then Amazon Photos export, checking duplicate detection after each
   batch); decide what happens to Google Photos/Drive and Amazon
   Photos subscriptions once migration is verified. **Stage 2 (Google
-  Takeout) is planned in detail in
-  `docs/photo-migration-google-takeout-plan.md`** — including why
-  Google now goes before Amazon, and why the import runs from
-  `gsfarmctl` rather than the Mac.
+  Takeout) is DONE as of 2026-09-12** — both accounts, 16,310 assets /
+  21 albums / 116 GB, zero errors; see
+  `CLUSTER-doc-updates-2026-09-12.md` for the two probe
+  misconfigurations it uncovered and
+  `docs/photo-migration-google-takeout-plan.md` for the method. Next
+  is Amazon, scoped to Shawna's pre-2022 history — but note the
+  research doc's overlap assumption did **not** hold for Google (only
+  32 of Shawna's 12,135 assets were already present), so budget
+  storage at or above the high end of the 180–230 GB estimate and dry-
+  run Amazon before committing to a full export.
+- **`gsfarmctl` is memory-constrained** — 5.7 GB total, with a UniFi
+  controller (`java` ~765 MB + `mongod` ~358 MB) taking roughly 30% of
+  what's in use. This is not theoretical: it killed a bulk `immich-go`
+  import at 53% on 2026-09-12 when free memory fell to ~360 MB, and it
+  will recur on the Amazon stage. Options in rough order of effort:
+  add RAM; move the UniFi controller off the cluster's control host
+  (arguably it doesn't belong there); or split imports so the tool
+  never indexes 12,000 assets at once.
 - **Apple Photos re-import (Immich)** — the 2026-09-08 first-batch
   import pointed `immich-go` at all of `~/Pictures`, which walked
   into the `Photos Library.photoslibrary` package (5,287 paths
