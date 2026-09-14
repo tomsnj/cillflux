@@ -485,6 +485,33 @@ with `helm template` that the existing overrides still render - a
 second top-level `controllers:` key would silently discard one of
 them.
 
+**Samsung motion photos import fine but never get a thumbnail**  
+A Galaxy-camera JPEG (`20210903_153528.jpg` naming) is a complete JPEG
+with a video and metadata block appended *after* the EOI marker,
+terminated by a Samsung Extended Format trailer - the file's last four
+bytes are literally `SEFT`. Immich stores the asset correctly and the
+original downloads and views fine, but thumbnail generation fails with
+`AssetGenerateThumbnails: Input file contains unsupported image
+format`, so the asset shows as a **blank tile in the timeline**. This
+looks exactly like file corruption and isn't: check with
+`tail -c 8 <file> | od -An -c` (expect `$ \0 \0 \0 S E F T`) and
+confirm the JPEG `ffd9` EOI is present earlier in the file. Do **not**
+chase it as a failed upload or a stuck job queue - re-running
+`thumbnailGeneration` with the missing-only command finds nothing to
+do, because nothing is queued or failing; the job already ran and gave
+up. The only fix is to strip the SEF trailer and re-upload, which
+restores the thumbnail at the cost of the motion component - rarely
+worth it. Hit 11 times out of 16,998 assets in the 2026-09-12 Google
+Takeout import (Shawna's older, Samsung-era library); expect a similar
+rate from any Samsung-sourced batch, including the Amazon stage.
+Separately and unrelated: **hidden Motion Photo video components
+legitimately have no thumbnail**. Immich extracts the video half of a
+Pixel `.MP.jpg` as its own asset with `visibility='hidden'`, linked to
+its parent still via `livePhotoVideoId`; those are never displayed on
+their own and are not missing anything. 864 of them in the same
+import. When auditing thumbnail coverage, filter on
+`visibility='timeline'` or the count will look alarming for no reason.
+
 **SOPS / Flux decryption**  
 The `flux-system` kustomization in `gotk-sync.yaml` must include a `decryption` block. Without it, every reconcile cycle overwrites decrypted secrets with raw ciphertext.
 
