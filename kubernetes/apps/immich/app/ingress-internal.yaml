@@ -8,6 +8,20 @@ metadata:
     cert-manager.io/cluster-issuer: letsencrypt-production
     # No body-size limit - large photo/video uploads.
     nginx.ingress.kubernetes.io/proxy-body-size: "0"
+    # immich-go's dedup fetch (POST /api/search/metadata with
+    # withExif:true) pages through the whole library 1000 assets at a
+    # time, and Immich joins and serialises EXIF for each. Measured
+    # 2026-09-15 at 17,861 assets: most pages are tens of ms, but the
+    # full ones took 8-54s, with the worst at 53.7s against an *idle*
+    # server - inside nginx's 60s default by six seconds, so any
+    # variance returned 504 and aborted the import before a byte was
+    # uploaded. Raised to 300s. Note this is headroom, not a fix: the
+    # query is slow because the library lives on gsks0 (~78 IOPS HDD
+    # mirror), and the worst-case page grows with the asset count, so
+    # this will need revisiting rather than raising forever.
+    # Internal only - browsers never make this call, and a 5 minute
+    # read timeout on the internet-facing ingress is a worse trade.
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "300"
 spec:
   ingressClassName: internal
   rules:
