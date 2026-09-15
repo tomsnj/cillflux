@@ -107,10 +107,23 @@ spec:
           containers:
             main:
               probes:
+                # Liveness is deliberately far more tolerant than
+                # readiness. They do different jobs and the storage
+                # here punishes conflating them: readiness only pulls
+                # the pod from Service endpoints (recoverable in
+                # seconds), while liveness SIGTERMs it. On 2026-09-15 a
+                # bulk import made the server unresponsive for over 60s
+                # of NFS I/O and liveness killed it mid-upload - exit
+                # 143, 55 failed uploads - which is strictly worse than
+                # having waited. 30s x 10 gives a five-minute stall
+                # budget and still catches a genuinely wedged process
+                # (the case actually seen on 2026-09-13, where workers
+                # hung indefinitely).
                 liveness:
                   spec:
                     timeoutSeconds: 10
-                    failureThreshold: 6
+                    periodSeconds: 30
+                    failureThreshold: 10
                 readiness:
                   spec:
                     timeoutSeconds: 10
