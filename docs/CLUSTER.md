@@ -519,6 +519,54 @@ audit that doesn't filter on `visibility='timeline'` looks roughly
 eighty times worse than reality.
 
 
+**Create the Immich account *before* the first SSO login, or it gets no quota**  
+With `autoRegister: true` (the chart/Immich default), a successful
+Keycloak login auto-creates a matching Immich user - but that
+autocreated account has **no storage quota**, and quotas are a
+create-time property of the account. The working order is therefore
+the reverse of what feels natural:
+
+1. `POST /api/admin/users` with `email`, `name`, `password`,
+   `quotaSizeInBytes` and `shouldChangePassword: true`.
+2. Create the matching user in the **`immich` Keycloak realm** - not
+   `master`, not another app's realm (see the empty-realm gotcha
+   below).
+3. Have them sign in once via "Sign in with Keycloak". Immich matches
+   on **email** and attaches `oauthId` to the *existing* row, keeping
+   the quota, the `createdAt`, and any partner shares.
+
+**The emails must match exactly.** If they don't, Immich creates a
+second account instead of linking, and you get a duplicate with no
+quota and no shares. Verify after the first login with:
+
+```sql
+SELECT email, "quotaSizeInBytes"/1073741824 AS quota_gib,
+       ("oauthId" IS NOT NULL AND "oauthId" <> '') AS sso_linked,
+       "createdAt"
+FROM "user" ORDER BY "createdAt";
+```
+
+A correct link shows `sso_linked = t` with the **`createdAt`
+unchanged** and no extra row. Confirmed working 2026-09-16 for three
+family accounts.
+
+**Immich partner sharing is one-way per direction, and only the sharer
+can create it**  
+`POST /api/partners/{id}` shares *the caller's* whole library with the
+named user, read-only. An admin cannot create someone else's outbound
+share - there is no "share X's library with Y" call, even as admin. So:
+
+- Mutual visibility needs **two** shares, one created by each person
+  from their own account.
+- One-way visibility is the default and needs no configuration - which
+  is how you give someone read access to the family archive without
+  their own uploads flowing back.
+
+Partner sharing covers the sharer's **entire** library and stays live
+as it grows, so it is the right tool for "see everything"; albums are
+the tool for "see these specific photos", and work between any pair of
+accounts independently.
+
 **SOPS / Flux decryption**  
 The `flux-system` kustomization in `gotk-sync.yaml` must include a `decryption` block. Without it, every reconcile cycle overwrites decrypted secrets with raw ciphertext.
 
