@@ -1,6 +1,9 @@
 # Proposal — move Immich's Postgres off NFS onto node NVMe
 
-**Status:** proposed, not implemented. Written 2026-09-15.
+**Status:** proposed, not implemented. Written 2026-09-15;
+urgency revised upward 2026-09-17 after the cascade recurred at
+concurrency 1 - see "Concurrency was a large factor, but not the
+cure" below.
 
 ## The problem
 
@@ -27,13 +30,32 @@ Three fixes this week were all downstream of this single cause:
 probe timeouts on the server (`584e7f8e`), the same on Postgres
 (`0d1499d0`), and a liveness period increase (`a5534ff3`).
 
-**Important caveat, discovered after those fixes:** dropping to
+**Concurrency was a large factor, but not the cure.** Dropping to
 `--concurrent-tasks 1` took throughput from 4/min with cascades to
-**17/min with zero restarts**, median upload 14.5s → 3.4s. Parallel
-writes were thrashing the mirror. So the ceiling is substantially
-further away than it appeared, and this proposal is no longer urgent -
-but the placement is still wrong, and the next bulk workload will find
-it again.
+17/min, median upload 14.5s → 3.4s - parallel writes were thrashing the
+mirror. Seven consecutive Amazon years then imported with zero errors
+and **zero pod restarts**, and this document originally recorded that
+as evidence the proposal was no longer urgent.
+
+**That conclusion was premature, and 2026-09-17 disproved it.** At
+~30,000 assets the cascade returned *at concurrency 1*: during the
+2020/2021/2012 imports, `immich-postgres` again exceeded its liveness
+budget and was SIGKILLed (`exit 137`), and `immich-server` crash-looped
+behind it (`exit 1`, alive two seconds) - **23 server restarts and 7
+Postgres restarts**. The imports still reported zero errors only
+because `--on-errors 200` let `immich-go` retry through the outages,
+which masked the failure in exactly the metric being used to declare it
+fixed.
+
+Node resources were never the constraint: 12% CPU, 42% memory
+throughout.
+
+The pattern is that this **worsens as the library grows** - more assets
+means heavier database work competing for the same spindles - so
+client-side tuning buys time proportional to how much headroom is left,
+and there is now visibly less. Every lever on that side has been
+pulled: two probe adjustments, a proxy timeout, and concurrency.
+**This proposal is the remaining option.**
 
 ## Precedent: Frigate already does this
 
