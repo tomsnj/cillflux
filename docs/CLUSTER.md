@@ -283,6 +283,20 @@ for 6+ days as of 2026-09-05. Nothing currently open here.)*
   32 of Shawna's 12,135 assets were already present), so budget
   storage at or above the high end of the 180–230 GB estimate and dry-
   run Amazon before committing to a full export.
+- **Immich: review resolution-duplicate stacks** — Amazon stored some
+  photos at two resolutions, and they are now in Immich as separate
+  assets. Confirmed case: `20160516_183350.jpg` exists at 259 KB and
+  6 MB. `immich-go` skips the smaller one *only* when the filename and
+  date both match (it logs "an asset with the same name and date but
+  with bigger size exists on the server"); anything that differs in
+  either lands as a second asset. Its `--manage-raw-jpeg` /
+  `--manage-heic-jpeg` / `--manage-burst` stacking flags are
+  import-time only and cannot fix what is already imported. For that,
+  use Immich's own `duplicateDetection` job and the Duplicates review
+  UI. Deliberately deferred until the migration settles - running it
+  mid-import would just re-detect against a moving target. Also worth
+  a pass over near-duplicates that dedup cannot catch by checksum,
+  e.g. a Google-resized copy alongside an Amazon original.
 - **`gsfarmctl` is memory-constrained** — 5.7 GB total, with a UniFi
   controller (`java` ~765 MB + `mongod` ~358 MB) taking roughly 30% of
   what's in use. This is not theoretical: it killed a bulk `immich-go`
