@@ -5,7 +5,12 @@ metadata:
   name: immich-postgres-data
   namespace: immich
 spec:
-  sourcePVC: immich-postgres-data
+  # MUST track the claim the Postgres deployment actually mounts.
+  # The 2026-09-18 move to NVMe repointed the deployment but initially
+  # left this naming the old gsks0 PVC - Volsync would have kept
+  # reporting successful nightly backups of a frozen copy. If the data
+  # directory is ever moved again, change this in the same commit.
+  sourcePVC: immich-postgres-data-nvme
   trigger:
     schedule: "0 3 * * *"
   restic:
