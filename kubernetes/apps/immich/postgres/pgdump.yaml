@@ -1,0 +1,103 @@
+---
+# Second, independent backup path for the Immich database.
+#
+# Volsync/restic already snapshots the immich-postgres-data PVC into
+# MinIO - but MinIO lives on the Talos node's NVMe. Once Postgres
+# itself moves to local-hostpath (see
+# docs/proposal-immich-postgres-nvme.md), its primary data and its
+# restic snapshots would share one physical disk, and that database
+# holds every album, face cluster and piece of metadata from the 2026
+# photo migration.
+#
+# This lands a logical dump on gsks1 (TrueNAS) instead:
+#   - different failure domain - the NAS, not the node
+#   - different format - a logical dump survives a corrupted data
+#     directory that restic would faithfully preserve
+# Cheap to run: the database is ~450 MB and compresses hard.
+#
+# Scheduled at 02:30, ahead of the 03:00 Volsync run, so a fresh dump
+# is on disk before the filesystem snapshot is taken.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: immich-postgres-dumps
+  namespace: immich
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: gsks1
+  resources:
+    requests:
+      storage: 10Gi
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: immich-postgres-dump
+  namespace: immich
+spec:
+  schedule: "30 2 * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      template:
+        spec:
+          restartPolicy: OnFailure
+          containers:
+            - name: pgdump
+              # Same image as the server, so pg_dump matches the
+              # server version exactly - a newer/older client can
+              # refuse outright.
+              image: ghcr.io/immich-app/postgres:14-vectorchord0.4.3-pgvectors0.2.0@sha256:bcf63357191b76a916ae5eb93464d65c07511da41e3bf7a8416db519b40b1c23
+              env:
+                - name: PGHOST
+                  value: immich-postgres.immich.svc.cluster.local
+                - name: PGUSER
+                  valueFrom:
+                    secretKeyRef:
+                      name: immich-postgres-secret
+                      key: DB_USERNAME
+                - name: PGPASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: immich-postgres-secret
+                      key: DB_PASSWORD
+                - name: PGDATABASE
+                  valueFrom:
+                    secretKeyRef:
+                      name: immich-postgres-secret
+                      key: DB_DATABASE_NAME
+              command:
+                - /bin/sh
+                - -c
+                - |
+                  set -eu
+                  ts="$(date +%Y%m%d-%H%M)"
+                  out="/dumps/immich-${ts}.dump"
+                  echo "dumping ${PGDATABASE} -> ${out}"
+                  # -Fc = custom format: compressed, and restorable
+                  # selectively with pg_restore.
+                  pg_dump -Fc -f "${out}.partial"
+                  # Rename only on success, so a failed or truncated
+                  # run never leaves a file that looks like a backup.
+                  mv "${out}.partial" "${out}"
+                  echo "wrote $(du -h "${out}" | cut -f1)"
+                  # Keep 7 most recent; prune the rest.
+                  ls -1t /dumps/immich-*.dump 2>/dev/null | tail -n +8 | while read -r old; do
+                    echo "pruning ${old}"
+                    rm -f "${old}"
+                  done
+                  # Clear any .partial left by an earlier crash.
+                  find /dumps -name '*.partial' -mtime +1 -delete 2>/dev/null || true
+                  echo "retained:"
+                  ls -1sh /dumps/immich-*.dump 2>/dev/null || true
+              volumeMounts:
+                - name: dumps
+                  mountPath: /dumps
+          volumes:
+            - name: dumps
+              persistentVolumeClaim:
+                claimName: immich-postgres-dumps

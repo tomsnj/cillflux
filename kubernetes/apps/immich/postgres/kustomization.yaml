@@ -7,3 +7,4 @@ resources:
   - postgres.yaml
   - volsync-secret.sops.yaml
   - volsync.yaml
+  - pgdump.yaml
