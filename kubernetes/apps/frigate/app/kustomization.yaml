@@ -4,6 +4,7 @@ kind: Kustomization
 resources:
   - namespace.yaml
   - pvc.yaml
+  - dbbackup.yaml
   - frigate-secret.sops.yaml
   - helmrelease.yaml
   - ingress-internal.yaml

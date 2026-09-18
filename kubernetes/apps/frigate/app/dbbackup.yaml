@@ -1,0 +1,106 @@
+---
+# Frigate's event database is ~92MB of SQLite in WAL mode on
+# local-hostpath (the node's NVMe), and until 2026-09-18 it had no
+# backup of any kind - every other stateful app in the cluster has a
+# Volsync ReplicationSource; this one was missed.
+#
+# A plain file-level backup is not safe here. The database is written
+# continuously, and copying frigate.db / frigate.db-wal / frigate.db-shm
+# at different instants can produce an archive that will not open.
+# SQLite's online backup API takes a transactionally consistent
+# snapshot of a live database instead - the equivalent of pg_dump for
+# Postgres. Python's stdlib exposes it as Connection.backup(), so no
+# sqlite3 binary is needed (the Frigate image has none).
+#
+# Output lands on gsks1 (TrueNAS), deliberately a different failure
+# domain from the node NVMe the source lives on.
+#
+# frigate-media (500Gi of recordings) is intentionally NOT backed up -
+# bulky, transient, and already on the NAS. Revisit separately.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: frigate-db-backups
+  namespace: frigate
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: gsks1
+  resources:
+    requests:
+      storage: 5Gi
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: frigate-db-backup
+  namespace: frigate
+spec:
+  # 02:45 - after Immich's pg_dump (02:30), before Volsync (03:00).
+  schedule: "45 2 * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      template:
+        spec:
+          restartPolicy: OnFailure
+          containers:
+            - name: sqlite-backup
+              image: python:3.12-slim
+              # Written in Python rather than shell so the script
+              # contains no '$' - Flux's postBuild envsubst rewrites
+              # shell variables in manifests and fails the whole
+              # kustomization on an unset name. See CLUSTER.md.
+              command: ["python3", "-c"]
+              args:
+                - |
+                  import sqlite3, os, glob, time, sys
+                  src = "/data/frigate.db"
+                  ts = time.strftime("%Y%m%d-%H%M")
+                  out = "/backups/frigate-{0}.db".format(ts)
+                  part = out + ".partial"
+                  print("backing up {0} -> {1}".format(src, out), flush=True)
+                  # Online backup API: consistent snapshot of a live,
+                  # WAL-mode database without stopping Frigate.
+                  s = sqlite3.connect("file:" + src, uri=True)
+                  d = sqlite3.connect(part)
+                  with d:
+                      s.backup(d)
+                  d.close(); s.close()
+                  # Verify before it is allowed to look like a backup.
+                  v = sqlite3.connect(part)
+                  res = v.execute("PRAGMA integrity_check").fetchone()[0]
+                  v.close()
+                  if res != "ok":
+                      print("INTEGRITY CHECK FAILED: {0}".format(res), flush=True)
+                      os.remove(part)
+                      sys.exit(1)
+                  os.rename(part, out)
+                  print("ok, {0:.1f} MB".format(os.path.getsize(out) / 1048576.0), flush=True)
+                  # Keep the 7 most recent.
+                  files = sorted(glob.glob("/backups/frigate-*.db"), reverse=True)
+                  for old in files[7:]:
+                      print("pruning {0}".format(old), flush=True)
+                      os.remove(old)
+                  for stale in glob.glob("/backups/*.partial"):
+                      if time.time() - os.path.getmtime(stale) > 86400:
+                          os.remove(stale)
+                  print("retained: {0}".format(len(sorted(glob.glob("/backups/frigate-*.db")))), flush=True)
+              volumeMounts:
+                # Mounted read-write, not read-only: SQLite needs to
+                # touch the -shm file even to read a WAL-mode database.
+                # The script only reads.
+                - name: data
+                  mountPath: /data
+                - name: backups
+                  mountPath: /backups
+          volumes:
+            - name: data
+              persistentVolumeClaim:
+                claimName: frigate-data
+            - name: backups
+              persistentVolumeClaim:
+                claimName: frigate-db-backups
