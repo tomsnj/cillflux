@@ -584,6 +584,31 @@ accounts independently.
 **SOPS / Flux decryption**  
 The `flux-system` kustomization in `gotk-sync.yaml` must include a `decryption` block. Without it, every reconcile cycle overwrites decrypted secrets with raw ciphertext.
 
+**Flux `postBuild` envsubst eats shell variables inside manifests, and one unset name fails the whole kustomization**  
+`postBuild` substitution runs over the *rendered* manifest text, so it
+cannot tell a Flux variable from a shell variable. A CronJob or
+initContainer script containing `$${ts}` or `$${PGDATABASE}` (written
+without escaping) is read as a Flux variable reference, and in strict
+mode an unset one fails **the entire `cluster-apps` kustomization** -
+not just that resource. Everything else stops reconciling too, which
+is what makes this worth recognising quickly:
+
+```
+post build failed for 'CronJob.v1.batch/immich-postgres-dump':
+envsubst error: variable substitution failed:
+variable not set (strict mode): "ts"
+```
+
+Fix: escape every shell `$` as `$$`, which Flux emits as a literal
+`$`. This applies to command substitution too (`$$(date ...)`), not
+just `$${VAR}`. Leave a comment at the call site - the escaping looks
+like a typo and is easy to "clean up" by mistake. Hit this adding the
+Immich pg_dump CronJob, 2026-09-17.
+
+Note this is the *opposite* failure to the one below: there,
+substitution does not reach somewhere you want it; here, it reaches
+somewhere you don't.
+
 **Flux `postBuild` variable substitution**  
 `${SECRET_DOMAIN}` variables are not substituted inside ConfigMap blobs used via `valuesFrom`. Move them directly to `spec.values` in the HelmRelease.
 
