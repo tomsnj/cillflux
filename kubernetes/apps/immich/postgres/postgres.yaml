@@ -20,6 +20,23 @@ spec:
     requests:
       storage: 20Gi
 ---
+# Live data directory since 2026-09-18 - the node's NVMe via
+# local-hostpath, not NFS. See the claimName comment below for why.
+# WaitForFirstConsumer binding, so this stays Pending until the
+# Postgres pod mounts it.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: immich-postgres-data-nvme
+  namespace: immich
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: local-hostpath
+  resources:
+    requests:
+      storage: 20Gi
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -83,7 +100,21 @@ spec:
       volumes:
         - name: data
           persistentVolumeClaim:
-            claimName: immich-postgres-data
+            # Moved off gsks0 (NFS, ~78 IOPS HDD mirror) to the Talos
+            # node's NVMe on 2026-09-18. The database shared spindles
+            # with the 1Ti photo library, and bulk imports starved it:
+            # pg_isready went unanswered past its liveness budget,
+            # Postgres was SIGKILLed, and immich-server crash-looped
+            # behind it. Recurred even at --concurrent-tasks 1 and with
+            # facialRecognition paused, so it was contention, not
+            # client behaviour. Same split Frigate already uses: bulk
+            # media on NFS, hot database local.
+            # Tradeoff: primary and restic snapshots now share the
+            # node's disk, so pgdump.yaml writes a nightly logical dump
+            # to gsks1 for a second failure domain. The old
+            # immich-postgres-data PVC is deliberately retained as
+            # rollback. See docs/proposal-immich-postgres-nvme.md.
+            claimName: immich-postgres-data-nvme
         # Matches upstream docker-compose's shm_size: 128mb
         - name: dshm
           emptyDir:
