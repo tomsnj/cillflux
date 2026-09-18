@@ -13,6 +13,16 @@ spec:
   sourcePVC: immich-postgres-data-nvme
   trigger:
     schedule: "0 3 * * *"
+  # The mover must run as the postgres user. PGDATA is mode 0700 owned
+  # by uid 999, and on the node's local disk (since the 2026-09-18 NVMe
+  # move) that is enforced strictly - the default mover uid got
+  # "ls: cannot open directory '/data': Permission denied" and every
+  # backup failed. It worked on NFS only because the export's squashing
+  # masked the permissions.
+  moverSecurityContext:
+    runAsUser: 999
+    runAsGroup: 0
+    fsGroup: 0
   restic:
     copyMethod: Direct
     pruneIntervalDays: 7
