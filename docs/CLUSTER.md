@@ -1,6 +1,6 @@
 # gs-farm.net Cluster Documentation
 
-> **Last updated**: 2026-09-06  
+> **Last updated**: 2026-09-18  
 > **Purpose**: Living reference for the Talos Linux Kubernetes homelab. Upload to this Claude Project to give Claude full cluster context in every chat.
 
 ---
@@ -267,6 +267,13 @@ for 6+ days as of 2026-09-05. Nothing currently open here.)*
   annotations in front of the Frigate Ingress — not just a
   HelmRelease values change like the other three apps. Bigger scope,
   not started.
+- **Frigate media backup** — `frigate-media` (500Gi of recordings) has
+  no backup by choice: bulky, transient, already on the NAS. The event
+  *database* is now covered (`dbbackup.yaml`, 2026-09-18). Worth
+  revisiting whether any recording retention deserves protection.
+- **Old `immich-postgres-data` PVC** — 20Gi on `gsks0`, retained as
+  rollback for the 2026-09-18 NVMe move. Delete once confident, not
+  before a week has passed.
 - **Immich follow-ups**: migrate content in from Google Photos/Amazon
   Photos per the staged plan in `docs/photo-storage-strategy-
   research.md` (local/network drives first, then Google Takeout,
@@ -581,8 +588,43 @@ as it grows, so it is the right tool for "see everything"; albums are
 the tool for "see these specific photos", and work between any pair of
 accounts independently.
 
+**Moving a PVC between storage classes breaks whatever reads it out-of-band**  
+The workload that owns the volume is the easy part. Everything *else*
+touching it needs rechecking, and each failure is quiet in its own
+way. Moving Immich's Postgres from `gsks0` to `local-hostpath`
+(2026-09-18) broke two things and neither announced itself:
+
+- **The Volsync `ReplicationSource` still named the old PVC.** The
+  Deployment's `claimName` was repointed; the backup's `sourcePVC` was
+  not. Volsync kept running nightly and kept reporting success while
+  capturing a frozen copy. Change both **in the same commit**.
+- **Permission semantics differ between storage classes.** PGDATA is
+  mode `0700` owned by uid 999. On NFS the export's squashing masked
+  that and the default mover uid could read it; on local disk it is
+  enforced, and every mover died with
+  `ls: cannot open directory '/data': Permission denied`. Fix is
+  `spec.restic.moverSecurityContext.runAsUser: 999` - note the path is
+  under `restic`, not `spec` directly.
+
+Pair any such move with a **differently-shaped** backup that does not
+read the volume at all. A `pg_dump` over TCP kept working throughout
+both failures precisely because it never touches the data directory.
+
 **SOPS / Flux decryption**  
 The `flux-system` kustomization in `gotk-sync.yaml` must include a `decryption` block. Without it, every reconcile cycle overwrites decrypted secrets with raw ciphertext.
+
+**An invalid CRD field fails the entire Kustomization, not just that resource**  
+`.spec.moverSecurityContext: field not declared in schema` on one
+ReplicationSource stopped `cluster-apps` applying *anything* for ~13
+minutes (2026-09-18). Same blast radius as the envsubst failure below,
+and the same trap: a small mistake in one manifest silently freezes
+every app's reconciliation, so the symptom is "my unrelated change
+isn't deploying".
+
+`kubectl apply --dry-run=server -f <file>` catches it in seconds and
+is worth running on any manifest touching a CRD - especially when
+guessing at field placement. `kubectl explain <crd>.spec...` gives the
+authoritative path; read it *before* writing rather than after.
 
 **Flux `postBuild` envsubst eats shell variables inside manifests, and one unset name fails the whole kustomization**  
 `postBuild` substitution runs over the *rendered* manifest text, so it
