@@ -73,22 +73,27 @@ spec:
               command:
                 - /bin/sh
                 - -c
+                # NOTE: every shell $ is escaped as $$ so Flux's
+                # postBuild envsubst leaves it alone. Unescaped, Flux
+                # treats ${ts} etc. as its own variables and the whole
+                # cluster-apps kustomization fails in strict mode with
+                # 'variable not set'. See CLUSTER.md gotchas.
                 - |
                   set -eu
-                  ts="$(date +%Y%m%d-%H%M)"
-                  out="/dumps/immich-${ts}.dump"
-                  echo "dumping ${PGDATABASE} -> ${out}"
+                  ts="$$(date +%Y%m%d-%H%M)"
+                  out="/dumps/immich-$${ts}.dump"
+                  echo "dumping $${PGDATABASE} -> $${out}"
                   # -Fc = custom format: compressed, and restorable
                   # selectively with pg_restore.
-                  pg_dump -Fc -f "${out}.partial"
+                  pg_dump -Fc -f "$${out}.partial"
                   # Rename only on success, so a failed or truncated
                   # run never leaves a file that looks like a backup.
-                  mv "${out}.partial" "${out}"
-                  echo "wrote $(du -h "${out}" | cut -f1)"
+                  mv "$${out}.partial" "$${out}"
+                  echo "wrote $$(du -h "$${out}" | cut -f1)"
                   # Keep 7 most recent; prune the rest.
                   ls -1t /dumps/immich-*.dump 2>/dev/null | tail -n +8 | while read -r old; do
-                    echo "pruning ${old}"
-                    rm -f "${old}"
+                    echo "pruning $${old}"
+                    rm -f "$${old}"
                   done
                   # Clear any .partial left by an earlier crash.
                   find /dumps -name '*.partial' -mtime +1 -delete 2>/dev/null || true
