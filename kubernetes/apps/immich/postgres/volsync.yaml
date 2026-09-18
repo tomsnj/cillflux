@@ -19,11 +19,11 @@ spec:
   # "ls: cannot open directory '/data': Permission denied" and every
   # backup failed. It worked on NFS only because the export's squashing
   # masked the permissions.
-  moverSecurityContext:
-    runAsUser: 999
-    runAsGroup: 0
-    fsGroup: 0
   restic:
+    moverSecurityContext:
+      runAsUser: 999
+      runAsGroup: 0
+      fsGroup: 0
     copyMethod: Direct
     pruneIntervalDays: 7
     repository: volsync-immich-postgres-data
