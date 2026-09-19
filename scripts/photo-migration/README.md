@@ -18,13 +18,22 @@ The size check is not paranoia - it caught a transfer mid-write twice
 on the 2017 batch. `scp` writes in place, so a file being present says
 nothing about it being complete.
 
-## `prep-year.sh <year>`
+## `prep-year.sh <dir|year>`
 
-Operates on `~/amazon-shawna/<year>/`. CRC-verifies every zip, refuses
+Takes either an explicit directory or a year resolved under
+`AMAZON_BASE` (default `~/amazon-shawna`, the 2026-09 layout):
+
+```bash
+prep-year.sh /mnt/storage1/home/stecktf_a/amazon-tom/2018
+AMAZON_BASE=/mnt/storage1/home/stecktf_a/amazon-tom prep-year.sh 2018
+```
+
+CRC-verifies every zip, refuses
 to extract if any fails, extracts to `files/`, then EXIF-checks
 anything whose filename has no date.
 
-**Compare `entries` against the extracted file count.** Amazon names
+It **compares `entries` against the extracted file count itself** and
+warns on a mismatch. Amazon names
 every download `AmazonPhotos.zip` with only the size to tell them
 apart, so batches get grabbed twice and others missed. A gap means a
 duplicate; a shortfall against the expected total means a missed
