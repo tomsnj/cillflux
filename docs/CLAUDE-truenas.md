@@ -77,7 +77,7 @@ allocated; all cluster storage (`home_nfs`) is 619G.
 |---|---|---|
 | `backups/maxwell-image` | 2.38T | 0 |
 | `backups/mycloud-photos` | 1.27T | — |
-| ↳ `shawna-laptop-backup` | 672G | **481G** |
+| ↳ `shawna-laptop-backup` | 672G | **481G** (~329G after 2026-09-19 prune; old Windows image versions) |
 | `backups/desktop2` | 733G | 52.6G |
 | `backups/desktop1` | 700G | 94.6G |
 | `media` | 700G | — |
@@ -87,15 +87,144 @@ allocated; all cluster storage (`home_nfs`) is 619G.
   them. Between them they are 3.65T, far more than snapshot pruning
   can recover.
 - Snapshot pruning yields roughly **692G total**, under 10% of the
-  pool. The 481G under `shawna-laptop-backup` is mostly the Amazon and
-  Google Takeout zips downloaded during the 2026-09 photo migration.
-  Those have been deleted from the laptop and their content is
-  verified in Immich, but **the blocks stay pinned until the
-  snapshots covering that window are pruned or age out**.
+  pool. **Corrected 2026-09-19:** the 481G under
+  `shawna-laptop-backup` is **not** the Amazon/Google Takeout zips. It
+  is retired versions of the Windows Image Backup of Mom's laptop
+  (`WindowsImageBackup/Moms-laptop/*.vhdx`), whose old blocks stay
+  pinned by snapshots after Windows replaces the image. The dataset
+  is a full-disk image, so the Takeout zips (`C:\Users\gilro\Takeout\`)
+  would exist only inside the `.vhdx`, and the newest image (2026-08-24)
+  predates the 2026-09 migration; the September snapshots add no
+  unique blocks. There is nothing Takeout-related to prune here.
+  **Refined 2026-09-20** (from `~/gs-farm-backup-documentation.md`):
+  `mycloud-photos/*` is a **weekly rsync (Sun 01:00, `/root/mycloud-sync.sh`)
+  from the WD MyCloud (10.0.0.201)**, which holds the primary copy of
+  Mom's laptop image; TrueNAS only mirrors it. When Windows renames the
+  backup folder (`Backup <date>`), rsync sees a new path and rewrites
+  the whole ~220 GiB `.vhdx` as a new file. On 2026-09-20 the rewrite was
+  byte-identical (same size/mtime, first GiB equal, new inode 401 vs 524);
+  202 snapshots still pin the old copy, and `mycloud-photos` also keeps
+  90-day daily snapshots. So much of the "image versions" space is
+  duplicate rsync churn, not distinct restore points. Not yet fixed.
+- Per-snapshot `used` is `0B` for this dataset because blocks are
+  shared across consecutive snapshots. Size a prune with a range dry
+  run (`zfs destroy -nv ds@first%last`), never by summing `used`.
+- **Done 2026-09-19:** destroyed
+  `shawna-laptop-backup@auto-2026-08-13_02-30%auto-2026-08-17_02-30`
+  (dry run: 152G, the 2026-07-27 image). Remaining ~330G is the
+  2026-08-10 and 2026-08-18 image versions, kept at the time as
+  restore points (see the 2026-09-20 note above: low value, the MyCloud
+  is primary). The laptop did back up again: the newest source folder
+  is `Backup 2026-09-15 041236`.
+- **Done 2026-09-20:** destroyed `shawna-laptop-backup@auto-2026-08-18_02-30%auto-2026-09-20_06-00`
+  (227 snapshots, dry run 496G): `backups` headroom 421G to 917G, pool
+  usable free ~828G to ~1.3T. It will refill the next time the MyCloud
+  sync rewrites the image after a Windows folder rename; fix the rsync
+  (exclude `WindowsImageBackup/` or shorten snapshot retention) first.
+- **Mom's laptop image plan (decided 2026-09-20).** Her hard drive is
+  showing signs of failing, so **do not delete the frozen
+  `shawna-laptop-backup/WindowsImageBackup` copy or the MyCloud copy
+  until a new image is on TrueNAS and verified.** Note the newest
+  `.vhdx` (C:) still has mtime 2026-08-24 even though the folder is
+  `Backup 2026-09-15`, so C: may not have been captured since 08-24.
+  Plan: Windows 11 "Backup and Restore (Windows 7)" system image
+  straight to a new share `backups-laptop-win-image` (dataset
+  `backups/laptop-win-image`, 400G quota, currently empty, root-owned),
+  user `backup-laptop-win-image`, laptop on Ethernet for the first full.
+  No MyCloud secondary. Restic (`laptop-win`, nightly 02:00) covers files
+  (last snapshot 2026-09-19). WinRE has no Wi-Fi: restoring needs
+  Ethernet or a USB copy of the image.
+  **Status 2026-09-20:** first full image completed over Wi-Fi
+  (5 h, ~12 MB/s) to `laptop-win-image/WindowsImageBackup/Moms-laptop/
+  Backup 2026-09-20 160006` (C: vhdx 183 GiB apparent / 126 GiB on disk,
+  virtual size 456 GiB, so a replacement drive must be at least that
+  big). `qemu-img check` clean; not yet browsed/test-restored. Share
+  uses the existing `backup-laptop-win` account (intentional). Old
+  copies (MyCloud, frozen TrueNAS folder) are still to be kept until the
+  new image is verified.
 - Two snapshots from **2020-11-04** (`media@manual`, `share@manual`,
   4.3G combined) and `home_nfs@pre-maintenance-2026-05-02` (12.3G) are
   obvious stale candidates.
 - **Fragmentation does not drop when space is freed.**
+- **`backups` has a 6T quota** (`zfs get quota storage1/backups`, set
+  locally). Writers under `backups` see only the headroom under it
+  (~710G on 2026-09-19), not the pool's free space. Leave it: it
+  stops a runaway backup from filling the pool that `home_nfs`
+  shares. A job that hits it fails; it does not take the cluster down.
+- **Two space figures.** `zpool list` gave 79% on 2026-09-19 (raw,
+  includes parity). The TrueNAS UI showed 85.5%: it is
+  used/(used+avail) in usable terms (about 1.16 TiB avail vs 1.73T
+  `zpool` free). The pool is **two mirror vdevs, not raidz**
+  (`zpool status`), so parity does not explain the ~0.57T gap; ZFS
+  slop space (~0.27T) accounts for part, and the rest is unidentified
+  (check `zfs get -r refreservation storage1`). Both figures are real. The ~80% guideline applies to `zpool list`.
+- **`maxwell-image` (Veeam, job "Maxwell Full Backup", Veeam 13)** is
+  2.4T because **two chains are on disk at once**: a full plus
+  incrementals (~1.5 TiB) and the newer full (~880 GiB, 2026-09-16).
+  Retention is set to **3 days** (was 7, changed 2026-09-20 while
+  debugging — see below); the job runs **Mon/Wed 23:00** on Maxwell's
+  PC (Veeam Agent, free edition) and writes over SMB to
+  `\\10.0.0.169\backups-maxwell-image`. It also makes a **monthly
+  active full on the first Monday** (next: 2026-10-05).
+  - **Restore points as of 2026-09-20 (from the Agent's own list):** 4
+    good (09-02 tail of the old chain; 09-16 full, succeeded on retry;
+    09-19 and 09-20 manual incrementals) and 3 failed/incomplete
+    (the 09-07, 09-09, 09-14 scheduled runs — each failed outright and
+    was never retried to success, unlike 09-16 which retried until it
+    worked on 09-18 01:19).
+  - Cause of the 09-17 failure (the retry of the 09-16 full) per
+    Veeam's log: the SMB connection dropped mid-write ("Failed to
+    flush file buffers") and the PC reconnected on a new port. TrueNAS
+    showed no kernel, disk, NIC-error, ZFS or smbd problem, so the
+    cause is on the PC/network side. Suspect: the PC's 2.5Gb NIC had
+    power saving enabled (found and disabled 2026-09-19). The Wi-Fi
+    latency/power-saving fixes made the next long write (the Mom's-
+    laptop image, 2026-09-20) succeed cleanly, which is supporting but
+    not conclusive evidence. Causes of the three outright-failed runs
+    (09-07/09/14) are unknown.
+  - **RESOLVED 2026-09-21, automatically, no manual deletion needed.**
+    Mechanism (pieced together from the job log and Veeam Agent for
+    Windows docs, helpcenter.veeam.com/docs/agentforwindows/userguide/
+    retention_days.html): forward-incremental retention normally shrinks
+    a chain point-by-point via **transform** (merge oldest incremental
+    into the full, delete it) — this job's log shows that step skipped
+    every run (`[TransformFull] Transformation skipped due to it turned
+    off in a job options.`), and no transform/merge setting exists
+    anywhere in the job (checked all 3 Advanced Settings tabs — Backup,
+    Maintenance, Storage — likely a structural limit of Veeam Agent Free
+    on an SMB-share target). **But there is a second, coarser mechanism:
+    once the current chain's restore-point count exceeds the retention-
+    days setting, Veeam drops the entire previous chain in one shot.**
+    Retention was lowered 7→3 on 2026-09-20; the 2026-09-21 23:00
+    scheduled run gave the new chain its 4th point (09-16 full + 09-19,
+    09-20, 09-21 incrementals — one more than the retain-3 setting), and
+    at 23:52 all 10 old-chain files (08-03 full through 09-02) were
+    deleted in one step, confirmed both on disk and in the `.vbm`.
+    `backups` headroom: ~795G → 1.1T (2.3T avail total).
+  - **Ongoing expectation:** after each monthly active full (next
+    2026-10-05), the old chain should self-clear once the new chain
+    reaches ~4 points at twice-weekly runs — roughly 2 weeks of two
+    chains overlapping, then automatic cleanup. No manual deletion
+    expected to be needed going forward; if a chain is still present
+    well past that window, revisit (the file-list-and-snapshot approach
+    from 2026-09-20/21 is the fallback, not yet needed). **Never delete
+    `.vbk`/`.vib` files by hand outside that fallback plan** — it can
+    break the chain in `Maxwell Full Backup.vbm`. No ZFS snapshots on
+    this dataset, so freed space returns at once. A second forced full
+    before an old chain clears (~880G) would still exceed the `backups`
+    quota headroom in the tightest part of the cycle.
+- **Snapshot policy changed 2026-09-20** (was 2,369 snapshots, now ~752).
+  Recursive tasks on `backups` (all exclude `maxwell-image` and
+  `laptop-win-image`): hourly **1 day** (was 1 week), daily 02:00
+  **14 days** (was 30), Sunday 03:00 **4 weeks** (was 8). Kept on
+  purpose: `mycloud-photos` daily 02:30 for 90 days (safety net for the
+  `rsync --delete` mirror; costs ~nothing) and `home_nfs` hourly/daily/
+  weekly (live cluster storage, not yet reviewed). `laptop-win-image` has
+  its own non-recursive daily 04:00 task (`img-` names, 7 days) plus the
+  manual `image-2026-09-20` (delete it after the next verified image).
+  A shortened lifetime is applied at the next hourly run. Excluding a
+  dataset from a task probably orphans its old snapshots, so delete
+  those by hand once.
 
 ### 2. Tom's Amazon Photos import
 
