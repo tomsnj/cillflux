@@ -105,7 +105,47 @@ allocated; all cluster storage (`home_nfs`) is 619G.
   byte-identical (same size/mtime, first GiB equal, new inode 401 vs 524);
   202 snapshots still pin the old copy, and `mycloud-photos` also keeps
   90-day daily snapshots. So much of the "image versions" space is
-  duplicate rsync churn, not distinct restore points. Not yet fixed.
+  duplicate rsync churn, not distinct restore points.
+  **Fixed and installed 2026-09-22:** `/root/mycloud-sync.sh` replaced
+  (backup at `/root/mycloud-sync.sh.bak-2026-09-22`; drafts at
+  `~/mycloud-sync.proposed-v2.sh`). Changes: skip a share that fails to
+  mount or mounts empty instead of running `rsync --delete` against an
+  empty dir (the real risk — would have silently wiped the TrueNAS
+  mirror); `--exclude 'WindowsImageBackup/'` on Shawna's share (stops
+  the rewrite churn above); `--exclude 'Desktop.ini'`/`'desktop.ini'`
+  on all three shares (a Windows junk file the `wd_backup_master`
+  account can't read off the MyCloud — was failing every run with
+  rc=23, found via the new alerting actually firing); `--max-delete=1000`
+  guard; per-share result written to `/var/log/mycloud-sync.status`
+  (`RESULT=OK|FAIL`, `TIME=<epoch>`) for `check-backups.sh` to read;
+  on failure, emails immediately via `midclt call mail.send`.
+  **Real cron schedule (checked via `midclt call cronjob.query`, not
+  `crontab -l` — TrueNAS SCALE doesn't use the system crontab for its
+  own Cron Jobs feature) is Sun 04:00**, not 01:00 as this doc and
+  `~/gs-farm-backup-documentation.md` say. Verified end to end
+  2026-09-22: dry run then real run, all three shares `OK rc=0`.
+  - **The shell `mail` command on this host does not work** — local
+    MTA is exim4, unconfigured to relay anywhere. TrueNAS's own alerts
+    (e.g. quota) go via `midclt call mail.send`, Gmail OAuth through the
+    middleware, confirmed working 2026-09-22. Any script that alerts
+    must use `midclt call -j mail.send '{"subject":...,"html":...,
+    "to":[...]}' ` (message dict as a single arg — do not wrap it in an
+    extra array), not `mail`.
+  - **`check-backups.sh` had no schedule at all** (checked Cron Jobs,
+    root crontab, `/etc/cron.d`, systemd timers, init/shutdown scripts —
+    found nothing), despite this doc and the backup-documentation file
+    saying "daily 9:00 AM via root crontab". Combined with `mail` not
+    working, backup warnings had likely never reached anyone. **Fixed
+    2026-09-22:** installed the updated script (same `mail`→`midclt`
+    fix; backup at `/root/check-backups.sh.bak-2026-09-22`, draft at
+    `~/check-backups.proposed.sh`) and added a Cron Job for it,
+    daily 09:00 (`midclt call cronjob.query` id 2).
+  - **CAUTION:** while debugging this, a `midclt call mail.config`
+    query printed the Gmail OAuth `client_secret` and `refresh_token`
+    in plaintext (2026-09-22). The user redid the OAuth sign-in
+    afterward, invalidating that token. Never run `mail.config` (or
+    similar config-dumping calls) without filtering secret-shaped
+    fields out of the output first.
 - Per-snapshot `used` is `0B` for this dataset because blocks are
   shared across consecutive snapshots. Size a prune with a range dry
   run (`zfs destroy -nv ds@first%last`), never by summing `used`.
@@ -134,14 +174,45 @@ allocated; all cluster storage (`home_nfs`) is 619G.
   No MyCloud secondary. Restic (`laptop-win`, nightly 02:00) covers files
   (last snapshot 2026-09-19). WinRE has no Wi-Fi: restoring needs
   Ethernet or a USB copy of the image.
-  **Status 2026-09-20:** first full image completed over Wi-Fi
-  (5 h, ~12 MB/s) to `laptop-win-image/WindowsImageBackup/Moms-laptop/
-  Backup 2026-09-20 160006` (C: vhdx 183 GiB apparent / 126 GiB on disk,
-  virtual size 456 GiB, so a replacement drive must be at least that
-  big). `qemu-img check` clean; not yet browsed/test-restored. Share
-  uses the existing `backup-laptop-win` account (intentional). Old
-  copies (MyCloud, frozen TrueNAS folder) are still to be kept until the
-  new image is verified.
+  **RESOLVED 2026-09-22/23.** First full image (09-20) completed over
+  Wi-Fi (5 h, ~12 MB/s) to `laptop-win-image/WindowsImageBackup/
+  Moms-laptop/Backup 2026-09-20 160006` (C: vhdx 183 GiB apparent /
+  126 GiB on disk, virtual size 456 GiB — a replacement drive must be
+  at least that big). `qemu-img check` clean. **Verified 2026-09-22**
+  by attaching the vhdx directly from a network path in Windows Disk
+  Management (`\\10.0.0.169\backups-laptop-win-image\...\9179c6a3-….
+  vhdx`, read-only; the volume needed a manual drive letter via
+  "Change Drive Letter and Paths" or `diskpart assign`, since Windows
+  Backup sets a no-default-drive-letter flag on system volumes) —
+  files browsed and confirmed good.
+  **Found 2026-09-22: her laptop's old scheduled backup was still
+  pointed at the MyCloud** (`10.0.0.201`), independent of the one-time
+  manual backup we'd sent to TrueNAS — this is what produced the
+  unexpected `Backup 2026-09-21 020005` folder under
+  `shawna-laptop-backup/WindowsImageBackup`. Redirected it via
+  Backup and Restore (Windows 7) → Change settings → the network
+  location, to `\\10.0.0.169\backups-laptop-win-image`. **Not yet
+  confirmed whether the old MyCloud destination was fully replaced or
+  is still separately configured** — check next time on her laptop.
+  New schedule: **weekly, Saturday 03:00** (an hour after her nightly
+  Restic run, off the Sun 04:00 MyCloud-sync and Mon/Wed 23:00 Veeam
+  slots). System-image only (unchecked the file/library items —
+  Restic already covers `C:\Users`).
+  First scheduled run (2026-09-23 01:24) landed as
+  `Backup 2026-09-23 012417`: same byte size and disk usage as 09-20
+  (196,416,110,592 bytes / 126 GiB), finished in under a minute with
+  ~0 MB/s sustained network traffic — almost certainly a server-side
+  block clone (SMB copy offload + ZFS block cloning) against the
+  unchanged prior image rather than a re-transfer. If this holds for
+  future runs, weekly images to this destination should stay cheap;
+  not yet confirmed on a run with real C: changes.
+  Old copies retired: the frozen `shawna-laptop-backup/
+  WindowsImageBackup` copy on TrueNAS (167G) deleted 2026-09-22. The
+  MyCloud's own copy was stuck behind a lock on the device itself
+  (held even across Mac Finder and Windows Explorer, i.e. server-side,
+  not a client issue — the `wd_backup_master` account is read-only
+  there anyway, so this could only be fixed on the MyCloud itself);
+  resolved by rebooting the MyCloud, then deleting normally.
 - Two snapshots from **2020-11-04** (`media@manual`, `share@manual`,
   4.3G combined) and `home_nfs@pre-maintenance-2026-05-02` (12.3G) are
   obvious stale candidates.
