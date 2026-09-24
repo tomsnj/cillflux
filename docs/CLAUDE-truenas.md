@@ -384,6 +384,49 @@ import right around 03:00 UTC (11 PM EDT) if it can be helped. If this
 recurs, check queue state (`GET /api/jobs`) more promptly next time,
 before too much log history ages out, and note the exact time noticed.
 
+### 3. node_exporter monitoring
+
+**Fixed 2026-09-24.** `gsfarmctl`'s Prometheus flagged
+`storage1-node-exporter` as down (connection refused, 10.0.0.169:9100).
+Root cause: the original setup (`~/install-node-exporter.sh`,
+2026-06-13) relied on `/etc/local.d/node_exporter.start` as a boot
+hook — **that was never real on TrueNAS SCALE** (Debian-based; it
+doesn't process `/etc/local.d`), so the "startup script" only ever
+ran once, by hand, at install time. The process then died on its own
+around 2026-07-04 (its log ends mid-write that day) and nothing ever
+restarted it — silently broken for over two months before anyone
+noticed.
+
+Also relocated the binary from `/mnt/storage1/apps/node_exporter/`
+(a plain directory on the pool's *root* dataset) to
+`~/opt/node_exporter/` (under `storage1/home`, matching where
+`immich-go`/`node`/`claude` already live). This wasn't actually the
+live-failure cause — direct execution worked fine from the old
+location too once retried — but it's the right place for it, and is
+where the registered start script now points.
+
+**Fix:** `~/opt/node_exporter-start.sh` (kills any existing instance,
+starts the binary with the textfile collector pointed at
+`/var/lib/node_exporter/textfile_collector`, same dir `check-backups.sh`
+writes `backup_*` metrics to), registered via TrueNAS's own **Init/
+Shutdown Scripts** feature — `midclt call initshutdownscript.query`,
+`id: 1`, type `SCRIPT`, `when: POSTINIT`, `enabled: true` — a
+middleware-backed mechanism stored in TrueNAS's config database, which
+actually does survive reboots/upgrades (unlike `/etc/local.d`).
+Confirmed working now: process up, `:9100/metrics` returns both
+`node_exporter_build_info` and all `backup_*` metrics with HTTP 200.
+**Not yet confirmed to survive an actual reboot** — the registration
+and the manual test both look right, but no reboot has happened since
+to prove it. If `storage1-node-exporter` goes down again after a
+TrueNAS reboot, check `midclt call initshutdownscript.query` first
+before re-diagnosing from scratch.
+
+A few `nohup`/backgrounding attempts during debugging failed
+intermittently with `Function not implemented` (ENOSYS) when run via
+`sudo`, but isolating `nohup`, plain backgrounding, and `setsid`
+individually all worked fine, and a plain retry of the full script
+also worked — never got a clean root cause, likely transient.
+
 ## Further reading
 
 `cluster-docs/CLUSTER.md` — the cluster reference and its gotchas
