@@ -5,3 +5,4 @@ resources:
   - ./helmvalues.yaml
   - ./helmrelease.yaml
   - ./pvc.yaml
+  - ./prometheusrule.yaml

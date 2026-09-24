@@ -1,0 +1,91 @@
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: backups
+  labels:
+    # REQUIRED. kube-prometheus-stack sets
+    #   ruleSelector: {matchLabels: {release: kube-prometheus-stack}}
+    # so a PrometheusRule without this label is silently ignored - it
+    # exists in the cluster, `kubectl get prometheusrules` lists it, and
+    # Prometheus never loads it. The volsync and cert-manager rules in
+    # this repo have both been dead since they were written for exactly
+    # this reason (found 2026-09-24). Verify with:
+    #   curl -s .../api/v1/rules | jq '.data.groups[].name'
+    release: kube-prometheus-stack
+spec:
+  groups:
+    - name: backups.rules
+      rules:
+        # Metrics come from check-backups.sh on storage1 (TrueNAS), via
+        # the node_exporter textfile collector, scraped by the
+        # storage1-node-exporter job in helmvalues.yaml.
+        #
+        # Thresholds assume every backup_job runs at least daily, which
+        # matches observed values (0-1 days). If a weekly job is added,
+        # give it its own rule rather than loosening these.
+        - alert: BackupJobFailed
+          annotations:
+            summary: "Backup job {{ $labels.backup_job }} reported failure."
+            description: >-
+              check-backups.sh on storage1 reports backup_success=0 for
+              {{ $labels.backup_job }}. The job ran and did not succeed.
+          expr: backup_success == 0
+          for: 15m
+          labels:
+            severity: critical
+
+        - alert: BackupStale
+          annotations:
+            summary: "Backup {{ $labels.backup_job }} last succeeded {{ $value }} days ago."
+            description: >-
+              No successful {{ $labels.backup_job }} backup for more than
+              two days. The job may be failing silently or not running.
+          expr: backup_last_success_days > 2
+          for: 1h
+          labels:
+            severity: warning
+
+        - alert: BackupVeryStale
+          annotations:
+            summary: "Backup {{ $labels.backup_job }} last succeeded {{ $value }} days ago."
+            description: >-
+              {{ $labels.backup_job }} has had no successful backup for
+              over a week. Treat the data as unprotected.
+          expr: backup_last_success_days > 7
+          for: 1h
+          labels:
+            severity: critical
+
+        # The silent-failure case that matters most: if check-backups.sh
+        # stops writing its textfile, the series disappear entirely and
+        # the threshold alerts above can never fire - no series, no
+        # alert. absent() is what catches that.
+        #
+        # Limitation: this only fires when ALL backup series vanish. If
+        # the script stops reporting one individual backup_job, nothing
+        # here notices. Revisit if jobs are added or removed often.
+        - alert: BackupMetricsAbsent
+          annotations:
+            summary: "Backup metrics have disappeared from storage1."
+            description: >-
+              No backup_success series at all. Either check-backups.sh
+              stopped writing its textfile, or the node_exporter textfile
+              collector is no longer reading it. Backup state is now
+              unknown - the threshold alerts cannot fire without series.
+          expr: absent(backup_success)
+          for: 1h
+          labels:
+            severity: critical
+
+        - alert: Storage1NodeExporterDown
+          annotations:
+            summary: "storage1 node_exporter is not being scraped."
+            description: >-
+              The storage1-node-exporter target is down, so TrueNAS host
+              metrics and all backup_* series are stale. This target was
+              down from install until 2026-09-24 without anyone noticing.
+          expr: up{job="storage1-node-exporter"} == 0
+          for: 15m
+          labels:
+            severity: warning
