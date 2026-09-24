@@ -60,8 +60,16 @@ data:
             regex: (apiserver_response_sizes_bucket|apiserver_watch_events_sizes_bucket)
     kubeControllerManager:
       enabled: true
+      # The Talos node. This was 10.10.1.110 - an address that does not
+      # exist on this network (it routes out the default gateway), so both
+      # targets sat "no route to host" from install until 2026-09-24. It
+      # came in with this block, whose metricRelabelings comments still
+      # refer to k3s; the endpoint was never adjusted for this cluster.
+      # Reaching these also needs bind-address: 0.0.0.0 on the Talos side
+      # (talos-config/talos-cp-metrics-patch.yaml) - Talos binds both to
+      # 127.0.0.1 by default. Neither change works without the other.
       endpoints: &endpoints
-        - 10.10.1.110
+        - 10.0.10.10
       serviceMonitor:
         metricRelabelings:
           # Remove duplicate labels provided by k3s
