@@ -22,6 +22,7 @@
 #   weekly-renovate-review.sh check <PR_NUMBER> [--json]
 #   weekly-renovate-review.sh merge <PR_NUMBER> [--force]
 #   weekly-renovate-review.sh health
+#   weekly-renovate-review.sh talos-drift
 #
 # Requires: gh (authenticated), git, kubectl, flux, jq, python3.
 
@@ -395,6 +396,83 @@ cmd_merge() {
   fi
 }
 
+# ---- talos patch drift ----------------------------------------------------
+
+TALOS_NODE="${TALOS_NODE:-10.0.10.10}"
+
+talos_drift() {
+  # Every patch under talos/patches/ should already be applied to the
+  # node. `talosctl patch machineconfig --dry-run` is read-only and
+  # reports "no changes detected" when the tracked file matches the live
+  # config -- so any other result means the repo and the node disagree.
+  #
+  # Exit status is 0 whether or not there is a diff, so the output has to
+  # be parsed. historical/ is skipped deliberately: those patches describe
+  # the past and are expected not to match (patch-network.yaml would
+  # renumber the node).
+  local dir="$REPO_ROOT/talos/patches"
+  [[ -d "$dir" ]] || { echo "No talos/patches directory - skipping."; return 0; }
+
+  if ! command -v talosctl >/dev/null 2>&1; then
+    echo "talosctl not found - skipping Talos patch drift check."
+    return 0
+  fi
+  if ! talosctl -n "$TALOS_NODE" version --short >/dev/null 2>&1; then
+    echo "Talos node $TALOS_NODE not reachable - skipping drift check."
+    return 0
+  fi
+
+  local f name out drifted=() errored=() skipped=() clean=0
+  for f in "$dir"/*.yaml "$dir"/*.yml; do
+    [[ -e "$f" ]] || continue
+    name=$(basename "$f")
+    # Some patches are not idempotent -- Talos strategic-merge appends to
+    # list fields rather than replacing them, so re-applying adds a
+    # duplicate entry and the dry-run always shows a diff even when the
+    # config is correct. Those files opt out with a
+    # "# drift-check: skip - <reason>" line and must say why.
+    if grep -qE '^#\s*drift-check:\s*skip' "$f"; then
+      skipped+=("$name ($(grep -oE 'drift-check:\s*skip[[:space:]-]*.*' "$f" | head -1 | sed 's/drift-check:\s*skip[[:space:]-]*//'))")
+      continue
+    fi
+    out=$(talosctl -n "$TALOS_NODE" patch machineconfig \
+            --patch "@$f" --dry-run 2>&1) || true
+    if grep -q 'no changes detected' <<<"$out"; then
+      clean=$((clean + 1))
+    elif grep -q 'Config diff:' <<<"$out"; then
+      drifted+=("$name")
+    else
+      errored+=("$name")
+    fi
+  done
+
+  local skipnote=""
+  ((${#skipped[@]} > 0)) && skipnote=" (${#skipped[@]} skipped)"
+
+  if ((${#drifted[@]} == 0 && ${#errored[@]} == 0)); then
+    echo "All $clean Talos patches match the live machine config.$skipnote"
+    for name in "${skipped[@]:-}"; do [[ -n "$name" ]] && echo "  skipped: $name"; done
+    return 0
+  fi
+
+  if ((${#drifted[@]} > 0)); then
+    echo "Talos patches that DO NOT match the live machine config:"
+    for name in "${drifted[@]}"; do echo "  - $name"; done
+    echo
+    echo "  Either the node was changed outside git, or a tracked patch was"
+    echo "  edited and never applied. See the diff with:"
+    echo "    talosctl -n $TALOS_NODE patch machineconfig \\"
+    echo "      --patch @talos/patches/<name> --dry-run"
+    echo "  Do NOT apply anything without Tom's go-ahead - a permanent apply"
+    echo "  restarts the control-plane static pods (~30s of API downtime)."
+  fi
+  if ((${#errored[@]} > 0)); then
+    echo "Talos patches that could not be checked:"
+    for name in "${errored[@]}"; do echo "  - $name"; done
+  fi
+  return 0
+}
+
 # ---- health --------------------------------------------------------------
 
 cmd_health() {
@@ -456,6 +534,9 @@ cmd_health() {
     echo "Charts with NO pinned version (resolve '*' on every reconcile):"
     echo "$floating"
   fi
+
+  log "==> talos patch drift"
+  talos_drift
 }
 
 # ---- main ----------------------------------------------------------------
@@ -483,6 +564,7 @@ main() {
       cmd_merge "$pr" "$@"
       ;;
     health) shift || true; cmd_health "$@" ;;
+    talos-drift) shift || true; talos_drift "$@" ;;
     --dry-run) cmd_review --dry-run ;;
     -h|--help|help)
       sed -n '2,25p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'

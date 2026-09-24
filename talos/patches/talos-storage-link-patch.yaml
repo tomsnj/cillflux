@@ -1,4 +1,16 @@
 # talos-storage-link-patch.yaml
+#
+# drift-check: skip - not idempotent (list append)
+#
+# Direct 10Gb link to TrueNAS. APPLIED AND LIVE - the node carries
+# 172.16.99.1/30 on enp41s0 (verify: talosctl -n 10.0.10.10 get addresses).
+#
+# Do not re-apply. Talos strategic-merge APPENDS to list fields rather
+# than replacing them, so a second apply adds a duplicate
+# 172.16.99.1/30 entry to machine.network.interfaces[].addresses
+# instead of being a no-op. That is why the weekly drift check skips
+# this file: its dry-run always reports a diff even though the config
+# is correct.
 machine:
   network:
     interfaces:

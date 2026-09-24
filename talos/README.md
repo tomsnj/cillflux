@@ -83,5 +83,41 @@ Two things learned doing this on 2026-09-24:
   and storage were unaffected, but do not do this mid-migration or
   during anything time-sensitive.
 
-Keep this directory and `~/talos-config/` in sync by hand — nothing
-automates it, and Flux does not read this directory.
+## Drift checking
+
+Flux does not read this directory, and nothing syncs it with
+`~/talos-config/` — so the weekly review checks it instead:
+
+```bash
+scripts/weekly-renovate-review.sh talos-drift   # standalone
+scripts/weekly-renovate-review.sh health        # included in the health pass
+```
+
+It runs `--dry-run` for each patch (read-only) and reports anything whose
+tracked content no longer matches the live machine config. Note that
+`talosctl` exits `0` whether or not there is a diff, so the check parses
+the output rather than the exit status. `historical/` is skipped by
+design — those patches are expected not to match.
+
+A drift report means either the node was changed outside git, or a
+tracked patch was edited and never applied. Investigate with the
+dry-run; do not apply anything unprompted, since a permanent apply
+restarts the control-plane static pods.
+
+### Opting a patch out
+
+Some patches are not idempotent: Talos strategic-merge **appends** to
+list fields instead of replacing them, so re-applying adds a duplicate
+entry and the dry-run shows a diff forever even though the config is
+correct. `talos-storage-link-patch.yaml` is one — a second apply would
+add `172.16.99.1/30` to `machine.network.interfaces[].addresses` twice.
+
+Such a file opts out with a marker line, which must state a reason:
+
+```yaml
+# drift-check: skip - not idempotent (list append)
+```
+
+The reason is printed in the report, so a skip stays visible rather than
+quietly disappearing. Use it only for genuine non-idempotency — never to
+silence a patch that has actually drifted.
