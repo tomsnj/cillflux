@@ -327,6 +327,63 @@ Immich is at `https://major.gs-farm.net`, 31,204 assets. Its API key
 is on `gsfarmctl` at `~/.immich-api-key`; keep it out of command
 lines, which are visible in `ps`.
 
+**Mystery 2026-09-20/22: all 5 non-facialRecognition queues (thumbnail-
+Generation, metadataExtraction, videoConversion, faceDetection,
+smartSearch) were found paused on 2026-09-22, not just the
+intentionally-paused facialRecognition.** They'd been confirmed
+correctly resumed right after the 2026-09-19 import. Investigated
+2026-09-23 via `kubectl` on `gsfarmctl` (this TrueNAS host has no
+kubectl): server logs pin the pause to sometime during the day on
+**Sunday 2026-09-20** (midnight retry errors present 09-19 and 09-20,
+absent 09-21 onward; normal activity continues up to 09-20 23:03,
+so the exact hour isn't narrower than "sometime that day"). Ruled out:
+Volsync's nightly backups (`immich-library`, `immich-postgres-data`,
+both 03:00 UTC — their `ReplicationSource` specs have no pre/post
+hooks); the nightly `immich-postgres-dump` CronJob (read the full
+script — plain `pg_dump`, no API calls); a pod/Redis restart
+(`immich-valkey` has been up since 09-08, so the persisted pause flag
+wasn't reset by one; `immich-server`/`immich-postgres` did restart
+together on 09-18, but that's before the pause and queues were
+confirmed fine after it). Immich doesn't log successful admin API
+calls with enough detail to show who/what issued the pause. Best
+remaining explanation was a manual pause via the Immich admin UI by
+someone with access — **ruled out 2026-09-23: confirmed no one else
+has Immich admin access.**
+
+Also checked 2026-09-23: `~/.immich-api-key` on `gsfarmctl` is used by
+manual `immich-go` runs for the earlier Shawna-library migration
+(2026-09-09 through 09-18, all one-off, per `~/.cache/immich-go/` on
+`gsfarmctl`), with **no runs on or after 09-19** and no systemd
+timer/cron wired to it — not a scheduled automation either.
+
+**Resource-pressure check (the user's hypothesis), via Prometheus
+(`kube-prometheus-stack`, `observability` ns, port-forward
+`svc/kube-prometheus-stack-prometheus` 9090):** this is a **single-
+node cluster** (`talos-iok-xpu` is the only node — every workload,
+including Immich, Postgres, Grafana, Vaultwarden, Forgejo, Pi-hole,
+shares one box). Node CPU genuinely spiked from a ~20-25% baseline to
+**60-76% for ~35 min (03:05-03:40 UTC = 11:05-11:40 PM EDT on 09-19)**,
+right at the Volsync backup trigger (03:00 UTC), plausibly compounded
+by Immich's own background workers still processing that evening's
+bulk import. **Real, but not a clean match**: it had fully settled
+back to baseline a full hour before the 04:57-04:58 UTC (12:57-12:58
+AM EDT) "No microservices worker connected" warnings — 1-minute-
+resolution CPU at that exact moment is flat baseline (23.8%), and
+those warnings were themselves a harmless self-healing blip (job
+processing continued right through both, never recurred), so they're
+probably not the pause mechanism either.
+
+**Net: still unresolved.** Everything checkable has been checked —
+no other admin, no automation anywhere in the namespace or on
+`gsfarmctl`, no pod/Redis restart, no clean resource-pressure
+correlation, and Immich doesn't log the actual pause action at any
+level. The one operationally useful thing that came out of this: a
+big Volsync backup and a big bulk photo import can genuinely compete
+for CPU on this single-node cluster — avoid running a bulk `immich-go`
+import right around 03:00 UTC (11 PM EDT) if it can be helped. If this
+recurs, check queue state (`GET /api/jobs`) more promptly next time,
+before too much log history ages out, and note the exact time noticed.
+
 ## Further reading
 
 `cluster-docs/CLUSTER.md` — the cluster reference and its gotchas
