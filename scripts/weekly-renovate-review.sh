@@ -301,8 +301,14 @@ cmd_review() {
 pod_snapshot() { kubectl get pods -A --no-headers 2>/dev/null; }
 
 not_healthy() {
-  # Reads a pod snapshot on stdin, prints lines not Running/Completed.
-  awk '{status=$4} status != "Running" && status != "Completed" {print}'
+  # Reads a pod snapshot on stdin, prints every pod that is not fully
+  # ready. STATUS alone is NOT sufficient: a pod can be Running with
+  # 0/1 containers ready and be completely unavailable. That blind spot
+  # reported "all pods Running" on 2026-09-23 while cluster DNS was
+  # actually down mid-CoreDNS-rollout. Compare the READY column (e.g.
+  # "1/1") as well. Completed pods are finished Jobs and are fine.
+  awk '{split($3, r, "/")}
+       $4 != "Completed" && (r[1] != r[2] || $4 != "Running") {print}'
 }
 
 cmd_merge() {
@@ -329,33 +335,63 @@ cmd_merge() {
   log "==> merging PR #$pr"
   gh pr merge "$pr" --repo "$REPO_SLUG" --squash
 
-  log "==> flux reconcile source git flux-system"
-  flux reconcile source git flux-system -n flux-system
+  # There is more than one GitRepository (flux-system and
+  # home-kubernetes). Most app Kustomizations track home-kubernetes, so
+  # reconciling only flux-system reports success while leaving them on
+  # the previous commit. Reconcile them all.
+  local src
+  for src in $(kubectl get gitrepositories -n flux-system \
+                 -o jsonpath='{.items[*].metadata.name}' 2>/dev/null); do
+    log "==> flux reconcile source git $src"
+    flux reconcile source git "$src" -n flux-system
+  done
 
   # A Helm upgrade can take well over a minute to even start rolling pods,
-  # so a single snapshot right after `flux reconcile source` mostly just
-  # proves nothing broke *yet*. Poll instead: keep checking until healthy,
-  # or until the unhealthy set stops changing (a real, non-transient
-  # problem) or we hit the timeout.
-  log "==> waiting for pods to settle (up to 3m)"
-  local prev_unhealthy="" unhealthy=""
-  for _ in $(seq 1 12); do
+  # so an immediately-clean snapshot proves nothing -- it just means the
+  # rollout has not begun. (On 2026-09-23 this declared success while
+  # cilium was still at Init:0/6.) So: always sleep before the first
+  # check, and require several *consecutive* clean polls before calling
+  # it settled. Bail out early only if the same unhealthy set persists
+  # across three polls, which means stuck rather than transient.
+  log "==> waiting for pods to settle (up to 4m)"
+  local prev_unhealthy="" unhealthy="" clean_streak=0 same_count=0
+  local required_clean=3
+  for _ in $(seq 1 16); do
+    sleep 15
     after=$(pod_snapshot)
     unhealthy=$(not_healthy <<<"$after")
-    [[ -z "$unhealthy" ]] && break
-    [[ -n "$prev_unhealthy" && "$unhealthy" == "$prev_unhealthy" ]] && break
-    prev_unhealthy="$unhealthy"
-    sleep 15
+    if [[ -z "$unhealthy" ]]; then
+      clean_streak=$((clean_streak + 1))
+      same_count=0
+      prev_unhealthy=""
+      [[ "$clean_streak" -ge "$required_clean" ]] && break
+      continue
+    fi
+    clean_streak=0
+    if [[ "$unhealthy" == "$prev_unhealthy" ]]; then
+      same_count=$((same_count + 1))
+      [[ "$same_count" -ge 3 ]] && break
+    else
+      same_count=0
+      prev_unhealthy="$unhealthy"
+    fi
   done
 
   if [[ -n "$unhealthy" ]]; then
-    echo "Pods not Running/Completed after merge of #$pr:"
+    echo "Pods not fully ready after merge of #$pr:"
     echo "$unhealthy"
     echo
     echo "(Investigate with kubectl describe / kubectl logs --previous before reporting — see"
     echo " CLAUDE.md 'Post-merge investigation'. Do not roll back or patch without Tom's go-ahead.)"
   else
-    echo "PR #$pr merged. All pods Running/Completed."
+    echo "PR #$pr merged. All pods fully ready."
+    echo
+    echo "NOTE: pod readiness is not proof the data path works. For network-layer"
+    echo "charts (cilium, coredns, nginx, external-dns) verify the real path too:"
+    echo "  for t in 10.0.10.1:443 10.0.10.2:443 10.0.10.3:9000 10.0.10.5:80; do"
+    echo "    nc -z \${t%:*} \${t#*:} && echo \"\$t OPEN\"; done"
+    echo "  dig +short @10.0.10.6 google.com"
+    echo "(Cilium L2-announced LB IPs do not answer ICMP — use nc, not ping.)"
   fi
 }
 
@@ -377,6 +413,48 @@ cmd_health() {
     echo "Kustomizations NOT Ready:"
     echo "$header"
     echo "$not_ready"
+  fi
+
+  # HelmReleases are checked separately because a release can sit
+  # Stalled (e.g. MissingRollbackTarget) while its Kustomization is
+  # perfectly Ready and the app runs fine on its last good revision --
+  # it silently refuses all further updates. Grafana hid like that for
+  # nine days before 2026-09-23. Flux renders it as "Unknown", which
+  # reads like a transient "reconciliation in progress", so anything
+  # not True is worth a look rather than a shrug.
+  log "==> flux get helmreleases -A"
+  local hr_out hr_bad
+  hr_out=$(flux get helmreleases -A 2>&1)
+  hr_bad=$(tail -n +2 <<<"$hr_out" | awk -F'\t' '{gsub(/ +$/,"",$5)} $5 != "True"')
+  if [[ -z "$hr_bad" ]]; then
+    echo "All helmreleases Ready."
+  else
+    echo "HelmReleases NOT Ready (check for Stalled, not just in-progress):"
+    head -1 <<<"$hr_out"
+    echo "$hr_bad"
+  fi
+
+  log "==> pod readiness"
+  local pods_bad
+  pods_bad=$(not_healthy <<<"$(pod_snapshot)")
+  if [[ -z "$pods_bad" ]]; then
+    echo "All pods fully ready."
+  else
+    echo "Pods NOT fully ready:"
+    echo "$pods_bad"
+  fi
+
+  # Catches the mis-indented/commented-out chart.spec.version that makes
+  # Flux resolve "*" and upgrade unattended, invisible to Renovate.
+  log "==> charts floating on latest"
+  local floating
+  floating=$(kubectl get helmcharts -A --no-headers 2>/dev/null \
+               | awk '$4 == "*" {print "  " $2}')
+  if [[ -z "$floating" ]]; then
+    echo "No charts floating on '*'."
+  else
+    echo "Charts with NO pinned version (resolve '*' on every reconcile):"
+    echo "$floating"
   fi
 }
 

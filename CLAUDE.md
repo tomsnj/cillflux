@@ -128,6 +128,54 @@ file covers working conventions, not the full reference.
   to hand off a one-time password without ever knowing the user's real
   one). Hit this with Grafana on 2026-09-07; will hit it again for
   Forgejo unless remembered.
+- A Helm chart's version and the application it deploys are different
+  things, and they publish **separate release notes**. A *minor* chart
+  bump can carry a *major* app behaviour change, so reading only the
+  chart changelog is not enough — check the app release notes for the
+  version that chart actually deploys. This cost nine minutes of public
+  DNS on 2026-09-23: external-dns chart 1.22.0's notes listed exactly
+  one breaking change (`policy` now required, which we already
+  satisfied), while the record-deleting annotation-prefix change was
+  documented solely in the app v0.22.0 notes.
+- external-dns is pinned to
+  `--annotation-prefix=external-dns.alpha.kubernetes.io/` because
+  v0.22.0 changed the default to `external-dns.kubernetes.io/` with no
+  fallback. **Do not remove that flag** without first migrating every
+  `external-dns.alpha.kubernetes.io/*` annotation in the repo — orphaned
+  annotations make external-dns lose its CNAME targets, try to publish
+  the ingress's private LB IP as a proxied A record (Cloudflare rejects
+  with code 9003), and **delete the existing records**. It deletes
+  before it creates, so a failed create leaves nothing behind, and it
+  does not self-heal.
+- A `HelmRelease` with no `chart.spec.version` resolves `*` and pulls
+  the newest chart in the repo on **every reconcile** — unattended
+  upgrades with no PR, and invisible to Renovate, which cannot propose
+  a bump when there is no version to bump. Watch for a mis-indented
+  `#      version:` *inside* `chart.spec`: it reads as pinned at a
+  glance but is only a comment. Grafana, Alloy and Pi-hole were all
+  floating this way until 2026-09-23. Sweep with
+  `kubectl get helmcharts -A | awk '$3=="*"'`.
+- A Flux `HelmRelease` can sit `Stalled: True (MissingRollbackTarget)`
+  indefinitely while the app runs perfectly on its last good revision.
+  Nothing alerts, and it silently refuses all further updates.
+  `flux get helmreleases -A` renders it as `Unknown`, which reads like
+  a transient "reconciliation in progress" — Grafana hid in that state
+  for nine days. Changing the spec clears it.
+- There are **two** `GitRepository` sources: `flux-system` and
+  `home-kubernetes`. Most app Kustomizations track `home-kubernetes`, so
+  `flux reconcile source git flux-system` reports success while leaving
+  them on the previous commit. If a pushed change will not appear,
+  check the revision column of `flux get kustomizations -A` for a split,
+  and reconcile the source that actually owns it.
+- Pod `STATUS` is not readiness. A pod that is `Running` but `0/1`
+  passes a naive `STATUS != Running` check while being entirely
+  unavailable — cluster DNS was down mid-CoreDNS-rollout on 2026-09-23
+  while exactly such a check reported healthy. Compare the READY
+  columns instead:
+  `kubectl get pods -A --no-headers | awk '{split($3,r,"/"); if ($4!="Completed" && (r[1]!=r[2] || $4!="Running")) print}'`.
+  For network-layer charts, readiness still is not enough — test the
+  data path. Cilium's L2-announced LB IPs do not answer ICMP, so use
+  `nc -z <ip> <port>` against the real Service port.
 
 ## Where things live
 
