@@ -176,6 +176,36 @@ file covers working conventions, not the full reference.
   For network-layer charts, readiness still is not enough — test the
   data path. Cilium's L2-announced LB IPs do not answer ICMP, so use
   `nc -z <ip> <port>` against the real Service port.
+- `flux diff kustomization` compares the **HelmRelease CR**, not what
+  the chart renders, so for a chart version bump it proves almost
+  nothing. To see the real effect, `helm template` both versions
+  against the live values and diff the output. Expect two false
+  positives: unsubstituted `${VAR}` (a local build skips Flux's
+  `postBuild` envsubst) and a stale PR branch appearing to revert a
+  newer merge (check with `git merge-tree --write-tree main <branch>`).
+  Note that not every HelmRelease keeps values in `spec.values` —
+  `kube-prometheus-stack` uses `valuesFrom` the
+  `kube-prometheus-stack-values` ConfigMap (key `values.yaml`), and a
+  jsonpath on `.spec.values` returns empty, so a render built from it
+  silently uses chart defaults and proves nothing.
+- `crds: CreateReplace` on a HelmRelease satisfies the "run these ten
+  `kubectl --server-side` commands" step that kube-prometheus-stack
+  majors ship with — verified on the 89→91 jump, where all ten
+  `monitoring.coreos.com` CRDs went 0.93.1 → 0.94.1 automatically. It
+  works because those CRDs are unlabelled (installed from the chart's
+  `crds/` directory, so not Helm-owned) and single-version. Confirm
+  both before relying on it for another chart.
+- Legacy `kubernetes.io/service-account-token` Secrets are still
+  populated by the control plane on Kubernetes **v1.35.2** (verified
+  2026-09-24 with a disposable probe Secret). kube-prometheus-stack
+  >= 90 depends on this for *all* control-plane scraping, so re-run
+  that probe after any major Kubernetes upgrade — if it stops working,
+  apiserver/kubelet/coredns metrics break.
+- `kube-controller-manager` and `kube-scheduler` Prometheus targets have
+  been `down` since the observability stack was installed (~170 days),
+  the usual Talos localhost-binding behaviour rather than a regression.
+  There is no alerting on either component. Don't read their absence as
+  a symptom of whatever change you are currently making.
 
 ## Where things live
 
