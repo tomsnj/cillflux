@@ -201,11 +201,28 @@ file covers working conventions, not the full reference.
   >= 90 depends on this for *all* control-plane scraping, so re-run
   that probe after any major Kubernetes upgrade — if it stops working,
   apiserver/kubelet/coredns metrics break.
-- `kube-controller-manager` and `kube-scheduler` Prometheus targets have
-  been `down` since the observability stack was installed (~170 days),
-  the usual Talos localhost-binding behaviour rather than a regression.
-  There is no alerting on either component. Don't read their absence as
-  a symptom of whatever change you are currently making.
+- Scraping `kube-controller-manager` and `kube-scheduler` on Talos needs
+  **two** things, and neither works alone: `bind-address: 0.0.0.0` in the
+  Talos machine config (Talos binds both to `127.0.0.1` by default) *and*
+  a correct `endpoints` address in the kube-prometheus-stack
+  `helmvalues.yaml`. Both were wrong until 2026-09-24 — the endpoint was
+  `10.10.1.110`, an address that does not exist on this network,
+  inherited from a k3s-derived template along with its "duplicate labels
+  provided by k3s" relabeling comments. Fixed; both targets now scrape.
+- Changing the Talos machine config **never requires reading it** — it
+  holds the cluster CA private key, etcd CA key, service-account signing
+  key and join tokens. `talosctl patch machineconfig` merges a patch
+  containing only the changed fields, server-side. Safe sequence:
+  `--dry-run` (prints the merged diff, changes nothing), then
+  `--mode=try` (applies and auto-reverts after its timeout, so you can
+  verify before committing), then `--mode=no-reboot`. Keep `try`'s
+  default 1m timeout — `--timeout=5m` silently fails to apply. And
+  despite the "Applied configuration without a reboot" message, a
+  permanent apply **does** restart the control-plane static pods: the API
+  server refused connections on 6443 for ~30s before recovering on its
+  own. Running workloads, networking and storage are unaffected, but
+  don't do it mid-migration. Patches live in `~/talos-config/`, which is
+  outside this repo — the machine config is not in git.
 
 ## Where things live
 

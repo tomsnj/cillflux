@@ -189,10 +189,10 @@ is being deprecated, and the cluster holds no example of that mechanism
 working, a two-minute disposable probe beats both the documentation and
 an assumption.
 
-## Found: two control-plane scrape targets dead for ~170 days
+## Fixed: two control-plane scrape targets dead for ~170 days
 
-Surfaced while assessing `#968`, unrelated to it, and **not fixed** —
-recorded here as the next piece of work.
+Surfaced while assessing `#968` and unrelated to it. Now fixed — it took
+two changes, and neither worked alone.
 
 ```
 kube-controller-manager   down
@@ -200,11 +200,83 @@ kube-scheduler            down
 storage1-node-exporter    down
 ```
 
-The first two are almost certainly the standard Talos behaviour of
-binding those components to localhost, so the chart's default
-ServiceMonitors cannot reach them. They have been down since the stack
-was installed 170 days ago, which means there has never been any
-alerting on controller-manager or scheduler health.
+### Two causes, not one
+
+The first read — "Talos binds them to localhost, so the chart's default
+ServiceMonitors can't reach them" — was half right and would have led to
+half a fix. The actual errors said something else:
+
+```
+kube-controller-manager  https://10.10.1.110:10257/metrics
+                         dial tcp 10.10.1.110: connect: no route to host
+```
+
+**Cause 1 — the endpoint address was wrong.** These ServiceMonitors are
+not chart defaults; `helmvalues.yaml` configures them explicitly with
+`endpoints: &endpoints [10.10.1.110]`. That address does not exist on
+this network — it routes out the default gateway and answers nothing.
+The node is `10.0.10.10`. The block came from a k3s-derived template
+(its `metricRelabelings` comments still read "Remove duplicate labels
+provided by k3s") and the endpoint was never adjusted. The YAML anchor
+means the same wrong address also fed `kubeEtcd` and `kubeScheduler`.
+
+**Cause 2 — Talos does bind to localhost.** Correcting the IP alone
+would only have changed the error from "no route to host" to
+"connection refused": `10.0.10.10:10257` and `:10259` were closed, from
+inside the cluster too. The machine config had no `extraArgs` on either
+component, so both used the Talos default of `127.0.0.1`.
+
+### The fix
+
+Talos side, `talos-config/talos-cp-metrics-patch.yaml` (outside this
+repo — the machine config is not in git):
+
+```yaml
+cluster:
+  controllerManager:
+    extraArgs:
+      bind-address: 0.0.0.0
+  scheduler:
+    extraArgs:
+      bind-address: 0.0.0.0
+```
+
+Git side: the `&endpoints` anchor in `helmvalues.yaml`, `10.10.1.110`
+-> `10.0.10.10`.
+
+**Result: both targets up, real metrics flowing** — 52
+`workqueue_adds_total` series from the controller-manager and a live
+`scheduler_schedule_attempts_total`.
+
+### Applying it safely without exposing the machine config
+
+The Talos machine config holds the cluster CA private key, the etcd CA
+key, the service-account signing key, the aescbc secret and the join
+tokens. None of that needs to be read to change a setting:
+`talosctl patch machineconfig` takes a patch of only the changed fields
+and merges it server-side.
+
+The sequence that worked, and is worth reusing:
+
+1. `--dry-run` — prints the exact merged diff, changes nothing. It
+   confirmed only the four intended lines and "Applied configuration
+   without a reboot".
+2. `--mode=try` — applies temporarily and **auto-reverts after the
+   timeout** (default 1m). Both ports were confirmed OPEN inside that
+   window, proving the approach before committing to it.
+3. `--mode=no-reboot` — permanent.
+
+Two practical notes. `--mode=try --timeout=5m` silently failed to
+apply; the default 1m worked, so don't extend that timer. And despite
+"without a reboot", **the permanent apply did restart the API server** —
+`connection refused` on 6443 for roughly 30 seconds while the
+control-plane static pods cycled. It recovered on its own with every
+workload untouched, but it is not a zero-impact change and should not
+be run while something important is mid-flight.
+
+`storage1-node-exporter` remains down: `connection refused` on
+`10.0.0.169:9100`, i.e. node_exporter is not listening on TrueNAS. A
+separate problem, and a natural fit for the TrueNAS session.
 
 It also means `#968`'s v90 ServiceMonitor change was lower-risk than it
 looked: two of the ServiceMonitors it rewrites were already broken. The
@@ -242,8 +314,19 @@ question from the Talos control-plane binding.
   depends on this for all control-plane scraping. If a future Kubernetes
   upgrade removes it, apiserver/kubelet/coredns metrics break. Re-run
   the probe after any major Kubernetes upgrade.
-- `kube-controller-manager` and `kube-scheduler` Prometheus targets have
-  been `down` since the observability stack was installed — the usual
-  Talos localhost-binding behaviour, not a regression from any upgrade.
-  There has been no alerting on either component. Do not read their
-  absence as a symptom of whatever change you are currently making.
+- Scraping `kube-controller-manager` and `kube-scheduler` on Talos needs
+  **two** things, and neither works alone: `bind-address: 0.0.0.0` in the
+  machine config (Talos defaults both to `127.0.0.1`) *and* a correct
+  `endpoints` address in `helmvalues.yaml`. Both were wrong here until
+  2026-09-24 — the endpoint was `10.10.1.110`, which does not exist on
+  this network, inherited from a k3s-derived template.
+- Changing the Talos machine config never requires reading it (it holds
+  the cluster CA key, etcd CA key, service-account signing key and join
+  tokens). `talosctl patch machineconfig` merges a patch of only the
+  changed fields server-side. Use `--dry-run` to preview the merged
+  diff, then `--mode=try` which auto-reverts after its timeout, then
+  `--mode=no-reboot`. Keep `try`'s default 1m timeout —
+  `--timeout=5m` silently fails to apply. Note that despite the
+  "without a reboot" message, a permanent apply restarts the
+  control-plane static pods: the API server was refusing connections on
+  6443 for ~30s. Workloads, networking and storage are unaffected.
