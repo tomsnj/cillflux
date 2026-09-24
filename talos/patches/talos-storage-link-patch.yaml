@@ -1,0 +1,8 @@
+# talos-storage-link-patch.yaml
+machine:
+  network:
+    interfaces:
+      - interface: enp41s0
+        addresses:
+          - 172.16.99.1/30
+        dhcp: false

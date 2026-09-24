@@ -1,0 +1,5 @@
+machine:
+  nodeLabels:
+    node-role.kubernetes.io/control-plane: ""
+cluster:
+  allowSchedulingOnControlPlanes: true

@@ -233,6 +233,12 @@ file covers working conventions, not the full reference.
 - Backup monitoring script: `/root/check-backups.sh` on TrueNAS (canonical
   copy also at `/mnt/storage1/home/stecktf_a/check-backups.sh`)
 - talosconfig: `~/.talos/config` on `gsfarmctl`
+- Talos machine-config patches: `talos/patches/` in this repo, with
+  `talos/README.md` covering the apply workflow. The machine config
+  *itself* is deliberately not in git (CA private keys, signing keys,
+  join tokens) — it lives in `~/talos-config/` on `gsfarmctl`, which is
+  gitignored along with `talosconfig`, `worker.yaml` and
+  `controlplane-*.yaml`.
 
 ## Full reference
 

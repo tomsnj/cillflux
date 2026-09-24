@@ -13,3 +13,16 @@ kubeconfig
 # Taskfile
 .tasks
 .tar.gz
+
+# Talos - machine configs hold CA private keys, signing keys and join
+# tokens. Only the patches under talos/patches/ are tracked; see
+# talos/README.md. Note a marker grep does NOT catch kubeconfig-style
+# base64 client-key-data, so never rely on one to decide what is safe.
+talosconfig
+worker.yaml
+controlplane.yaml
+controlplane-*.yaml
+controlplane.yaml.notused
+talos-config/
+secrets.yaml
+talsecret*.yaml

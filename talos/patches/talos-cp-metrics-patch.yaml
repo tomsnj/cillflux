@@ -1,0 +1,17 @@
+# Expose kube-controller-manager and kube-scheduler metrics endpoints.
+#
+# Talos binds both to 127.0.0.1 by default, so the Prometheus
+# ServiceMonitors shipped by kube-prometheus-stack cannot reach them
+# (ports 10257 / 10259 closed from inside the cluster). Both targets
+# have been down since the observability stack was installed.
+#
+# Pair this with the endpoint fix in
+# kubernetes/apps/observability/kube-prometheus-stack/app/helmvalues.yaml
+# (10.10.1.110 -> 10.0.10.10); neither change works alone.
+cluster:
+  controllerManager:
+    extraArgs:
+      bind-address: 0.0.0.0
+  scheduler:
+    extraArgs:
+      bind-address: 0.0.0.0

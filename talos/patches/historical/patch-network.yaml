@@ -1,0 +1,36 @@
+# ============================================================
+# SUPERSEDED - DO NOT APPLY
+# ------------------------------------------------------------
+# Kept only as a record of the original install (2026-04-05).
+# It does NOT describe the cluster as it now runs:
+#   - this sets the node to 10.0.0.170/16 on enp37s0; the node
+#     actually runs 10.0.10.10/16 (verified 2026-09-24)
+#   - certSANs here list 10.0.0.170, not the live 10.0.10.10
+#   - the "# adjust to your NIC name" comments are template
+#     scaffolding that was never cleaned up
+# Applying this would try to renumber the node and break the
+# cluster's API endpoint.
+# ============================================================
+# patch-network.yaml
+machine:
+  install:
+    disk: /dev/nvme0n1
+  network:
+    interfaces:
+      - interface: enp37s0        # adjust to your NIC name
+        addresses:
+          - 10.0.0.170/16   # your static IP/prefix
+        routes:
+          - network: 0.0.0.0/0
+            gateway: 10.0.100.1  # your gateway
+        dhcp: false
+    nameservers:
+      - 1.1.1.1
+      - 8.8.8.8
+cluster:
+  apiServer:
+    certSANs:
+      - 10.0.0.170
+      - 127.0.0.1
+  controlPlane:
+    localAPIServerPort: 6443
