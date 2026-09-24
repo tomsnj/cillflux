@@ -34,6 +34,11 @@ spec:
             key: api-token
     extraArgs:
       - --ingress-class=external
+      # v0.22.0 changed the default annotation prefix to external-dns.kubernetes.io/
+      # with no fallback, which orphans every external-dns.alpha.kubernetes.io/
+      # annotation in this repo and DELETES the records they own. Pin the old
+      # prefix; do not remove without migrating every annotation first.
+      - --annotation-prefix=external-dns.alpha.kubernetes.io/
       - --cloudflare-proxied
       - --crd-source-apiversion=externaldns.k8s.io/v1alpha1
       - --crd-source-kind=DNSEndpoint
