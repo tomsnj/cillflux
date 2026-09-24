@@ -8,7 +8,10 @@ spec:
   chart:
     spec:
       chart: pihole
-      # version: 2.26.1
+      # Pin explicitly. An unset version resolves to '*' (newest in the repo)
+      # on every reconcile. This is household DNS - an unattended chart upgrade
+      # takes the whole house offline. Bump only via a reviewed Renovate PR.
+      version: 2.0.13
       sourceRef:
         kind: HelmRepository
         name: pihole
