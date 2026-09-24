@@ -278,8 +278,11 @@ means nothing in this workflow blocks mid-run waiting on an answer.
    - Snapshot `kubectl get pods -A` before and after each auto-merge.
    - `flux reconcile source git flux-system` after each auto-merge so
      status reflects the new commit, not stale state.
-3. Run `flux get kustomizations -A` at the end (always, regardless of
-   how many PRs were merged) and report anything not `Ready`.
+3. Run `scripts/weekly-renovate-review.sh health` at the end (always,
+   regardless of how many PRs were merged) and report anything wrong. It
+   checks kustomizations, HelmReleases (a release can sit `Stalled` while
+   its Kustomization is `Ready`), pod *readiness* rather than STATUS,
+   charts floating on `*`, and Talos patch drift.
 4. `git pull --ff-only` again at the end to sync local `main` — no push
    needed, merges happen on GitHub.
 5. Present one consolidated end-of-run summary (see below). Then stop
