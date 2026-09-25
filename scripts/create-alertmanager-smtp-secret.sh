@@ -85,6 +85,8 @@ grep -q 'password: ENC\[' "$OUT" || die "the password field is not encrypted - r
 trap - EXIT
 chmod 644 "$OUT"
 
+enc_count=$(grep -c 'ENC\[' "$OUT")
 printf '\nWrote encrypted secret: %s\n' "${OUT#"$REPO_ROOT"/}"
-printf 'Verify with:  grep -c "ENC\\[" %s\n' "${OUT#"$REPO_ROOT"/}"
-printf 'Then commit it; Flux will create the secret in the observability namespace.\n'
+printf '  %s fields encrypted (the password plus SOPS metadata).\n' "$enc_count"
+printf '  The password field is encrypted; the file is safe to commit.\n\n'
+printf 'Next: commit it. Flux creates the secret in the observability namespace.\n'
