@@ -93,7 +93,9 @@ spec:
           hajimari.io/enable: 'true'
           hajimari.io/icon: "mdi:pail"
           hajimari.io/group: "Storage"
-          nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"  # add this
+          # MinIO serves TLS on both ports; see the note on the
+          # internal ingress below.
+          nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
         hosts:
           - host: "minio.${SECRET_DOMAIN}"
             paths:
@@ -115,6 +117,17 @@ spec:
       internal:
         enabled: true
         className: internal
+        annotations:
+          # REQUIRED, and its absence is silent. MinIO serves TLS on the
+          # api port, so without this nginx proxies plain HTTP to it and
+          # MinIO answers 400 "Client sent an HTTP request to an HTTPS
+          # server." The external ingress above has always carried it;
+          # this one never did, so s3.gs-farm.net worked from outside
+          # and was broken from inside the LAN from the day it was
+          # written (found 2026-09-25). Nothing noticed, because
+          # in-cluster consumers reach MinIO by Service name and never
+          # traverse this ingress.
+          nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
         hosts:
           - host: "s3.${SECRET_DOMAIN}"
             paths:
