@@ -329,6 +329,17 @@ for 6+ days as of 2026-09-05. Nothing currently open here.)*
   `WIN_20190505_07_44_26_Pro.mp4` in `~/immich-oversize` (exceeds
   Cloudflare's 100 MiB proxy cap — needs the LAN/browser path), and
   `~/Downloads` was never imported.
+- **`gitops.gs-farm.net` returns 504** (low priority, 2026-09-25) — the
+  Weave GitOps UI. The app is fine: an in-cluster probe against
+  `weave-gitops.flux-system.svc:9001` returns 200 immediately, the pod
+  is 1/1, and the ingress carries no unusual annotations. nginx reaches
+  the backend and gets nothing, timing out at ~15s. Not investigated
+  further. Note Weave GitOps OSS was sunset upstream, so removing the
+  ingress (or the release) may be a better answer than fixing it —
+  Flux's actual state is already covered by `flux get`, the weekly
+  health pass, and the Flux dashboards in Grafana. This was the last
+  survivor of the 2026-09-25 internal-ingress sweep; the other
+  thirteen answer 200/302/403.
 
 ---
 

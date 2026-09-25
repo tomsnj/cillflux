@@ -513,3 +513,61 @@ makes new ingresses work without touching DNS, so the tradeoff stays.
 The practical check is a status code, not a resolution: anything on the
 internal class should answer 200/302, and a 404 or 503 there means the
 route is broken rather than the app being down.
+
+### And the fourth: s3.gs-farm.net on the internal class
+
+The sweep's other survivor. `s3.gs-farm.net` answered **400** with
+`Client sent an HTTP request to an HTTPS server.` — a message from
+MinIO, not from nginx, which is the tell: the request arrived, at a TLS
+listener, in plaintext.
+
+MinIO serves TLS on its api port. The external ingress has always
+carried the annotation that tells nginx so; the internal one had no
+`annotations` block at all:
+
+```yaml
+ingress:
+  main:      # external
+    annotations:
+      nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
+  internal:  # <- had none
+    className: internal
+```
+
+So `s3.gs-farm.net` worked from outside the LAN and was broken from
+inside it, from the day it was written. Nothing noticed because
+in-cluster consumers reach MinIO by Service name and never traverse
+this ingress — **backups were never affected**, which is worth stating
+plainly given what MinIO holds.
+
+Fixed by adding the annotation. Verified, and note what "working" looks
+like for an S3 endpoint:
+
+```
+s3.gs-farm.net/                    403  <Error><Code>AccessDenied</Code>...
+s3.gs-farm.net/minio/health/live   200
+```
+
+A 403 carrying well-formed S3 XML is the healthy unauthenticated
+response. Only the health endpoint gives a plain 200, which is what
+actually proves MinIO is answering through the ingress rather than
+nginx synthesising an error.
+
+The MinIO pod was untouched by the Helm upgrade — same pod name, 0
+restarts, unchanged 49-day age — since only ingress annotations
+changed and the pod template did not. Checked for in-flight Volsync
+mover jobs beforehand regardless; there were none.
+
+### Sweep result
+
+Thirteen of fourteen internal hosts now answer 200/302/403. The one
+survivor is `gitops.gs-farm.net` (504), moved to the open-issues list
+in `CLUSTER.md` at Tom's call. The check itself is three lines and
+worth folding into the weekly health pass:
+
+```bash
+kubectl get ingress -A -o jsonpath='{range .items[?(@.spec.ingressClassName=="internal")]}{.spec.rules[*].host}{"\n"}{end}' \
+  | tr ' ' '\n' | sort -u | while read -r h; do
+      printf '%-28s %s\n' "$h" "$(curl -s -o /dev/null -w '%{http_code}' "https://$h/" --max-time 20)"
+    done
+```
