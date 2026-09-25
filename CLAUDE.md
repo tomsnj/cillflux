@@ -262,8 +262,9 @@ file covers working conventions, not the full reference.
   Pi-hole, ingress, NFS all kept serving), but **anything that talks to
   the API server does not** — four Flux controllers crash-looped five
   times each with `exitCode 1` until the API returned, then recovered
-  unaided. Don't do it mid-migration or during a backup window. Patches live in `~/talos-config/`, which is
-  outside this repo — the machine config is not in git.
+  unaided. Don't do it mid-migration or during a backup window.
+  Patches live in `~/talos-config/` and are tracked in `talos/patches/`;
+  the machine config itself is deliberately not in git.
 
 ## Where things live
 
