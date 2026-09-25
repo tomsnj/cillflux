@@ -151,8 +151,19 @@ spec:
         serviceName: minio
         enabled: true
         endpoints:
+          # MinIO serves TLS on the api port, so an http scrape gets
+          # "Client sent an HTTP request to an HTTPS server" and a bare
+          # HTTP 400. That looks like an auth failure and is not:
+          # MINIO_PROMETHEUS_AUTH_TYPE=public is set and works - the same
+          # request over https returns 200 with ~31KB of metrics.
+          # insecureSkipVerify because the cert is issued for
+          # s3.${SECRET_DOMAIN}, not minio.minio.svc, so verification can
+          # never succeed on the in-cluster address. Same approach the
+          # volsync ServiceMonitor uses.
           - port: api
-            scheme: http
+            scheme: https
+            tlsConfig:
+              insecureSkipVerify: true
             path: /minio/v2/metrics/cluster
             interval: 1m
             scrapeTimeout: 10s
