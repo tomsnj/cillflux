@@ -21,14 +21,15 @@ metadata:
 spec:
   interval: 10m0s
   path: ./kubernetes/flux
-  # Temporarily false while gotk-components.yaml is removed from this
-  # path (2026-09-25). Flux computes pruning by diffing the previous
-  # inventory against the new one, so shrinking the inventory with
-  # prune enabled would garbage-collect the 11 Flux CRDs this
-  # Kustomization shares with the `flux` Kustomization, cascade-
-  # deleting every HelmRelease and Kustomization in the cluster.
-  # Restored to true once the handover is verified.
-  prune: false
+  # Was briefly false on 2026-09-25 while gotk-components.yaml was
+  # removed from this path. Flux computes pruning by diffing the
+  # previous inventory against the new one, so shrinking an inventory
+  # with prune enabled deletes the difference -- and this Kustomization
+  # shared the 11 Flux CRDs with the `flux` Kustomization, so that
+  # would have cascade-deleted every Flux CR in the cluster. The
+  # inventory has since settled at 32 objects, so re-enabling prune
+  # has nothing to remove.
+  prune: true
   sourceRef:
     kind: GitRepository
     name: flux-system
