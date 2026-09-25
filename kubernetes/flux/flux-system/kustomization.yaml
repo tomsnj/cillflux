@@ -1,12 +1,21 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
+# Only the sync objects live here now. gotk-components.yaml -- the
+# 270KB copy of Flux's own manifests written by `flux bootstrap` -- was
+# removed on 2026-09-25 because it was fighting ../config/flux.yaml,
+# which installs the same components from the flux-manifests OCI
+# artifact with the concurrency and resource patches applied. Both
+# reconciled every 10m, so the controller pod template was rewritten
+# continuously: kustomize-controller reached deployment revision 142326
+# in 172 days.
+#
+# Flux now comes from the OCI artifact alone. Bumping the version is a
+# one-line change to the `flux-manifests` OCIRepository tag in
+# ../config/flux.yaml, which Renovate can track -- not a re-run of
+# `flux bootstrap` regenerating a file this large.
+#
+# gotk-sync.yaml stays: it defines the flux-system GitRepository and
+# the root Kustomization, which are the entry point for everything
+# else and are not part of the components artifact.
 resources:
-- gotk-components.yaml
-- gotk-sync.yaml
-patches:
-  - patch: |
-      - op: add
-        path: /metadata/annotations/kustomize.toolkit.fluxcd.io~1substitute
-        value: "disabled"
-    target:
-      kind: CustomResourceDefinition
+  - gotk-sync.yaml
