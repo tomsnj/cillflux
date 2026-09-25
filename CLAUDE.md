@@ -102,6 +102,21 @@ file covers working conventions, not the full reference.
   `kubectl get prometheus -n observability kube-prometheus-stack -o jsonpath='{.spec.serviceMonitorSelector}'`
   and compare `kubectl get servicemonitors -A` against the live target
   list from `/api/v1/targets`.
+- When replacing kube-prometheus-stack's default Alertmanager route,
+  **`InfoInhibitor` must be null-routed alongside `Watchdog`** — the
+  chart's default matcher is `alertname =~ "InfoInhibitor|Watchdog"`.
+  `InfoInhibitor` is not an alert: it fires whenever any `severity=info`
+  alert is firing in a namespace with nothing warning-or-critical, and
+  exists only to drive the inhibit rule that silences info alerts. Route
+  it anywhere real and it mails on every transition, as often as the
+  noisiest info alert in the cluster — 83 emails in under a day on
+  2026-09-24, roughly one every ten minutes, doubled by
+  `send_resolved`. Carry over the chart's three `inhibit_rules` too
+  (critical over warning+info, warning over info, InfoInhibitor over
+  info); without the third the whole mechanism is inert. Check what a
+  live alert will actually do with
+  `kubectl exec -n observability alertmanager-kube-prometheus-stack-0 -c alertmanager -- wget -qO- 'http://localhost:9093/api/v2/alerts?active=true&inhibited=true'`
+  and read the `receivers` field — the route matters more than the rule.
 
 - After TrueNAS interface changes, NFS may bind to only the most recently
   configured interface — clear with
@@ -205,6 +220,41 @@ file covers working conventions, not the full reference.
   them on the previous commit. If a pushed change will not appear,
   check the revision column of `flux get kustomizations -A` for a split,
   and reconcile the source that actually owns it.
+- Two Kustomizations quietly managed Flux's own components for 172
+  days: `flux` (the `flux-manifests` OCI artifact, patched to cpu
+  2/2Gi with `--concurrent=8` and the API-QPS bumps) and
+  `flux-system`/`cluster` (the checked-in
+  `kubernetes/flux/flux-system/gotk-components.yaml`, stock 1/1Gi and
+  unpatched). Both reconciled every 10m, so the controller pod
+  template was rewritten continuously — a new ReplicaSet and a new pod
+  each time, **deployment revision 142326** on kustomize-controller,
+  about 34 rollouts an hour. Every symptom was downstream and looked
+  like something else: `CPUThrottlingHigh` flapping in `flux-system`
+  (startup throttling on pods seconds old), the tuning only in effect
+  half the time, and controllers that were always mid-restart when
+  anything else went wrong. Nothing alerted, because at any instant
+  every Deployment was `1/1` and every Kustomization `Ready`.
+  Resolved 2026-09-25 by deleting `gotk-components.yaml` — Flux now
+  comes from the OCI artifact alone, and a version bump is a one-line
+  tag change Renovate can track instead of a `flux bootstrap` re-run.
+  The general check: `kubectl get deploy -A -o custom-columns=\
+  'NS:.metadata.namespace,NAME:.metadata.name,REV:.metadata.annotations.deployment\.kubernetes\.io/revision'`
+  and look for a revision count that cannot be explained by the number
+  of times anyone has actually changed that Deployment.
+- Flux computes pruning by diffing a Kustomization's **previous
+  inventory** against the newly applied set, so *removing* a resource
+  from a path deletes it — even if another Kustomization also manages
+  it. `flux-system` and `cluster` shared 29 objects with `flux`,
+  including the `flux-system` Namespace and all 11 Flux CRDs; dropping
+  `gotk-components.yaml` with `prune: true` would have collected those
+  CRDs and cascade-deleted all 38 Kustomizations, 28 HelmReleases and
+  24 HelmRepositories in the cluster. Safe handover is three commits:
+  set `prune: false` on every Kustomization applying that path, then
+  remove the resources and verify the survivors, then restore
+  `prune: true` — by which point the stored inventory already matches,
+  so there is nothing to collect. Check for overlap first with
+  `kubectl get kustomization -n flux-system <name> -o jsonpath='{.status.inventory.entries[*].id}'`
+  on both sides and compare.
 - Pod `STATUS` is not readiness. A pod that is `Running` but `0/1`
   passes a naive `STATUS != Running` check while being entirely
   unavailable — cluster DNS was down mid-CoreDNS-rollout on 2026-09-23
