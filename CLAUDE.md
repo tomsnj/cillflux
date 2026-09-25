@@ -171,6 +171,34 @@ file covers working conventions, not the full reference.
   doesn't necessarily mean a Brave-specific setting is at fault.
   Always pair `address=/domain/ip` with `local=/domain/` for any
   internally-overridden `*.gs-farm.net` domain.
+- `gsfarmctl` does **not** use Pi-hole for DNS, and must not. Until
+  2026-09-25 its `/etc/resolv.conf` pointed straight at `8.8.8.8`, so
+  no `*.gs-farm.net` name resolved from the control host at all — which
+  is the real reason so much diagnosis here has gone through
+  `kubectl port-forward`. It now runs its own loopback dnsmasq carrying
+  the same two directives Pi-hole serves
+  (`scripts/setup-gsfarmctl-dns.sh`, revert with `--revert`).
+  Do not "simplify" this to `nameserver 10.0.10.6` with a public
+  fallback: **glibc falls through to the next `nameserver` only after a
+  timeout, and re-pays it on every lookup**, so cluster maintenance
+  would add ~5s to every public DNS query on this host. The
+  `127.0.0.1` → `1.1.1.1` fallback that is there does not have that
+  problem — a dead loopback resolver *refuses* instantly rather than
+  dropping, and glibc moves on with no delay. Also note `no-resolv` in
+  the dnsmasq config is load-bearing: Debian's dnsmasq otherwise reads
+  `/etc/resolv.conf` for upstreams, which now points at itself.
+- Alertmanager has a UI at `alertmanager.gs-farm.net` as of
+  2026-09-25 (internal class). Before that it was ClusterIP-only and
+  the hostname 404'd — the Pi-hole wildcard resolved it, so it looked
+  exposed and was not. **It is not read-only**: anyone on the LAN can
+  create a silence, the same trust boundary that already exposes
+  Prometheus's admin API. Grafana has an Alertmanager datasource
+  pointed at it. Note Grafana can list Prometheus *rules* read-only
+  through the Prometheus datasource alone, which looks like alerting
+  visibility but shows no silences and no inhibition state.
+  Ingresses here carry no `secretName` on purpose — `nginx-internal`
+  sets `default-ssl-certificate: network/gs-farm-net-production-tls`,
+  a `*.gs-farm.net` wildcard.
 - Wiring a new app to Keycloak SSO (per-app realm pattern, e.g.
   `vaultwarden`, `grafana`) means creating a **brand new, empty**
   realm — it has zero users even though `master`/other realms have
@@ -325,6 +353,9 @@ file covers working conventions, not the full reference.
 - Backup monitoring script: `/root/check-backups.sh` on TrueNAS (canonical
   copy also at `/mnt/storage1/home/stecktf_a/check-backups.sh`)
 - talosconfig: `~/.talos/config` on `gsfarmctl`
+- Control-host DNS: `scripts/setup-gsfarmctl-dns.sh` (writes
+  `/etc/dnsmasq.d/gs-farm.conf` and `/etc/resolv.conf`; original saved
+  to `/etc/resolv.conf.pre-dnsmasq`)
 - Talos machine-config patches: `talos/patches/` in this repo, with
   `talos/README.md` covering the apply workflow. The machine config
   *itself* is deliberately not in git (CA private keys, signing keys,

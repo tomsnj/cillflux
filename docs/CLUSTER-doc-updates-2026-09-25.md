@@ -304,3 +304,160 @@ them — worth knowing if something ever churns there instead.
 The baseline was seeded on 2026-09-25 immediately after the fix, so the
 next weekly review measures a real post-fix week rather than reporting
 the 172-day lifetime average of a problem that is already solved.
+
+---
+
+## Alertmanager got a UI, and gsfarmctl got its own resolver
+
+### The 404 that looked like "not exposed"
+
+`prometheus.gs-farm.net` appearing unreachable turned out not to be an
+ingress problem at all. Prometheus and Grafana are both on the
+`internal` ingress class and both have worked from any LAN client since
+install — Pi-hole wildcards the whole domain:
+
+```yaml
+# kubernetes/apps/network/pihole/app/helmrelease.yaml
+customDnsmasq:
+  - "local=/gs-farm.net/"
+  - "address=/gs-farm.net/10.0.10.1"
+```
+
+What could not resolve them was **gsfarmctl itself**, whose
+`/etc/resolv.conf` has pointed at `8.8.8.8` and `75.75.75.75` since
+2024-09-29. That is the real reason every investigation from the control
+host this week needed `kubectl port-forward`. `grafana.gs-farm.net` does
+resolve from here, to Cloudflare proxy addresses — there is a public
+record for a host whose only ingress is internal, which is worth a
+separate look.
+
+Alertmanager was the one genuine gap. It had no Ingress at all, only a
+ClusterIP, so `alertmanager.gs-farm.net` hit the wildcard, reached nginx,
+matched no rule and returned 404. Silences, inhibition state and "what
+receiver will this alert actually hit" were reachable only by
+port-forward — a bad thing to be missing on the same day the routing
+tree was rebuilt.
+
+### What was added
+
+An internal Ingress in the kube-prometheus-stack values, mirroring the
+Prometheus one exactly, including the absent `secretName`:
+
+```yaml
+alertmanager:
+  ingress:
+    enabled: true
+    ingressClassName: internal
+    hosts: ["alertmanager.${SECRET_DOMAIN}"]
+    tls:
+      - hosts: ["alertmanager.${SECRET_DOMAIN}"]
+```
+
+No `secretName` is correct here rather than an oversight:
+`nginx-internal` sets
+`default-ssl-certificate: network/gs-farm-net-production-tls`, and that
+certificate carries `*.gs-farm.net`. Verified before relying on it —
+`openssl s_client -servername alertmanager.gs-farm.net` against
+`10.0.10.1` already returned the wildcard SAN, before any Ingress
+existed.
+
+Plus an Alertmanager datasource in Grafana. Grafana could already list
+Prometheus *rules* read-only through the Prometheus datasource, which is
+easy to mistake for full alerting visibility; silences and inhibition
+are Alertmanager-side and were simply absent.
+
+```yaml
+- name: Alertmanager
+  type: alertmanager
+  uid: alertmanager
+  url: http://kube-prometheus-stack-alertmanager.observability.svc.cluster.local:9093
+  jsonData:
+    implementation: prometheus
+    handleGrafanaManagedAlerts: false
+```
+
+`implementation: prometheus` distinguishes a vanilla Alertmanager from
+Mimir/Cortex, which expose a different API.
+`handleGrafanaManagedAlerts: false` keeps Grafana from routing alert
+rules of its own through the household email receiver.
+
+Verified through the ingress rather than from the diff:
+
+```
+alertmanager.gs-farm.net   200   (valid wildcard cert, no -k required)
+
+/api/v2/alerts?active=true&inhibited=true
+Watchdog    none    active    -> null
+```
+
+One alert, firing into the null receiver, which is the intended
+steady state after the 2026-09-24 routing fix.
+
+**This ingress is not read-only.** Anyone on the LAN can create a
+silence. That is the same trust boundary that already exposes
+Prometheus's admin API (`enableAdminAPI: true`, which can delete
+series), so it is consistent rather than new — but it is worth knowing
+before anything else lands on the internal class.
+
+### Which UI to use for what
+
+Grafana is the right default: it is the only one with SSO, it carries 35
+provisioned dashboards, and it is the only place Prometheus and Loki sit
+side by side.
+
+The Prometheus UI earns its place for the things Grafana renders badly,
+all three of which have actually bitten this cluster:
+
+| Page | Why it matters here |
+|---|---|
+| `/targets` | `storage1-node-exporter` was down from install to 2026-09-24; controller-manager and scheduler pointed at a nonexistent address. A dashboard draws an absent target as an empty panel, which reads as idle |
+| `/rules` | Both hand-written PrometheusRules were never evaluated under `ruleSelectorNilUsesHelmValues: true`. Grafana showed nothing either way |
+| `/tsdb-status` | Cardinality, relevant while watching whether 10d retention survives 80,363 -> 108,235 series |
+
+Grafana answers *what is the cluster doing*. Prometheus answers *is the
+monitoring itself intact*. The failure mode in this cluster has
+consistently been the second.
+
+### gsfarmctl resolves gs-farm.net itself now
+
+`scripts/setup-gsfarmctl-dns.sh` installs dnsmasq on the control host,
+listening on loopback only, carrying the same two directives Pi-hole
+serves and forwarding everything else to `1.1.1.1` / `8.8.8.8`.
+
+The obvious alternative — point `/etc/resolv.conf` at Pi-hole with a
+public resolver second — was rejected, and the reason generalises.
+**glibc's resolver falls through to the next `nameserver` only after a
+timeout, and re-pays it on every lookup.** With Pi-hole first, taking
+the cluster down for maintenance would add roughly five seconds to every
+public DNS query on this host — `apt`, `git`, `gh`, `curl` — exactly
+when something is being fixed. A fallback that costs nothing while
+healthy can still be the wrong design if the failure it covers is the
+one you actually expect.
+
+Answering locally has no such cost. gsfarmctl never queries Pi-hole, so
+cluster downtime is invisible to it: public DNS is untouched, and
+internal names still resolve but do not connect, which is the truth.
+
+The `127.0.0.1` -> `1.1.1.1` fallback that *is* in the new resolv.conf
+is not the same trap. A query to a loopback port with nothing listening
+is **refused** immediately rather than dropped, so glibc moves on with
+no timeout. Refused and unanswered are very different failures to a
+resolver.
+
+Two details the script is careful about:
+
+- **`no-resolv` is mandatory.** Debian's dnsmasq reads
+  `/etc/resolv.conf` for its upstreams by default, and that file is
+  about to say `127.0.0.1`. Without `no-resolv` the resolver forwards
+  to itself.
+- **`local=/gs-farm.net/` is not optional**, for the same reason it is
+  not optional in Pi-hole: `address=/` overrides only A and AAAA, so an
+  HTTPS/SVCB query falls through to the public upstream and returns
+  Cloudflare's real record advertising ECH and HTTP/3. Chrome-family
+  browsers use it for connection setup and fail against internal nginx
+  in ways that look unrelated to DNS.
+
+`resolv.conf` is switched only after dnsmasq is proven to answer both an
+internal and a public name, so a failure cannot strand the host without
+a resolver. The original is saved to `/etc/resolv.conf.pre-dnsmasq` and
+`--revert` restores it.
