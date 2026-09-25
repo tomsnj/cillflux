@@ -23,7 +23,10 @@ metadata:
 spec:
   interval: 30m
   path: ./kubernetes/flux
-  prune: true
+  # See the note in flux-system/gotk-sync.yaml -- `cluster` applies the
+  # same path and shares the same inventory, so it needs the same
+  # temporary setting. Restored to true once the handover is verified.
+  prune: false
   wait: false
   sourceRef:
     kind: GitRepository

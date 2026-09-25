@@ -24,16 +24,14 @@ spec:
     kind: OCIRepository
     name: flux-manifests
   patches:
-    # Remove the network policies that does not work with k3s
-    - patch: |
-        $patch: delete
-        apiVersion: networking.k8s.io/v1
-        kind: NetworkPolicy
-        metadata:
-          name: not-used
-      target:
-        group: networking.k8s.io
-        kind: NetworkPolicy
+    # The upstream NetworkPolicies are kept. This patch used to delete
+    # them, inherited from a k3s-targeted template; this cluster is
+    # Talos with Cilium and they have been enforced for 172 days via
+    # gotk-components.yaml without trouble. They are real ingress
+    # restriction, not decoration -- allow-scraping selects every pod
+    # in the namespace, so removing it would open flux-system up rather
+    # than lock it down. Dropping the patch lets this Kustomization
+    # take them over as gotk-components.yaml goes away (2026-09-25).
     # Increase the number of reconciliations that can be performed in parallel and bump the resources limits
     # https://fluxcd.io/flux/cheatsheets/bootstrap/#increase-the-number-of-workers
     - patch: |
