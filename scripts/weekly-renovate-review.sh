@@ -23,6 +23,7 @@
 #   weekly-renovate-review.sh merge <PR_NUMBER> [--force]
 #   weekly-renovate-review.sh health
 #   weekly-renovate-review.sh talos-drift
+#   weekly-renovate-review.sh rollout-churn
 #
 # Requires: gh (authenticated), git, kubectl, flux, jq, python3.
 
@@ -473,6 +474,164 @@ talos_drift() {
   return 0
 }
 
+# ---- rollout churn --------------------------------------------------------
+
+# Where the previous run's revision counters are kept. Deliberately
+# outside the repo: this is per-host observation state, not config.
+CHURN_STATE_FILE="${CHURN_STATE_FILE:-${XDG_STATE_HOME:-$HOME/.local/state}/weekly-renovate-review/rollouts.json}"
+# A Deployment is flagged only if all three hold, so a single noisy
+# afternoon or a brand-new workload does not trip it.
+CHURN_RATE_PER_DAY="${CHURN_RATE_PER_DAY:-5}"
+CHURN_MIN_ROLLOUTS="${CHURN_MIN_ROLLOUTS:-10}"
+CHURN_MIN_WINDOW_DAYS="${CHURN_MIN_WINDOW_DAYS:-0.5}"
+
+rollout_churn() {
+  # Catches a Deployment being rewritten over and over -- the signature
+  # of two controllers applying different specs to the same object.
+  #
+  # This failure mode is invisible to every other check in this script.
+  # Two Kustomizations owned Flux's own controllers for 172 days, one
+  # rendering cpu 2/2Gi with the concurrency patches and one rendering
+  # stock 1/1Gi, both reconciling every 10m. Each apply produced a new
+  # ReplicaSet and a new pod: kustomize-controller reached deployment
+  # revision 142326, about 34 rollouts an hour, sustained. At every
+  # instant the Deployment was 1/1 Available and every Kustomization was
+  # Ready, so nothing sampling current state could see it. The fault
+  # only exists in the derivative.
+  #
+  # Hence the state file. A raw revision counter cannot distinguish
+  # "142k accumulated over six months" from "142k since Tuesday", and
+  # would keep screaming for years after a fix, since the counter never
+  # resets. So each run records where every Deployment's counter stood
+  # and compares against last time -- at the weekly cadence of this
+  # review, that is a week-over-week rate.
+  #
+  # First sight of a Deployment has no stored baseline, so it falls back
+  # to revision 0 at creationTimestamp, i.e. the lifetime average. That
+  # makes the very first run useful rather than silent, and it self-
+  # corrects: once a baseline is written, history stops counting.
+  #
+  # Deployments only. StatefulSets and DaemonSets carry revision hashes
+  # rather than a monotonic counter, so the same trick does not apply.
+  local raw
+  if ! raw=$(kubectl get deployments -A -o json 2>/dev/null); then
+    echo "Could not list Deployments - skipping rollout churn check."
+    return 0
+  fi
+
+  # The analysis reads the Deployment JSON on stdin, so the program
+  # itself cannot also arrive by heredoc -- only the last stdin
+  # redirection would survive.
+  local script
+  script=$(cat <<'PY'
+import json, os, sys
+from datetime import datetime, timezone
+
+state_file = os.environ["CHURN_STATE_FILE"]
+rate_limit = float(os.environ["CHURN_RATE_PER_DAY"])
+min_delta  = int(os.environ["CHURN_MIN_ROLLOUTS"])
+min_window = float(os.environ["CHURN_MIN_WINDOW_DAYS"])
+
+def parse(ts):
+    return datetime.fromisoformat(ts.replace("Z", "+00:00"))
+
+now = datetime.now(timezone.utc)
+
+try:
+    old = json.load(open(state_file))
+except (OSError, ValueError):
+    old = {}
+first_run = not old
+
+items = json.load(sys.stdin).get("items", [])
+new, flagged = {}, []
+
+for d in items:
+    m = d["metadata"]
+    key = f'{m["namespace"]}/{m["name"]}'
+    try:
+        rev = int((m.get("annotations") or {}).get(
+            "deployment.kubernetes.io/revision", 0))
+    except ValueError:
+        continue
+
+    base = old.get(key)
+    # No baseline, or the counter went backwards because the Deployment
+    # was deleted and recreated: measure from creation instead.
+    if not base or base.get("revision", 0) > rev:
+        base = {"revision": 0, "at": m["creationTimestamp"]}
+
+    window = (now - parse(base["at"])).total_seconds() / 86400.0
+    delta  = rev - base["revision"]
+
+    if window >= min_window:
+        # Baseline advances only once the window is wide enough --
+        # otherwise running this twice in an hour would reset the clock
+        # forever and nothing would ever accumulate.
+        new[key] = {"revision": rev, "at": now.isoformat()}
+        rate = delta / window
+        if delta >= min_delta and rate >= rate_limit:
+            flagged.append((rate, key, delta, window, rev))
+    else:
+        new[key] = base
+
+os.makedirs(os.path.dirname(state_file) or ".", exist_ok=True)
+tmp = state_file + ".tmp"
+with open(tmp, "w") as fh:
+    json.dump(new, fh, indent=2, sort_keys=True)
+os.replace(tmp, state_file)
+
+scope = "since this Deployment was created" if first_run else "since the last run"
+
+if not flagged:
+    print(f"No Deployment rollout churn ({len(new)} tracked, measured {scope}).")
+    if first_run:
+        print("  Baseline written; from the next run this is a week-over-week rate.")
+    raise SystemExit(0)
+
+flagged.sort(reverse=True)
+print(f"Deployments being rolled out repeatedly (measured {scope}):")
+for rate, key, delta, window, rev in flagged:
+    print(f"  {key}")
+    print(f"    +{delta} rollouts over {window:.1f}d = {rate:.0f}/day"
+          f"  (counter now at {rev})")
+print()
+print("  A Deployment should only roll out when someone changes it. A rate")
+print("  like this almost always means two controllers are applying")
+print("  different specs to the same object and overwriting each other.")
+print("  Find the disagreement by diffing the competing ReplicaSet pod")
+print("  templates, which is where the difference actually shows:")
+print("    kubectl get rs -n <ns> -l app=<name> \\")
+print("      --sort-by=.metadata.creationTimestamp")
+print("    kubectl get rs -n <ns> <rs-a> -o jsonpath='{.spec.template}' > /tmp/a")
+print("    kubectl get rs -n <ns> <rs-b> -o jsonpath='{.spec.template}' > /tmp/b")
+print("  Then check which Kustomizations claim the object -- note that")
+print("  the kustomize.toolkit.fluxcd.io/name label shows only the last")
+print("  writer, so compare inventories rather than trusting it:")
+print("    kubectl get kustomization -n flux-system <name> \\")
+print("      -o jsonpath='{.status.inventory.entries[*].id}'")
+print()
+print("  Do NOT remove the losing side without staging it: Flux prunes by")
+print("  diffing a Kustomization's previous inventory against the new one")
+print("  and does not know another Kustomization manages the same object.")
+print("  See the prune note in CLAUDE.md before touching shared resources.")
+if first_run:
+    print()
+    print("  This is the first run, so the figures above are lifetime")
+    print("  averages and may describe something already fixed. The")
+    print("  baseline is now written; next run measures only new rollouts.")
+PY
+)
+  if ! CHURN_STATE_FILE="$CHURN_STATE_FILE" \
+       CHURN_RATE_PER_DAY="$CHURN_RATE_PER_DAY" \
+       CHURN_MIN_ROLLOUTS="$CHURN_MIN_ROLLOUTS" \
+       CHURN_MIN_WINDOW_DAYS="$CHURN_MIN_WINDOW_DAYS" \
+       python3 -c "$script" <<<"$raw"; then
+    echo "Rollout churn check failed - see the error above."
+  fi
+  return 0
+}
+
 # ---- health --------------------------------------------------------------
 
 cmd_health() {
@@ -537,6 +696,9 @@ cmd_health() {
 
   log "==> talos patch drift"
   talos_drift
+
+  log "==> deployment rollout churn"
+  rollout_churn
 }
 
 # ---- main ----------------------------------------------------------------
@@ -565,6 +727,7 @@ main() {
       ;;
     health) shift || true; cmd_health "$@" ;;
     talos-drift) shift || true; talos_drift "$@" ;;
+    rollout-churn) shift || true; rollout_churn "$@" ;;
     --dry-run) cmd_review --dry-run ;;
     -h|--help|help)
       sed -n '2,25p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'

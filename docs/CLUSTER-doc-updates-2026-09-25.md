@@ -245,3 +245,62 @@ has to be reviewed by hand.
   removing resources from a path, compare inventories
   (`-o jsonpath='{.status.inventory.entries[*].id}'`) and, if they
   overlap, stage it: `prune: false` → remove and verify → `prune: true`.
+
+---
+
+## Added: a rollout churn check in the weekly review
+
+Nothing in the weekly health pass could have found the above, because
+every check in it samples current state and the fault only existed in
+the derivative. Added `rollout-churn`, which does not:
+
+```
+scripts/weekly-renovate-review.sh rollout-churn   # standalone
+scripts/weekly-renovate-review.sh health          # included in the pass
+```
+
+It reads `deployment.kubernetes.io/revision` for every Deployment and
+compares it against the previous run's value, stored in
+`~/.local/state/weekly-renovate-review/rollouts.json`. At the weekly
+cadence of this review that is a week-over-week rollout rate.
+
+The state file is the whole point. A raw revision counter cannot tell
+"142k accumulated over six months" from "142k since Tuesday", and since
+the counter never resets, a threshold on the absolute number would have
+kept firing for years after the fix. Storing where each counter stood
+last time is what turns it into a rate.
+
+A Deployment is only reported when all three of these hold, so one busy
+afternoon or a newly created workload does not trip it:
+
+| Knob | Default | Purpose |
+|---|---|---|
+| `CHURN_RATE_PER_DAY` | 5 | Rollouts/day. Renovate-driven bumps run ~0.15/day, a fight runs hundreds |
+| `CHURN_MIN_ROLLOUTS` | 10 | Absolute floor, so small numbers over a short window cannot produce a big rate |
+| `CHURN_MIN_WINDOW_DAYS` | 0.5 | Minimum observation window |
+
+Two details that took a second pass to get right:
+
+- **The baseline only advances once the window is wide enough.** Without
+  that, running `health` twice in an hour would reset the clock every
+  time and nothing would ever accumulate.
+- **First sight of a Deployment falls back to revision 0 at
+  `creationTimestamp`** — the lifetime average — so the very first run
+  is useful rather than silent, and it labels the output as such. It
+  self-corrects: once a baseline exists, history stops counting. A
+  counter that has gone *backwards* (Deployment deleted and recreated)
+  takes the same fallback rather than producing a negative delta.
+
+Verified against all three paths before committing: the live first run
+correctly reported the four flux-system controllers at 822-826/day; a
+synthetic baseline dated a week back flagged an injected +1200 while
+suppressing an injected +9 under the floor; and an injected counter
+reset fell back to lifetime cleanly.
+
+Deployments only. StatefulSets and DaemonSets carry revision *hashes*
+rather than a monotonic counter, so the same trick does not work on
+them — worth knowing if something ever churns there instead.
+
+The baseline was seeded on 2026-09-25 immediately after the fix, so the
+next weekly review measures a real post-fix week rather than reporting
+the 172-day lifetime average of a problem that is already solved.
