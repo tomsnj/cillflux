@@ -461,3 +461,55 @@ Two details the script is careful about:
 internal and a public name, so a failure cannot strand the host without
 a resolver. The original is saved to `/etc/resolv.conf.pre-dnsmasq` and
 `--revert` restores it.
+
+### Third instance the same day: alloy.gs-farm.net
+
+Verifying the new resolver turned up one more host that looked exposed
+and was not. `alloy.gs-farm.net` resolved, reached nginx, and returned
+**503 — as it had since the ingress was written**.
+
+```
+svc/alloy      http-metrics 12345 -> 12345
+ingress/alloy  backend port 12347
+```
+
+The Alloy chart exposes exactly one knob for the ingress backend port,
+`faroPort`, and it defaults to `12347` — the Faro browser-telemetry
+receiver. Faro is not enabled here, so the Service never opens that
+port and the ingress pointed at a service port that did not exist. The
+chart's own comment (`Enables ingress for Alloy (Faro port)`) describes
+an intent this deployment never had; the value was inherited unchanged.
+
+Nothing was actually broken. The pod was healthy at 2/2 and log
+shipping to Loki was unaffected — only the UI was unreachable. Fixed by
+setting `faroPort: 12345`, the port the Service does expose, with a
+comment recording why a key named for Faro is serving the UI.
+
+```
+alloy.gs-farm.net  200   <title>Grafana Alloy</title>   /-/ready 200
+```
+
+Checked before exposing it: the Alloy config carries no inline
+credentials (its only `secrets` reference is an RBAC rule for
+Kubernetes discovery), so the UI reveals nothing the internal class
+should not already see.
+
+### The pattern worth naming
+
+Three hosts in one week were reachable-looking and not, each for a
+different reason, and none of them alerted:
+
+| Host | Looked like | Actually |
+|---|---|---|
+| `prometheus` | not exposed | exposed; **gsfarmctl** could not resolve it |
+| `alertmanager` | exposed (DNS resolved, nginx answered) | no Ingress at all — 404 |
+| `alloy` | exposed | Ingress pointed at a closed Service port — 503 |
+
+The common cause is the Pi-hole wildcard: `address=/gs-farm.net/` means
+*every* name under the domain resolves and reaches nginx, so DNS
+success and a TCP response prove nothing about whether the thing exists.
+A blackhole reply would be a stronger signal, but the wildcard is what
+makes new ingresses work without touching DNS, so the tradeoff stays.
+The practical check is a status code, not a resolution: anything on the
+internal class should answer 200/302, and a 404 or 503 there means the
+route is broken rather than the app being down.

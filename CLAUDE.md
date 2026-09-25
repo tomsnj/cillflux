@@ -199,6 +199,21 @@ file covers working conventions, not the full reference.
   Ingresses here carry no `secretName` on purpose — `nginx-internal`
   sets `default-ssl-certificate: network/gs-farm-net-production-tls`,
   a `*.gs-farm.net` wildcard.
+- Because Pi-hole wildcards `address=/gs-farm.net/10.0.10.1`, **every**
+  name under the domain resolves and reaches nginx — so a successful
+  lookup and a TCP response prove nothing about whether the route
+  exists. Three hosts were reachable-looking and broken in one week
+  (2026-09-25): `alertmanager` 404'd with no Ingress at all, `alloy`
+  503'd pointing at a closed Service port, and `prometheus` was fine
+  but unresolvable from gsfarmctl. Check the status code, not the
+  resolution: anything on the internal class should answer 200/302, and
+  a 404 or 503 means the route is wrong rather than the app being down.
+- The Alloy chart's ingress backend port is `faroPort`, its only knob
+  for that, defaulting to `12347` (the Faro browser-telemetry
+  receiver). Faro is not enabled here, so the Service opens only
+  `http-metrics` on `12345` and the default pointed at a port that did
+  not exist. It is set to `12345` deliberately — do not "correct" it
+  back to a Faro port without also enabling a Faro receiver.
 - Wiring a new app to Keycloak SSO (per-app realm pattern, e.g.
   `vaultwarden`, `grafana`) means creating a **brand new, empty**
   realm — it has zero users even though `master`/other realms have
