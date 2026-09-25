@@ -63,8 +63,24 @@ file covers working conventions, not the full reference.
   mounts — use explicit `hostPath` mounts for real filesystem access.
 - Only `kube-system` is PSA-exempted for privileged pods — use it for
   debug/maintenance pods needing elevated access.
-- Helm `valuesFrom` ConfigMaps do **not** receive Flux `postBuild` variable
-  substitution — put variables in the HelmRelease's `spec.values` directly.
+- Flux `postBuild` substitution applies to **every manifest the
+  Kustomization renders**, including a ConfigMap that a HelmRelease later
+  consumes via `valuesFrom`. Both such ConfigMaps in this repo rely on
+  it and work: `cilium-values` resolves `${CLUSTER_CIDR}` to
+  `10.42.0.0/16` and `kube-prometheus-stack-values` resolves
+  `prometheus.${SECRET_DOMAIN}` to `prometheus.gs-farm.net` (verified
+  against the live ConfigMaps and `cilium-config`, 2026-09-24). So
+  putting variables in a `valuesFrom` ConfigMap is fine, and there is no
+  need to duplicate them into `spec.values`.
+  What does **not** get substituted is anything Flux never renders: a
+  ConfigMap produced by the Helm chart's own templates, one created
+  outside Flux (`kubectl`, another tool), or one in a Kustomization
+  without `postBuild.substituteFrom`. That last case is the likely
+  original culprit — the substitution is a property of the owning
+  Kustomization, not of `valuesFrom`. Check with
+  `kubectl get kustomization -n flux-system <name> -o jsonpath='{.spec.postBuild.substituteFrom[*].name}'`,
+  then confirm the rendered ConfigMap holds a real value rather than a
+  literal `${VAR}`.
 - After TrueNAS interface changes, NFS may bind to only the most recently
   configured interface — clear with
   `sudo midclt call nfs.update '{"bindip": []}'`.
