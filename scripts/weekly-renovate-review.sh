@@ -24,8 +24,9 @@
 #   weekly-renovate-review.sh health
 #   weekly-renovate-review.sh talos-drift
 #   weekly-renovate-review.sh rollout-churn
+#   weekly-renovate-review.sh ingress-check
 #
-# Requires: gh (authenticated), git, kubectl, flux, jq, python3.
+# Requires: gh (authenticated), git, kubectl, flux, jq, python3, curl.
 
 set -euo pipefail
 
@@ -49,7 +50,7 @@ die() { log "error: $*"; exit 1; }
 
 require_tools() {
   local missing=()
-  for t in gh git kubectl flux jq python3; do
+  for t in gh git kubectl flux jq python3 curl; do
     command -v "$t" >/dev/null 2>&1 || missing+=("$t")
   done
   ((${#missing[@]} == 0)) || die "missing required tools: ${missing[*]}"
@@ -632,6 +633,115 @@ PY
   return 0
 }
 
+# ---- ingress reachability -------------------------------------------------
+
+# The only check here that leaves the cluster and speaks to the data
+# path. It exists because on 2026-09-25 four internal hosts were broken
+# in four different ways while every Kustomization, HelmRelease and pod
+# was green: alertmanager had no Ingress at all (404), alloy pointed at
+# a Service port that was never opened (503), s3 proxied plaintext to a
+# TLS listener (400), and prometheus was fine but unresolvable from this
+# host. None of them alerted, and none of the other checks in this
+# script can see any of them.
+#
+# Pi-hole wildcards address=/gs-farm.net/10.0.10.1, so EVERY name under
+# the domain resolves and reaches nginx. DNS success and a TCP response
+# therefore prove nothing -- the status code is the only real signal.
+#
+# Internal class only. External-class hosts are deliberately excluded:
+# from inside the LAN they resolve to the internal LB via that same
+# wildcard, so testing them here would exercise the internal path under
+# an external hostname and report confident nonsense.
+
+# 401/403 are healthy: an authenticated app refusing an anonymous GET is
+# working correctly. MinIO answers 403 with S3 XML, Pi-hole 403 at /.
+INGRESS_OK_CODES="${INGRESS_OK_CODES:-200 301 302 303 307 308 401 403}"
+INGRESS_TIMEOUT="${INGRESS_TIMEOUT:-20}"
+# Space-separated hostnames to exclude. Add a reason next to any entry
+# -- an undocumented skip is how a broken route becomes permanent.
+#   gitops.gs-farm.net  # 504, known, see CLUSTER.md open issues
+INGRESS_SKIP="${INGRESS_SKIP:-}"
+
+ingress_reachability() {
+  local hosts
+  if ! hosts=$(kubectl get ingress -A -o jsonpath='{range .items[?(@.spec.ingressClassName=="internal")]}{.spec.rules[*].host}{"\n"}{end}' 2>/dev/null); then
+    echo "Could not list ingresses - skipping reachability check."
+    return 0
+  fi
+  hosts=$(tr ' ' '\n' <<<"$hosts" | sed '/^$/d' | sort -u)
+  if [[ -z "$hosts" ]]; then
+    echo "No internal-class ingresses found."
+    return 0
+  fi
+
+  local total=0 bad=0 skipped=0 unresolved=0 report="" skips=""
+  local h code rc verdict
+
+  while read -r h; do
+    [[ -z "$h" ]] && continue
+    if [[ " $INGRESS_SKIP " == *" $h "* ]]; then
+      skipped=$((skipped + 1))
+      skips+="  $h (skipped)"$'\n'
+      continue
+    fi
+    total=$((total + 1))
+
+    # Resolution is checked separately so "the control host cannot
+    # resolve this" is never reported as "the app is down" -- that
+    # confusion is exactly what hid the working Prometheus ingress.
+    if ! getent hosts "$h" >/dev/null 2>&1; then
+      unresolved=$((unresolved + 1))
+      bad=$((bad + 1))
+      report+="  $(printf '%-30s %s' "$h" "does not resolve")"$'\n'
+      continue
+    fi
+
+    # No -k: an expired or wrong certificate should fail this check
+    # rather than pass it quietly.
+    code=$(curl -s -o /dev/null -w '%{http_code}' "https://$h/" \
+             --max-time "$INGRESS_TIMEOUT" 2>/dev/null) && rc=0 || rc=$?
+
+    if [[ " $INGRESS_OK_CODES " == *" $code "* ]]; then
+      continue
+    fi
+
+    case "$rc" in
+      28) verdict="no response within ${INGRESS_TIMEOUT}s" ;;
+      35|60) verdict="TLS error (curl $rc)" ;;
+      7)  verdict="connection refused" ;;
+      6)  verdict="DNS failure at request time" ;;
+      0)  verdict="HTTP $code" ;;
+      *)  verdict="curl exit $rc (HTTP $code)" ;;
+    esac
+    bad=$((bad + 1))
+    report+="  $(printf '%-30s %s' "$h" "$verdict")"$'\n'
+  done <<<"$hosts"
+
+  # Every host failing to resolve is a resolver problem on this host,
+  # not fourteen broken ingresses. Say so rather than burying it.
+  if (( unresolved > 0 && unresolved == total )); then
+    echo "None of the $total internal hostnames resolve from this host."
+    echo "  That is a resolver problem here, not $total broken ingresses."
+    echo "  Fix with: sudo bash scripts/setup-gsfarmctl-dns.sh"
+    return 0
+  fi
+
+  if (( bad == 0 )); then
+    printf 'All %d internal ingresses reachable.' "$total"
+    (( skipped > 0 )) && printf ' (%d skipped)' "$skipped"
+    printf '\n'
+    [[ -n "$skips" ]] && printf '%s' "$skips"
+  else
+    echo "Internal ingresses NOT serving (status code is the only real signal here):"
+    printf '%s' "$report"
+    printf '  %d of %d bad' "$bad" "$total"
+    (( skipped > 0 )) && printf ', %d skipped' "$skipped"
+    printf '\n'
+    [[ -n "$skips" ]] && printf '%s' "$skips"
+  fi
+  return 0
+}
+
 # ---- health --------------------------------------------------------------
 
 cmd_health() {
@@ -699,6 +809,9 @@ cmd_health() {
 
   log "==> deployment rollout churn"
   rollout_churn
+
+  log "==> internal ingress reachability"
+  ingress_reachability
 }
 
 # ---- main ----------------------------------------------------------------
@@ -728,9 +841,10 @@ main() {
     health) shift || true; cmd_health "$@" ;;
     talos-drift) shift || true; talos_drift "$@" ;;
     rollout-churn) shift || true; rollout_churn "$@" ;;
+    ingress-check) shift || true; ingress_reachability "$@" ;;
     --dry-run) cmd_review --dry-run ;;
     -h|--help|help)
-      sed -n '2,25p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'
+      awk 'NR>1 { if (/^#/) { sub(/^# ?/, ""); print; next } exit }' "${BASH_SOURCE[0]}"
       ;;
     *) die "unknown command: $cmd (see --help)" ;;
   esac

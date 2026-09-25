@@ -420,13 +420,23 @@ means nothing in this workflow blocks mid-run waiting on an answer.
    regardless of how many PRs were merged) and report anything wrong. It
    checks kustomizations, HelmReleases (a release can sit `Stalled` while
    its Kustomization is `Ready`), pod *readiness* rather than STATUS,
-   charts floating on `*`, Talos patch drift, and Deployment rollout
-   churn. That last one is the only check here that is not a snapshot:
-   it compares each Deployment's `deployment.kubernetes.io/revision`
+   charts floating on `*`, Talos patch drift, Deployment rollout churn,
+   and internal ingress reachability.
+
+   Two of those are not snapshots of cluster state. **Rollout churn**
+   compares each Deployment's `deployment.kubernetes.io/revision`
    against the previous run's, stored in
    `~/.local/state/weekly-renovate-review/rollouts.json`, so the weekly
-   cadence gives a week-over-week rate. Run it standalone with
-   `scripts/weekly-renovate-review.sh rollout-churn`.
+   cadence gives a week-over-week rate
+   (`scripts/weekly-renovate-review.sh rollout-churn`).
+   **Ingress reachability** is the only check that leaves the cluster
+   and speaks to the data path: it GETs every internal-class host and
+   flags anything not answering 200/3xx/401/403
+   (`scripts/weekly-renovate-review.sh ingress-check`). It needs this
+   host's own resolver, and says so plainly if nothing resolves rather
+   than reporting every ingress as broken. Quiet a known-bad host with
+   `INGRESS_SKIP="host.gs-farm.net"`, but record why — an undocumented
+   skip is how a broken route becomes permanent.
 4. `git pull --ff-only` again at the end to sync local `main` — no push
    needed, merges happen on GitHub.
 5. Present one consolidated end-of-run summary (see below). Then stop

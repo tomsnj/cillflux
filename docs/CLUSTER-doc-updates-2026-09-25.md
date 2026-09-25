@@ -571,3 +571,53 @@ kubectl get ingress -A -o jsonpath='{range .items[?(@.spec.ingressClassName=="in
       printf '%-28s %s\n' "$h" "$(curl -s -o /dev/null -w '%{http_code}' "https://$h/" --max-time 20)"
     done
 ```
+
+## Added: an ingress reachability check in the weekly review
+
+`scripts/weekly-renovate-review.sh ingress-check`, also the last step of
+`health`. It GETs every internal-class host and flags anything not
+answering 200/3xx/401/403.
+
+This is the first check in that script that leaves the cluster and
+speaks to the data path, and the reason is the day's tally: four hosts
+broken in four different ways while `flux get kustomizations`,
+`flux get helmreleases` and pod readiness were all green. None of the
+existing checks could see any of them, because from the control plane's
+point of view nothing was wrong — the Ingress objects existed, the pods
+were ready, the HelmReleases had converged.
+
+Design decisions worth keeping:
+
+- **Internal class only.** External-class hosts resolve to the internal
+  LB from inside the LAN via the same Pi-hole wildcard, so testing them
+  here would exercise the internal path under an external hostname and
+  report confident nonsense.
+- **401 and 403 are healthy.** An authenticated app refusing an
+  anonymous GET is working correctly. MinIO answers 403 with S3 XML and
+  Pi-hole answers 403 at `/`; treating those as failures would have made
+  the check cry wolf on day one.
+- **Resolution is checked separately from HTTP**, and if *nothing*
+  resolves the check says so and points at
+  `setup-gsfarmctl-dns.sh` instead of reporting fourteen broken
+  ingresses. That specific confusion — "the control host cannot resolve
+  this" read as "the app is down" — is what hid a perfectly working
+  Prometheus ingress for months.
+- **No `curl -k`.** An expired or mismatched certificate should fail
+  this check, not pass it quietly. Verified against
+  `expired.badssl.com`, which reports `TLS error (curl 60)` rather than
+  a status code.
+
+Tested on six paths before committing: the live run (flags `gitops`
+alone out of 14), a skip via `INGRESS_SKIP`, an all-unresolvable host
+list (blames the resolver, correctly), a mixed list with one resolvable
+and one not (does *not* blame the resolver), a TLS failure, and a
+shortened timeout.
+
+`gitops.gs-farm.net` is deliberately **not** in the default skip list.
+It is a real open issue, and a check that hides it is worse than no
+check.
+
+While in the file: `--help` printed a hardcoded `sed -n '2,25p'` line
+range and had been silently truncating its own usage list since
+`rollout-churn` was added. It now prints the leading comment block by
+structure, so it cannot drift again.
