@@ -79,9 +79,22 @@ Two things learned doing this on 2026-09-24:
 - **"Applied configuration without a reboot" does not mean no
   disruption.** The permanent apply restarted the control-plane static
   pods; the API server refused connections on `6443` for roughly 30
-  seconds before recovering on its own. Running workloads, networking
-  and storage were unaffected, but do not do this mid-migration or
-  during anything time-sensitive.
+  seconds before recovering on its own.
+
+  Pods that do not talk to the API server rode through it untouched --
+  Immich, Vaultwarden, Pi-hole DNS, ingress and NFS storage all kept
+  serving. **Anything that does talk to the API server did not.** Four
+  Flux controllers (`image-automation`, `image-reflector`,
+  `notification`, `source-watcher`) crash-looped five times each during
+  the window, exiting instantly with `exitCode 1` because they could not
+  reach `6443` at startup. They recovered on their own once the API came
+  back, with no intervention and no lasting damage.
+
+  So the blast radius is "the API server and everything that depends on
+  it for ~30s", not "nothing". Operators, controllers and admission
+  webhooks are in scope; ordinary serving workloads are not. Do not run
+  this mid-migration, during a backup window, or alongside anything that
+  will interpret a brief API outage as a hard failure.
 
 ## Drift checking
 

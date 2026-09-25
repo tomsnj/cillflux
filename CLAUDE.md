@@ -258,8 +258,11 @@ file covers working conventions, not the full reference.
   despite the "Applied configuration without a reboot" message, a
   permanent apply **does** restart the control-plane static pods: the API
   server refused connections on 6443 for ~30s before recovering on its
-  own. Running workloads, networking and storage are unaffected, but
-  don't do it mid-migration. Patches live in `~/talos-config/`, which is
+  own. Ordinary serving workloads ride through it (Immich, Vaultwarden,
+  Pi-hole, ingress, NFS all kept serving), but **anything that talks to
+  the API server does not** — four Flux controllers crash-looped five
+  times each with `exitCode 1` until the API returned, then recovered
+  unaided. Don't do it mid-migration or during a backup window. Patches live in `~/talos-config/`, which is
   outside this repo — the machine config is not in git.
 
 ## Where things live
