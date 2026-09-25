@@ -157,11 +157,27 @@ data:
           - hosts:
               - "prometheus.${SECRET_DOMAIN}"
       prometheusSpec:
-        ruleSelectorNilUsesHelmValues: true
-        serviceMonitorSelectorNilUsesHelmValues: true
-        podMonitorSelectorNilUsesHelmValues: true
-        probeSelectorNilUsesHelmValues: true
-        scrapeConfigSelectorNilUsesHelmValues: true
+        # These were all `true`, which makes Prometheus select ONLY
+        # resources labelled `release: kube-prometheus-stack` - i.e. the
+        # chart's own. Everything defined elsewhere was silently ignored:
+        # on 2026-09-24 that was 14 of 24 ServiceMonitors (cilium, minio,
+        # both nginx controllers, external-dns, cloudflared, cert-manager,
+        # volsync, snapshot-controller, metrics-server, hubble,
+        # descheduler, grafana) plus both hand-written PrometheusRules,
+        # which had never been evaluated.
+        #
+        # Nothing warns about this. The ServiceMonitor exists, kubectl
+        # lists it, and no target ever appears.
+        #
+        # Labelling each one instead is not viable: the volsync chart
+        # exposes no way to add labels to the ServiceMonitor it creates
+        # (`metrics:` offers only `disableAuth`), and Kustomize cannot
+        # patch a Helm-rendered resource.
+        ruleSelectorNilUsesHelmValues: false
+        serviceMonitorSelectorNilUsesHelmValues: false
+        podMonitorSelectorNilUsesHelmValues: false
+        probeSelectorNilUsesHelmValues: false
+        scrapeConfigSelectorNilUsesHelmValues: false
         enableAdminAPI: true
         walCompression: true
         retentionSize: 8GB

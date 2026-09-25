@@ -81,6 +81,28 @@ file covers working conventions, not the full reference.
   `kubectl get kustomization -n flux-system <name> -o jsonpath='{.spec.postBuild.substituteFrom[*].name}'`,
   then confirm the rendered ConfigMap holds a real value rather than a
   literal `${VAR}`.
+- Editing a `valuesFrom` ConfigMap does **not** trigger a Helm upgrade.
+  Flux applies the ConfigMap immediately and the Kustomization goes
+  `Ready`, so the change looks deployed — but the HelmRelease keeps
+  serving its previous rendering until its own `interval` elapses (30m
+  for `kube-prometheus-stack`). Symptom: the ConfigMap holds the new
+  value while the workload is untouched, with no error anywhere. Force
+  it with
+  `flux reconcile helmrelease <name> -n <namespace>`; `flux reconcile
+  kustomization` is not enough. Same family as the Vaultwarden
+  `config.json` trap — the diff deployed, the behaviour didn't.
+- kube-prometheus-stack's `*SelectorNilUsesHelmValues: true` settings
+  make Prometheus select **only** resources labelled
+  `release: kube-prometheus-stack`. Anything defined outside the chart is
+  silently ignored: the ServiceMonitor or PrometheusRule exists, `kubectl
+  get` lists it, and no target or rule group ever appears. On 2026-09-24
+  that was 14 of 24 ServiceMonitors and both hand-written
+  PrometheusRules. They are now `false` (select everything). If a new
+  app's metrics never show up, check these before debugging the exporter:
+  `kubectl get prometheus -n observability kube-prometheus-stack -o jsonpath='{.spec.serviceMonitorSelector}'`
+  and compare `kubectl get servicemonitors -A` against the live target
+  list from `/api/v1/targets`.
+
 - After TrueNAS interface changes, NFS may bind to only the most recently
   configured interface — clear with
   `sudo midclt call nfs.update '{"bindip": []}'`.
