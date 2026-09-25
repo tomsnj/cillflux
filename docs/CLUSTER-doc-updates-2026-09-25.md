@@ -1,0 +1,247 @@
+# Cluster Doc Update — 2026-09-25
+
+## The alert that was mailing every ten minutes
+
+The email receiver wired up on 2026-09-24 started working, and then
+would not stop. Tom's report: "Alerts are toggling at a high rate...
+Like every 10 minutes on average."
+
+That was accurate to the minute. Over the preceding twelve hours:
+
+```
+54 firing episodes                             (~1 every 13 min)
+alertmanager_notifications_total{email} = 83
+alertmanager_notifications_failed_total = 0
+```
+
+Every one of them was the same alert:
+
+```
+InfoInhibitor  namespace=flux-system  severity=none  ->  receivers: [email]
+```
+
+### Why it went to email
+
+`InfoInhibitor` is not an alert. It fires whenever any `severity=info`
+alert is firing in a namespace where nothing warning-or-critical is
+firing, and it exists for exactly one purpose: to be the *source* of an
+inhibit rule that silences info alerts. kube-prometheus-stack's default
+route therefore sends `alertname =~ "InfoInhibitor|Watchdog"` to the
+`null` receiver.
+
+The route written yesterday null-routed **Watchdog only**. `InfoInhibitor`
+fell through to the default receiver, which is `email`. With
+`send_resolved: true`, every transition produced two messages.
+
+The same omission dropped two of the chart's three `inhibit_rules`,
+including the `InfoInhibitor -> severity=info` rule that is the entire
+point of the mechanism. So info alerts had nothing suppressing them
+either — that had simply not been noticed yet, because the only info
+alert in the cluster was stuck in `pending` and never reached `firing`.
+
+Restored in `helmvalues.yaml`:
+
+```yaml
+routes:
+  - receiver: "null"
+    matchers:
+      - 'alertname =~ "InfoInhibitor|Watchdog"'
+inhibit_rules:
+  - source_matchers: ['severity = "critical"']
+    target_matchers: ['severity =~ "warning|info"']
+    equal: ["alertname", "namespace"]
+  - source_matchers: ['severity = "warning"']
+    target_matchers: ['severity = "info"']
+    equal: ["alertname", "namespace"]
+  - source_matchers: ['alertname = "InfoInhibitor"']
+    target_matchers: ['severity = "info"']
+    equal: ["namespace"]
+```
+
+Verified against the running Alertmanager rather than the diff — the
+`valuesFrom` ConfigMap trap from yesterday means the config can be
+correct in git and stale in the pod:
+
+```
+$ .../api/v2/alerts?active=true&inhibited=true
+Watchdog | receivers= ['null'] | state= active
+```
+
+**The generalisable rule:** when replacing a chart's default
+Alertmanager route, the defaults are not boilerplate. Read what each
+one is load-bearing for before dropping it.
+
+---
+
+## Root cause: two Kustomizations fighting over Flux's own components
+
+The mail was noise. What was generating it had been running since the
+cluster was built.
+
+`CPUThrottlingHigh` in `flux-system` was flapping because flux
+controller pods were being **created continuously** — not restarting,
+but replaced, from two ReplicaSets alternating:
+
+```
+kustomize-controller    deployment revision 142326
+helm-controller         deployment revision 142416
+source-controller       deployment revision 141618
+notification-controller deployment revision  36397
+```
+
+142,000 rollouts in 172 days. About 34 an hour, sustained, for the life
+of the cluster.
+
+### Three Kustomizations, two answers
+
+| Kustomization | Source | Path | Interval | Renders |
+|---|---|---|---|---|
+| `flux` | OCI `flux-manifests:v2.9.5` | `./` | 10m | **patched** — cpu 2/2Gi, `--concurrent=8`, `--kube-api-qps=500`, `--kube-api-burst=1000`, `--requeue-dependency=5s`, OOMWatch |
+| `flux-system` | git `flux-system` | `./kubernetes/flux` | 10m | **stock** — cpu 1/1Gi, no tuning |
+| `cluster` | git `home-kubernetes` | `./kubernetes/flux` | 30m | same stock manifests |
+
+`kubernetes/flux/config/flux.yaml` installs Flux from the OCI artifact
+and patches it. `kubernetes/flux/flux-system/gotk-components.yaml` — a
+270KB copy written by `flux bootstrap` — installs the same v2.9.5
+components with none of those patches. Both were applied. Each apply
+rewrote the pod template, so Kubernetes created a new ReplicaSet and
+killed the running pod, every ten minutes, both directions, forever.
+
+Two bootstrap conventions layered on top of each other: the legacy
+`flux bootstrap` output was never removed when the home-ops OCI pattern
+was adopted.
+
+### Why nothing ever caught it
+
+At any given instant every Deployment was `1/1 Available`, every
+Kustomization `Ready`, every HelmRelease `Ready`. A health check that
+samples state sees nothing wrong, because nothing *is* wrong at any
+single moment — the fault is only visible in the derivative.
+
+Both symptoms looked like other problems:
+
+- `CPUThrottlingHigh` reads as a resources problem. It was startup
+  throttling on pods that were seconds old.
+- The tuning in `flux.yaml` was in effect roughly half the time, which
+  makes reconcile-performance measurements meaningless.
+- The four Flux controllers that crash-looped during yesterday's Talos
+  apply were, it turns out, being recycled constantly anyway.
+
+The check that does find it is the rollout counter:
+
+```bash
+kubectl get deploy -A -o custom-columns=\
+'NS:.metadata.namespace,NAME:.metadata.name,REV:.metadata.annotations.deployment\.kubernetes\.io/revision'
+```
+
+A revision number that cannot be explained by the number of times
+anyone has actually changed that Deployment is the signature.
+
+### The prune hazard
+
+The obvious fix — delete `gotk-components.yaml` — would have taken the
+cluster down.
+
+Flux computes pruning by diffing a Kustomization's **previous
+inventory** against the newly applied set. Removing a resource from a
+path deletes it, whether or not another Kustomization also manages it.
+`flux-system` and `cluster` shared **29 objects** with `flux`:
+
+```
+ 11  CustomResourceDefinition     <- backing 38 Kustomizations,
+  4  Deployment                      28 HelmReleases,
+  4  ServiceAccount                  24 HelmRepositories
+  3  Service
+  3  ClusterRole
+  2  ClusterRoleBinding
+  1  ResourceQuota
+  1  Namespace   (flux-system itself)
+```
+
+Dropping the file with `prune: true` would have garbage-collected the
+Flux CRDs and cascade-deleted every Flux custom resource in the
+cluster.
+
+### The handover, in three commits
+
+**1. Prepare** (`1cd8ed47`). `prune: false` on both `flux-system` and
+`cluster`. With pruning off, the inventory shrinks without deleting
+anything.
+
+Also dropped the NetworkPolicy delete-patch from `flux.yaml`, so the
+OCI Kustomization adopts `allow-egress`, `allow-scraping` and
+`allow-webhooks` *before* `gotk-components.yaml` stops supplying them.
+That patch was inherited from a k3s-targeted template and its comment
+("does not work with k3s") does not apply here — this is Talos with
+Cilium and the policies have been enforced for 172 days. They are also
+real ingress restriction rather than decoration: `allow-scraping`
+selects every pod in the namespace, so deleting the policies would have
+*opened* `flux-system` rather than locked it down.
+
+**2. Remove** (`3584a637`). Deleted `gotk-components.yaml` and its CRD
+`substitute: disabled` patch, which existed only to stop `cluster`'s
+`postBuild` envsubst mangling the single `${...}` string inside it.
+
+Verified before and after:
+
+```
+             before   after
+kustomizations   38      38
+helmreleases     28      28
+helmrepositories 24      24
+flux CRDs        15      15
+networkpolicies   5       5
+
+inventories:  flux 43 | flux-system 64 -> 32 | cluster 64 -> 32
+```
+
+**3. Restore** (`5deaab15`). `prune: true` back on both. By this point
+the stored inventory already matched the applied set, so the diff was
+32 against 32 and there was nothing to collect. Confirmed: no deletions.
+
+### Result
+
+```
+$ kubectl get deploy -n flux-system -o custom-columns=NAME:...,OWNER:...
+kustomize-controller   flux
+helm-controller        flux
+source-controller      flux
+
+$ kubectl get deploy -n flux-system kustomize-controller -o json | ...
+  limits: {'cpu': '2', 'memory': '2Gi'}
+  args:   --concurrent=8 --kube-api-qps=500 --kube-api-burst=1000
+          --requeue-dependency=5s
+```
+
+Single owner, and the tuned spec is live and staying live for the first
+time.
+
+Secondary benefit: bumping Flux is now a one-line change to the
+`flux-manifests` OCIRepository tag, which Renovate can track — rather
+than re-running `flux bootstrap` to regenerate a 270KB file that then
+has to be reviewed by hand.
+
+---
+
+## Suggested `CLUSTER.md` Known Gotchas entries
+
+- **`InfoInhibitor` must be null-routed alongside `Watchdog`.** The
+  kube-prometheus-stack default matcher is
+  `alertname =~ "InfoInhibitor|Watchdog"`. `InfoInhibitor` is plumbing,
+  not an alert — it toggles as often as the noisiest info alert in the
+  cluster. Routed anywhere real it produced 83 emails in under a day.
+  Carry over all three default `inhibit_rules` too; without the
+  `InfoInhibitor -> severity=info` rule the mechanism is inert.
+
+- **A Deployment can be rewritten forever without anything reporting
+  unhealthy.** Two Kustomizations managing the same Deployment with
+  different specs produce a new ReplicaSet and a new pod on every
+  reconcile of either one. Every instantaneous check passes. Look at
+  `deployment.kubernetes.io/revision` — 142,326 in 172 days here.
+
+- **Flux prune deletes shared objects.** Pruning diffs a
+  Kustomization's previous inventory against the new one, with no
+  awareness that another Kustomization manages the same object. Before
+  removing resources from a path, compare inventories
+  (`-o jsonpath='{.status.inventory.entries[*].id}'`) and, if they
+  overlap, stage it: `prune: false` → remove and verify → `prune: true`.
