@@ -33,13 +33,24 @@ data:
           repeat_interval: 24h
           receiver: email
           routes:
-            # Watchdog fires permanently by design - it is the
-            # dead-man's-switch that proves alerting works. Mailing it
-            # would be constant noise, so it goes nowhere. Its real use
+            # Neither of these is a real alert, and both must go
+            # nowhere -- this is the chart's own default matcher,
+            # restored after a 2026-09-25 regression.
+            #
+            # Watchdog fires permanently by design: it is the
+            # dead-man's-switch that proves alerting works. Its real use
             # is an external monitor watching for it to STOP.
+            #
+            # InfoInhibitor is pure plumbing -- it fires whenever any
+            # severity=info alert is firing in a namespace with no
+            # warning/critical alert, and exists only to drive the
+            # inhibit_rule below. It therefore toggles as often as the
+            # noisiest info alert in the cluster. Omitting it here on
+            # 2026-09-24 sent it to the default receiver and produced 83
+            # emails in under a day, roughly one every ten minutes.
             - receiver: "null"
               matchers:
-                - 'alertname = "Watchdog"'
+                - 'alertname =~ "InfoInhibitor|Watchdog"'
             # Criticals nag every 6h instead of daily.
             - receiver: email
               matchers:
@@ -51,14 +62,29 @@ data:
             email_configs:
               - to: "${SECRET_ALERT_EMAIL}"
                 send_resolved: true
-        # Don't also mail the warning when the critical for the same
-        # alert is already firing.
+        # Severity laddering, matching the chart defaults: a firing
+        # alert suppresses the quieter ones for the same alertname and
+        # namespace, so one problem produces one email rather than
+        # three. The third rule is the point of InfoInhibitor above --
+        # info alerts stay silent unless something louder is firing in
+        # the same namespace, which is what makes them worth having at
+        # all.
         inhibit_rules:
           - source_matchers:
               - 'severity = "critical"'
             target_matchers:
-              - 'severity = "warning"'
+              - 'severity =~ "warning|info"'
             equal: ["alertname", "namespace"]
+          - source_matchers:
+              - 'severity = "warning"'
+            target_matchers:
+              - 'severity = "info"'
+            equal: ["alertname", "namespace"]
+          - source_matchers:
+              - 'alertname = "InfoInhibitor"'
+            target_matchers:
+              - 'severity = "info"'
+            equal: ["namespace"]
       alertmanagerSpec:
         # Mounts the secret at /etc/alertmanager/secrets/<name>/<key>.
         secrets:
