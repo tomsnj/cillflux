@@ -110,6 +110,23 @@ spec:
             jsonData:
               prometheusType: Prometheus
             isDefault: true
+          # Added 2026-09-25 alongside the Alertmanager ingress. Without
+          # this, Grafana's Alerting section can list Prometheus rules
+          # read-only but cannot show silences or inhibition, and cannot
+          # silence anything -- all of that is Alertmanager-side.
+          # implementation: prometheus is what distinguishes a vanilla
+          # Alertmanager from Mimir/Cortex, which expose a different API.
+          # handleGrafanaManagedAlerts stays false: Grafana has no alert
+          # rules of its own here and should not start routing any
+          # through the household email receiver.
+          - name: Alertmanager
+            type: alertmanager
+            uid: alertmanager
+            access: proxy
+            url: http://kube-prometheus-stack-alertmanager.observability.svc.cluster.local:9093
+            jsonData:
+              implementation: prometheus
+              handleGrafanaManagedAlerts: false
     dashboards:
       default:
         cloudflared:

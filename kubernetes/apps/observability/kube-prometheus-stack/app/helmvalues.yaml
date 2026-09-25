@@ -10,6 +10,31 @@ data:
     cleanPrometheusOperatorObjectNames: true
     alertmanager:
       enabled: true
+      # Alertmanager had no Ingress at all until 2026-09-25 -- ClusterIP
+      # only, so silences, inhibition state and "what will this alert
+      # actually do" were reachable only via kubectl port-forward. That
+      # is the wrong thing to be missing right after rebuilding the
+      # routing tree. No secretName: nginx-internal serves the
+      # *.gs-farm.net wildcard (network/gs-farm-net-production-tls) as
+      # its default-ssl-certificate, which is how the Prometheus ingress
+      # below works too.
+      #
+      # Internal class only, and deliberately unauthenticated like
+      # Prometheus -- but note this one is not read-only: anyone on the
+      # LAN can create a silence. That is the same trust boundary that
+      # already lets them use Prometheus's admin API (enableAdminAPI).
+      ingress:
+        enabled: true
+        ingressClassName: internal
+        annotations:
+          hajimari.io/appName: Alertmanager
+          hajimari.io/icon: mdi:bell-alert
+        pathType: Prefix
+        hosts:
+          - "alertmanager.${SECRET_DOMAIN}"
+        tls:
+          - hosts:
+              - "alertmanager.${SECRET_DOMAIN}"
       # Until 2026-09-24 this was chart defaults, which route every alert
       # to a receiver literally named "null" -- nothing had ever notified
       # anyone, including the Watchdog alert whose only purpose is to
