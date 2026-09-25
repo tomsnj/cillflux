@@ -415,6 +415,15 @@ spec:
     ingress:
       # -- Enables ingress for Alloy (Faro port)
       enabled: true
+      # NOTE: despite the chart's comment above and the key name below,
+      # this ingress serves the Alloy UI, not Faro. faroPort is simply
+      # the only knob the chart exposes for the backend port, and it
+      # defaults to 12347 -- the Faro browser-telemetry receiver, which
+      # is not enabled here, so the Service never opens that port. The
+      # ingress therefore pointed at a nonexistent service port and
+      # alloy.gs-farm.net returned 503 from the day it was written
+      # (found 2026-09-25). 12345 is http-metrics, the only port the
+      # Service actually exposes, and where the UI lives.
       # For Kubernetes >= 1.18 you should specify the ingress-controller via the field ingressClassName
       # See https://kubernetes.io/blog/2020/04/02/improvements-to-the-ingress-api-in-kubernetes-1.18/#specifying-the-class-of-an-ingress
       # ingressClassName: nginx
@@ -426,7 +435,7 @@ spec:
         # kubernetes.io/tls-acme: "true"
       labels: {}
       path: /
-      faroPort: 12347
+      faroPort: 12345
       pathType: Prefix
       hosts:
         - &host "alloy.${SECRET_DOMAIN}"
