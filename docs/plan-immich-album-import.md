@@ -118,49 +118,50 @@ should be identical and the 183/184 gap is sync lag. If they are
 separate local libraries, the difference is real and both need
 importing.
 
-### 1b. The *Family* shared album needs different handling
+### 1b. The *Family* shared album — import it, the derivative worry does not apply
 
-This is the one piece of album structure in the whole phase, and it
-is the piece most likely to cause harm if imported naively.
+The concern was that iCloud Shared Albums hold ~2048px derivatives
+rather than originals, so importing 48 of them would manufacture up
+to 48 new resolution-variant duplicate groups right before the
+stacking pass. **That does not apply here**, and the reason is the
+source device.
 
-**iCloud Shared Albums do not hold originals.** Apple downscales
-shared-album photos to roughly 2048px on the long edge; the
-full-resolution file stays in the contributor's own library.
-"Export Unmodified Originals" from a shared album therefore exports
-the *shared* version, which is already a derivative.
+All 48 came from an **Apple iPad 2**, whose rear camera is 0.7 MP —
+**960x720 native**. The sample (`IMG_0001.JPG`, 2017-11-18, 960x720,
+146 KB) is therefore already *below* the shared-album cap, so Apple
+never downscaled it. These are originals, not derivatives.
 
-That matters because of what comes next. Importing 48 downscaled
-copies of photographs already in Immich at full resolution would
-manufacture up to 48 new resolution-variant duplicate groups —
-precisely the thing the stacking pass exists to clean up, created
-deliberately, immediately before running it.
+They are also not in Immich. Checked against the live library
+2026-09-26:
 
-But the album is not worthless, because a shared album has **two**
-kinds of content:
+| Check | Result |
+|---|---|
+| Assets with `model = 'iPad 2'` | **1** in 31,938 — `File_000.jpeg`, 720x720, 2017-01-14. Not this set |
+| Assets named `IMG_0001.*` | **0** |
+| Assets at 960x720 | 27, **all Facebook downloads** (`*_n.jpg`, `FB_IMG_*`, `_facebook_*`), no EXIF, unrelated |
+| Library coverage Nov 2017 | 237 assets — the period is well covered, so the gap is device-specific, not date-specific |
 
-- **Photos Tom or Shawna contributed** — downscaled copies of
-  originals already in the library. Importing these is pure harm.
-- **Photos other people contributed** — genuinely unique content that
-  exists nowhere else in Immich, at whatever resolution the shared
-  album holds. These are the reason to bother.
+So the 48 are genuinely unique content that exists nowhere else in
+the library, at their original resolution, and the
+"which-contributor" split from the earlier draft is moot: one device,
+one contributor, none of it already held.
 
-Photos.app shows the contributor per photo in a shared album, so the
-split is visible before exporting. **Export only the photos
-contributed by others.**
-
-Two checks on whatever does get exported:
+**Import them, and recreate `Family` as a real album** — it is the
+only album structure in the entire Apple phase. No name clash exists
+(checked, case-insensitively, against all 31 albums).
 
 ```bash
-# confirm the downscaling (expect long edge ~2048)
-identify -format '%f %wx%h\n' ~/apple-shared/* 2>/dev/null | sort -u -k2
-# and whether Immich already holds the bytes
-find ~/apple-shared -type f -print0 | xargs -0 sha1sum
+# folder named exactly "Family", one level under the staging dir
+immich-go upload from-folder --no-ui --dry-run --pause-immich-jobs=false \
+  --folder-as-album=FOLDER --concurrent-tasks 1 ~/apple-shared
 ```
 
-A checksum match means it is already present and should be skipped. A
-miss does **not** prove uniqueness — a downscaled copy never matches
-its original by checksum — so for anything unmatched, check it
-against the library visually or by filename/date before uploading.
+Expect ~48 uploads rather than `server has duplicate` — the opposite
+of every other batch this month, and the sign it is working. Total
+size is trivial: 48 x ~146 KB is about 7 MB.
+
+Because this genuinely adds assets, re-run **Duplicate Detection**
+afterwards before the stacking pass, per the ordering section.
 
 ### 1c. Export, stage, dry run
 
