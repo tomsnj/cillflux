@@ -123,6 +123,25 @@ file covers working conventions, not the full reference.
   `sudo midclt call nfs.update '{"bindip": []}'`.
 - Renovate's strict YAML parser crashes on aliases referenced before their
   anchors are defined.
+- **Immich's `duplicateDetection` with `force: false` does not sweep
+  assets whose `duplicatesDetectedAt` is NULL** — it only queues
+  assets it considers newly eligible, so anything that missed its
+  turn stays missed forever and the job reports success with
+  `completed: 0`. Found 2026-09-26: **737 timeline images, all with
+  CLIP embeddings, metadata extracted and faces recognised, had
+  never been duplicate-detected**; 704 of them were imported on
+  2026-09-12/13, the Google Takeout window, when `immich-go` pauses
+  the job queues (`--pause-immich-jobs` defaults to true). The
+  duplicate view is therefore an undercount, which matters before
+  any stacking or dedupe pass. Check with:
+  `SELECT count(*) FROM asset a LEFT JOIN asset_job_status js ON js."assetId"=a.id`
+  `LEFT JOIN smart_search ss ON ss."assetId"=a.id WHERE a."deletedAt" IS NULL`
+  `AND js."duplicatesDetectedAt" IS NULL AND a.type='IMAGE'`
+  `AND a.visibility='timeline' AND ss."assetId" IS NOT NULL;`
+  Only `force: true` clears it, and that reprocesses the whole
+  library. Note hidden motion-photo videos (871 here) legitimately
+  never get detected — filter to `visibility='timeline'` and
+  `type='IMAGE'` or the number looks far worse than it is.
 - **Copy photo staging folders with `scp -rp` or `rsync -a`, never plain
   `scp -r`.** For any file without an EXIF date, the file mtime is the
   *only* remaining date source: `immich-go` sends it as `FileDate`, and
