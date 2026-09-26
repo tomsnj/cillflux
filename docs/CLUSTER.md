@@ -313,6 +313,20 @@ for 6+ days as of 2026-09-05. Nothing currently open here.)*
   of names, then `PUT /api/albums/{id}/assets` (confirmed present on
   v3.1.0; `POST` to that path is 404). Scope as of 2026-09-26: Tom's
   Amazon account has no albums, Shawna's has **12**.
+  **Pilot done 2026-09-26 — 2 of 12.** The Windows Amazon Photos app
+  exports one album at a time; *Chadwick* (23) and *home* (8) came
+  across and were created with
+  `scripts/immich-album-from-names.py`. Name-matching was validated
+  against byte-matching first: sha1 vs `asset.checksum`,
+  `originalFileName` resolution, and an `immich-go --folder-as-album`
+  dry run all resolved the same 31 assets with **zero
+  disagreements**. Albums went 21 -> 23, memberships 606 -> 637,
+  photo/video totals unchanged at 31,455/483 (nothing uploaded), both
+  owned by `immadmin`. The remaining 10 need only a `dir /b` filename
+  list each — no bulk transfer. Note `asset.checksum` is plain sha1
+  of the original bytes as `bytea`, so `encode(checksum,'hex')`
+  compares straight against `sha1sum`; and album ownership is not a
+  column on `album` in v3.1.0 but a role in `album_user`.
 - **Immich: review resolution-duplicate stacks** — Amazon stored some
   photos at two resolutions, and they are now in Immich as separate
   assets. Confirmed case: `20160516_183350.jpg` exists at 259 KB and

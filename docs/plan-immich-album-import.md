@@ -278,36 +278,78 @@ planted failures resolved 60 exact, 1 case-insensitive, 1 unresolvable,
 re-adding an asset already in the *Drop Box* album — a genuine no-op,
 count stayed 3.
 
-### The pilot: validate name-matching against checksum-matching
+### The pilot — DONE 2026-09-26, name-matching validated
 
-Do **one** album end to end before the other eleven, and pick a small
-one. The point is not to get one album done — it is to find out
-whether matching by name is as good as matching by bytes.
+Two albums exported from the Windows app (one was selected by
+accident, which is how it became two): **Chadwick** 23 files / 95 MB
+and **home** 8 files / 21 MB, landing as
+`~/AmazonAlbum/Amazon Photos Downloads/<album>/`. All JPEG, no
+`Thumbs.db`, no nesting.
 
-1. Export the album from the Windows app into a folder named for it.
-2. Copy the *whole folder* to `gsfarmctl` this once
-   (`~/amazon-albums/<Album Name>/`).
-3. Run both methods in dry run and compare what each would attach:
+The point of the pilot was not to get two albums done; it was to find
+out whether matching by *name* is as good as matching by *bytes*
+before trusting it for the rest. Three independent methods were run
+over the same 31 files:
 
-   ```bash
-   # by checksum - what immich-go would do
-   immich-go upload from-folder --no-ui --dry-run --pause-immich-jobs=false \
-     --folder-as-album=FOLDER --concurrent-tasks 1 ~/amazon-albums
+| Method | Result |
+|---|---|
+| sha1 vs `asset.checksum` (ground truth) | 31/31 resolved |
+| `originalFileName` resolution | 31/31 resolved |
+| `immich-go --folder-as-album` dry run | 31 `server has duplicate`, 31 `added to album`, 0 uploaded |
 
-   # by name - what the resolver would do
-   scripts/immich-album-from-names.py --dir ~/amazon-albums/"<Album Name>"
-   ```
+**Every file resolved to the same asset id under both name-matching
+and checksum-matching — 31 of 31, zero disagreements.** Name
+resolution is therefore trustworthy here, and the remaining albums
+need only a filename list.
 
-4. If the two agree, name resolution is trustworthy and the remaining
-   eleven albums need only a filename list — on Windows,
-   `dir /b > album.txt` in the exported folder — with no bulk
-   transfer at all. If they disagree, the difference says exactly
-   which cases name-matching gets wrong, and that is worth knowing
-   before it is applied eleven more times.
+Note `asset.checksum` is plain sha1 of the original bytes, stored as
+`bytea`, so `encode(checksum,'hex')` compares directly against
+`sha1sum` output. That makes a byte-level truth set cheap to build
+whenever a method needs checking.
 
-Either tool can then do the real write. `immich-go` is
-checksum-exact and will also upload anything genuinely missing;
-the resolver moves no photographs and needs only names.
+Created with the resolver:
+
+```
+created album 2ae272ea-4e71-452f-b1b8-7295d406878f
+added 23 assets to 'Chadwick'
+created album 5791cc65-b95f-47ff-95ba-a4f9d81f2072
+added 8 assets to 'home'
+```
+
+Verified after: 21 -> **23 albums**, 606 -> **637 memberships**,
+photo/video totals **unchanged at 31,455 / 483** (nothing uploaded),
+both albums owned by `immadmin` as intended, and each album's live
+membership **identical** to the checksum-derived truth set. The
+duplicate-name guard was confirmed by re-running `--create`, which
+refused and exited 1.
+
+Ownership is not on the `album` table in v3.1.0 — it is a role in
+`album_user`:
+
+```sql
+SELECT a."albumName", u.email, au.role FROM album a
+JOIN album_user au ON au."albumId" = a.id
+JOIN "user" u ON u.id = au."userId";
+```
+
+### Remaining: 10 albums
+
+No bulk transfer needed. Per album, in the exported folder on
+Windows:
+
+```
+dir /b > "<Album Name>.txt"
+```
+
+then on `gsfarmctl`:
+
+```bash
+scripts/immich-album-from-names.py --names-file "<Album Name>.txt" --album "<Album Name>"
+scripts/immich-album-from-names.py --names-file "<Album Name>.txt" --album "<Album Name>" --create
+```
+
+Exporting the files works equally well (`--dir`) and is what the
+pilot did; it is just 115 MB per two albums for no added accuracy.
 
 ### Where the albums would land
 
