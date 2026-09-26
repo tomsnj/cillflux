@@ -1,0 +1,415 @@
+# Work plan: Immich Postgres 14 → 16
+
+Status: **proposed, not started.** Written 2026-09-26 against PR
+[#960](https://github.com/tomsnj/cillflux/pull/960)
+(`ghcr.io/immich-app/postgres` 14 → 16), which is queued as "needs Tom"
+from that day's Renovate review.
+
+---
+
+## 1. Read this first: the PR cannot simply be merged
+
+PR #960 changes one thing in two files — the image tag:
+
+```
+-  ghcr.io/immich-app/postgres:14-vectorchord0.4.3-pgvectors0.2.0@sha256:bcf6335…
++  ghcr.io/immich-app/postgres:16-vectorchord0.4.3-pgvectors0.2.0@sha256:1a078b2…
+```
+
+**PostgreSQL does not read a version-14 data directory with a version-16
+binary.** The on-disk format changes between majors. Merging this PR as
+delivered starts a 16.10 server against the existing `PG_VERSION = 14`
+directory, it refuses to start with
+
+```
+FATAL: database files are incompatible with server
+DETAIL: The data directory was initialized by PostgreSQL version 14,
+        which is not compatible with this version 16.10.
+```
+
+and `immich-postgres` crash-loops. Immich itself then follows, because
+`immich-server` has no database. Nothing is *destroyed* — the v14 data
+directory is untouched by a server that never starts — but Immich is
+down until the image is reverted.
+
+There is also no operator to do this for us. Unlike the rest of the
+cluster's databases, Immich's Postgres is a **plain Deployment, not
+CrunchyData PGO** (see the header comment in `postgres.yaml`: the
+`ghcr.io/immich-app/postgres` image is incompatible with PGO's
+Patroni/pgBackRest image layout). So there is no `PGUpgrade` CRD and no
+managed path. This is a manual dump-and-restore.
+
+## 2. Should we do it at all?
+
+**There is no deadline.** Immich's own documentation states it "is known
+to work with Postgres versions `>= 14, < 20`", so 14.19 is a supported
+configuration today and will be for a long time. Nothing in Immich
+v3.1.0 requires 16.
+
+Reasons to do it anyway, in honest order:
+
+- PostgreSQL 14 reaches community end-of-life in **November 2026**.
+  After that the `ghcr.io/immich-app/postgres:14-…` tag stops receiving
+  rebuilds, including for CVEs in Postgres itself and in the Debian
+  base. That is the real driver.
+- Renovate will keep re-opening this PR, and a standing "needs Tom" item
+  trains the eye to skip it.
+- 16 is measurably faster for some of what Immich does, but on a 621 MB
+  database that is not a reason on its own.
+
+Reasons to wait: none urgent. **This is a "do it on a quiet evening"
+task, not a "do it now" task.** If it is deferred, note the November
+2026 EOL and revisit.
+
+## 3. Measured current state
+
+All figures taken 2026-09-26, not estimated.
+
+| | |
+|---|---|
+| Server | PostgreSQL **14.19** (Debian 14.19-1.pgdg12+1) |
+| Target | PostgreSQL **16.10** (Debian 16.10-1.pgdg12+1) |
+| Database size | **621 MB** |
+| Workload | `Deployment/immich-postgres`, 1 replica, `Recreate` |
+| Data PVC | `immich-postgres-data-nvme`, `local-hostpath` 20 Gi (node NVMe) |
+| Old PVC | `immich-postgres-data`, `gsks0` 20 Gi — retained rollback from the 2026-09-18 NVMe move, still Bound |
+| Node headroom | 1,671 GB free of 1,997 GB — a second 20 Gi volume is nothing |
+| Logical dumps | `immich-postgres-dumps` PVC on `gsks1` (TrueNAS), nightly 02:30, `pg_dump -Fc`, 7 retained, each run ~30 s |
+| Volsync | `immich-postgres-data` ReplicationSource, 03:00 daily, last 2026-09-26T03:00:22Z |
+| Flux | Kustomizations `postgres-immich` (DB) and `immich` (app, `dependsOn: postgres-immich`); **both `prune: true`** |
+
+Extensions, live vs. what the v16 image ships (verified by running the
+v16 image as a throwaway pod):
+
+| Extension | Live on 14 | Available on 16 | |
+|---|---|---|---|
+| `vchord` | 0.4.3 | 0.4.3 | identical |
+| `vector` | 0.8.1 | 0.8.1 | identical |
+| `cube` | 1.5 | 1.5 | identical |
+| `pg_trgm` | 1.6 | 1.6 | identical |
+| `unaccent` | 1.1 | 1.1 | identical |
+| `uuid-ossp` | 1.1 | 1.1 | identical |
+| `earthdistance` | 1.1 | **1.2** | only difference |
+| `plpgsql` | 1.0 | 1.0 | built in |
+
+**The vector extensions do not move.** `vchord` and `vector` are
+byte-identical versions on both sides, so none of Immich's
+"`ALTER EXTENSION vchord UPDATE;` then reindex" guidance applies — that
+is for changing the *extension* version, which this does not.
+
+`earthdistance` 1.1 → 1.2 is the only extension change. `pg_dump` emits
+`CREATE EXTENSION` without a version pin, so the restore installs 1.2.
+It is a trivial catalogue change used only by Immich's geo queries;
+treat it as expected, not as a surprise.
+
+The two vector indexes are ordinary index definitions with no external
+state, so `pg_restore` rebuilds them from DDL:
+
+```sql
+CREATE INDEX clip_index ON public.smart_search USING vchordrq (embedding vector_cosine_ops)
+  WITH (options='… lists = [1] … build_threads = 4 …')   -- 90 MB
+CREATE INDEX face_index ON public.face_search USING vchordrq (embedding vector_cosine_ops)
+  WITH (options='… lists = [1] … build_threads = 4 …')   -- 85 MB
+```
+
+**Rebuilding these two indexes is the long pole of the whole migration**
+and the one number this plan cannot predict. Phase 1 exists to measure it.
+
+Row-count baseline to compare against afterwards:
+
+```
+asset_file 81236   asset_ocr 73322   asset 32822   asset_exif 32820
+asset_job_status 32819   smart_search 31893   face_search 30224   asset_face 30224
+```
+
+## 4. Approach
+
+**Logical dump and restore onto a second, new PVC**, leaving the v14
+volume untouched.
+
+Why not `pg_upgrade`: it needs the 14 *and* 16 binaries present in one
+filesystem. `ghcr.io/immich-app/postgres` ships exactly one major
+version, so using it would mean building a custom image carrying both
+plus matching `vchord`/`vector` builds for each. That is more work and
+more risk than a dump/restore of 621 MB.
+
+Why a new PVC rather than wiping the existing one: it makes rollback a
+one-line `claimName` revert instead of a restore, and it is the same
+pattern that made the 2026-09-18 NVMe move safe. Disk is free here.
+
+Collation is a non-issue: both images are `pgdg12` (Debian 12,
+same glibc), and a dump/restore rebuilds every index from DDL anyway, so
+the text-sort-order hazard that bites `pg_upgrade` across glibc versions
+does not arise.
+
+## 5. Phase 1 — rehearsal (no downtime, nothing production touched)
+
+Do this first, on a normal day. It answers the only open question —
+how long the vchordrq rebuild takes — and proves the procedure end to
+end against the real data, at zero risk.
+
+Restore **last night's dump** into a throwaway v16 instance:
+
+1. Create a scratch PVC (`local-hostpath`, 20 Gi) and a scratch
+   Deployment running the v16 image with its own Service, in the
+   `immich` namespace but with different labels so it does not join the
+   `immich-postgres` Service selector. **Apply by hand, not through
+   Flux** — it must never enter a Kustomization's inventory, or prune
+   will chase it later.
+2. Run a restore Job (see §6 step 8) pointed at the scratch Service,
+   using the newest file in `immich-postgres-dumps`.
+3. **Time it.** Record wall-clock for `pg_restore` and note when
+   `clip_index` / `face_index` finish.
+4. Verify against §7 on the scratch instance.
+5. Tear down: delete the Deployment, Service and scratch PVC.
+
+Carry the measured restore time into the maintenance-window estimate in
+§9 and replace the guess there.
+
+## 6. Phase 2 — the migration
+
+Downtime starts at step 3 and ends at step 11.
+
+1. **Announce it.** Immich is family-visible. Mobile apps will fail to
+   sync for the window and recover on their own.
+
+2. **Suspend Flux for both Kustomizations**, so it cannot fight the
+   manual scaling or re-apply a half-finished state:
+   ```bash
+   flux suspend kustomization immich -n flux-system
+   flux suspend kustomization postgres-immich -n flux-system
+   ```
+
+3. **Stop the writers.** Postgres stays up; only its clients go away:
+   ```bash
+   kubectl scale -n immich deploy/immich-server --replicas=0
+   kubectl scale -n immich deploy/immich-machine-learning --replicas=0
+   kubectl wait -n immich --for=delete pod -l app.kubernetes.io/name=immich --timeout=3m
+   ```
+   Confirm nothing is still connected:
+   ```bash
+   kubectl exec -n immich deploy/immich-postgres -- \
+     psql -U immich -d immich -At -c \
+     "select count(*) from pg_stat_activity where datname='immich' and pid<>pg_backend_pid();"
+   ```
+   Expect `0`. Anything else, find it before continuing.
+
+4. **Take the migration dump — with the v16 client.** PostgreSQL's own
+   guidance is to dump with the *newer* `pg_dump`, which is the opposite
+   of what `pgdump.yaml` does day to day (it deliberately pins the
+   client to the server version). Run a one-off Job using the **v16**
+   image against the still-running v14 server, writing to the same
+   dumps PVC with a distinct name, e.g. `immich-pg16-migration.dump`.
+
+5. **Verify the dump before destroying anything.** Not just that the
+   file exists:
+   ```bash
+   pg_restore --list /dumps/immich-pg16-migration.dump | wc -l   # non-trivial count
+   ```
+   A dump you have not listed is not a backup.
+
+6. **Commit the change.** In one commit:
+   - `postgres.yaml`: add PVC `immich-postgres-data-nvme-pg16`
+     (`local-hostpath`, 20 Gi); change the container image to the v16
+     digest; change `claimName` to the new PVC.
+   - `pgdump.yaml`: change the image to the v16 digest.
+   - **Leave the `immich-postgres-data-nvme` PVC declared in git.**
+     Removing it in the same commit would have Flux prune it and destroy
+     the rollback. It comes out later, in Phase 5.
+
+7. **Resume Flux and let the new pod start:**
+   ```bash
+   flux resume kustomization postgres-immich -n flux-system
+   flux reconcile kustomization postgres-immich -n flux-system --with-source
+   ```
+   The new PVC is `WaitForFirstConsumer`, so it binds when the pod
+   mounts it. The pod runs `initdb` on the empty volume — with
+   `--data-checksums`, from the existing `POSTGRES_INITDB_ARGS` — and
+   creates an empty `immich` database from the secret's
+   `DB_DATABASE_NAME`. Wait for `pg_isready`.
+
+8. **Restore.** One-shot Job, applied by hand (not via Flux):
+   ```yaml
+   apiVersion: batch/v1
+   kind: Job
+   metadata: {name: immich-pg16-restore, namespace: immich}
+   spec:
+     backoffLimit: 0
+     template:
+       spec:
+         restartPolicy: Never
+         containers:
+           - name: restore
+             image: ghcr.io/immich-app/postgres:16-vectorchord0.4.3-pgvectors0.2.0@sha256:1a078b237c1d9b420b0ee59147386b4aa60d3a07a8e6a402fc84a57e41b043a4
+             env:
+               - {name: PGHOST, value: immich-postgres.immich.svc.cluster.local}
+               - {name: PGUSER,     valueFrom: {secretKeyRef: {name: immich-postgres-secret, key: DB_USERNAME}}}
+               - {name: PGPASSWORD, valueFrom: {secretKeyRef: {name: immich-postgres-secret, key: DB_PASSWORD}}}
+               - {name: PGDATABASE, valueFrom: {secretKeyRef: {name: immich-postgres-secret, key: DB_DATABASE_NAME}}}
+             command: ["/bin/sh","-c"]
+             args:
+               - |
+                 set -eu
+                 time pg_restore --no-owner --no-privileges --exit-on-error \
+                   -d "$PGDATABASE" /dumps/immich-pg16-migration.dump
+                 echo "--- ANALYZE ---"
+                 time psql -d "$PGDATABASE" -c 'ANALYZE;'
+             volumeMounts: [{name: dumps, mountPath: /dumps}]
+         volumes:
+           - name: dumps
+             persistentVolumeClaim: {claimName: immich-postgres-dumps}
+   ```
+   Notes: this file is applied directly, so shell `$` is written once —
+   the `$$` escaping in `pgdump.yaml` exists only because Flux runs
+   envsubst over it. `--exit-on-error` is deliberate: a restore that
+   half-succeeds is worse than one that stops. Follow with
+   `kubectl logs -n immich -f job/immich-pg16-restore`.
+
+9. **`ANALYZE` is not optional** and is easy to forget — it is folded
+   into the Job above. `pg_restore` does not carry planner statistics
+   across, and without them Immich's first hours are mysteriously slow
+   in a way that looks like the upgrade made things worse.
+
+10. **Verify** — §7, before letting anyone back in.
+
+11. **Bring Immich back:**
+    ```bash
+    flux resume kustomization immich -n flux-system
+    kubectl scale -n immich deploy/immich-server --replicas=1
+    kubectl scale -n immich deploy/immich-machine-learning --replicas=1
+    ```
+    Flux restores the declared replica counts on the next reconcile;
+    the explicit scale just avoids waiting for it.
+
+12. **Delete the restore Job** once its logs are read.
+
+## 7. Verification
+
+Do all of these. The first three are cheap and the last two are the ones
+that actually matter to a user.
+
+```bash
+PG=$(kubectl get pods -n immich -l app=immich-postgres -o name | head -1)
+
+# 1. It really is 16, and on the new volume
+kubectl exec -n immich ${PG#pod/} -- psql -U immich -At -c 'select version();'
+kubectl get deploy -n immich immich-postgres \
+  -o jsonpath='{.spec.template.spec.volumes[?(@.name=="data")].persistentVolumeClaim.claimName}{"\n"}'
+
+# 2. Extensions, expecting vchord 0.4.3 / vector 0.8.1 / earthdistance 1.2
+kubectl exec -n immich ${PG#pod/} -- psql -U immich -d immich \
+  -c 'select extname, extversion from pg_extension order by 1;'
+
+# 3. Row counts against the §3 baseline (ANALYZE must have run first,
+#    or n_live_tup reads zero and looks alarming for no reason)
+kubectl exec -n immich ${PG#pod/} -- psql -U immich -d immich -At -F'|' \
+  -c 'select relname, n_live_tup from pg_stat_user_tables order by n_live_tup desc limit 8;'
+
+# 4. Both vchordrq indexes exist and are valid
+kubectl exec -n immich ${PG#pod/} -- psql -U immich -d immich -At -F'|' -c "
+  select i.relname, am.amname, x.indisvalid, pg_size_pretty(pg_relation_size(i.oid))
+  from pg_index x join pg_class i on i.oid=x.indexrelid
+  join pg_am am on am.oid=i.relam where am.amname='vchordrq';"
+```
+
+Then, in the Immich UI:
+
+- **Smart search** for something textual ("beach", "dog"). This is the
+  only thing that exercises `clip_index`; if the vector index did not
+  rebuild, search returns nothing while everything else looks perfect.
+- **People / faces** view loads and a person's photos open — exercises
+  `face_index`.
+- A map view loads (that is `earthdistance` 1.2 in use).
+- Upload one photo from a phone and confirm it appears.
+
+Finally, confirm the nightly dump still works on the new version rather
+than waiting to find out:
+```bash
+kubectl create job -n immich --from=cronjob/immich-postgres-dump pg16-dumptest
+```
+
+## 8. Rollback
+
+Cheap and fast, at any point up to Phase 5, because the v14 volume is
+never written to.
+
+1. `git revert` the Phase 2 commit (image back to the v14 digest,
+   `claimName` back to `immich-postgres-data-nvme`), push.
+2. `flux reconcile kustomization postgres-immich -n flux-system --with-source`
+3. Scale `immich-server` and `immich-machine-learning` back up.
+
+Immich returns on the v14 database exactly as it was at step 3, losing
+only whatever the window would have contained — nothing, since the
+writers were stopped first.
+
+If the v14 volume itself is somehow lost as well, the fallbacks are the
+nightly logical dumps on `gsks1` (different failure domain from the
+node) and the Volsync/restic snapshots of the old PVC. That is three
+independent copies before this starts.
+
+## 9. Time and downtime
+
+| Step | Estimate |
+|---|---|
+| Scale down, confirm no connections | 1–2 min |
+| Migration dump (v16 client, 621 MB) | ~1 min (the nightly takes ~30 s) |
+| Commit, reconcile, `initdb`, pod ready | 2–3 min |
+| `pg_restore` + vchordrq rebuild | **unknown — Phase 1 measures this** |
+| `ANALYZE` | ~1 min |
+| Verification | 5 min |
+
+Budget **an hour** and expect to use far less. The single unknown is the
+index rebuild; do not schedule the window until Phase 1 has produced a
+real number.
+
+## 10. Gotchas specific to this cluster
+
+- **Do not remove the old PVC in the same commit.** Flux computes
+  pruning by diffing the previous inventory, so dropping
+  `immich-postgres-data-nvme` from `postgres.yaml` deletes the volume —
+  and with it the rollback. Same hazard, same shape, as the
+  `gotk-components.yaml` handover on 2026-09-25.
+- **Suspend both Kustomizations, not just one.** `immich` depends on
+  `postgres-immich`; leaving the app one active means Flux keeps trying
+  to reconcile a deployment whose database is mid-migration.
+- **Probes are deliberately slack** (`timeoutSeconds: 10`,
+  `failureThreshold: 6`) because `pg_isready` on this single-replica pod
+  used to blow past a 1 s default under load and get the pod pulled from
+  the Service mid-request. Do not "tidy" them while in this file.
+- **The restore Job is hand-applied, so write shell `$` once.** The
+  `$$` doubling in `pgdump.yaml` is there only because Flux runs
+  envsubst across everything it renders.
+- **`pgdump.yaml`'s image must move with the server.** Its comment says
+  the client is pinned to the server version on purpose; leaving it at
+  14 after the server is 16 means the nightly dump starts failing, and
+  it would fail quietly into a CronJob nobody reads.
+- **PR #960 stays closed or unmerged until Phase 2.** If it is merged
+  early by reflex, the symptom is `immich-postgres` crash-looping with
+  the incompatible-data-directory FATAL; revert the image and it comes
+  straight back.
+
+## 11. Phase 5 — cleanup, a week after
+
+Only once Immich has been in normal use for several days:
+
+- Remove the `immich-postgres-data-nvme` PVC from `postgres.yaml` and
+  let Flux prune it.
+- Remove the pre-existing `immich-postgres-data` PVC (`gsks0`, the
+  rollback from the 2026-09-18 NVMe move) if it is still around — it is
+  already an open item in `CLUSTER.md` and will by then be two
+  migrations stale.
+- Point the Volsync `ReplicationSource` at the new PVC. **Check this
+  during Phase 2, not here** — `immich-postgres-data` currently has
+  `sourcePVC: immich-postgres-data-nvme`, so it silently keeps backing
+  up the *old* volume the moment the claim name changes, and the new
+  database would go unprotected until someone noticed.
+
+## 12. Open questions
+
+1. How long does the vchordrq rebuild actually take? → Phase 1.
+2. Is a maintenance window needed at all, or is a quiet evening enough?
+   → decide once (1) has a number.
+3. Do we want to go to 17 instead of 16? Immich supports `< 20`, and the
+   work is identical either way, so a single hop to the newest supported
+   major buys a longer runway. Worth deciding **before** Phase 1 so the
+   rehearsal measures the version we will actually run.

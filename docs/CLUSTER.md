@@ -499,6 +499,15 @@ for 6+ days as of 2026-09-05. Nothing currently open here.)*
   Folder deleted 2026-09-25 after re-verifying all 472 immediately
   beforehand; 97 MB reclaimed. No batch folders remain on
   `gsfarmctl`. Total reclaimed across all four: 826 MB.
+- **Immich Postgres 14 → 16** (PR #960, queued 2026-09-26) — cannot be
+  merged as-is: Postgres will not read a v14 data directory with a v16
+  binary, and this database is a plain Deployment, not PGO, so there is
+  no `PGUpgrade` path. Needs a logical dump/restore onto a second PVC.
+  **Not urgent** — Immich supports `>= 14, < 20`, so the real driver is
+  PostgreSQL 14's community EOL in **November 2026**. Full runbook,
+  with measured current state and a zero-risk rehearsal phase, in
+  `docs/plan-immich-postgres-pg16.md`. Open decision recorded there:
+  whether to hop straight to 17 instead, since the work is identical.
 - **`gitops.gs-farm.net` returns 504** (low priority, 2026-09-25) — the
   Weave GitOps UI. The app is fine: an in-cluster probe against
   `weave-gitops.flux-system.svc:9001` returns 200 immediately, the pod
