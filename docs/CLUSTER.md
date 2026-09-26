@@ -297,9 +297,16 @@ for 6+ days as of 2026-09-05. Nothing currently open here.)*
   organised by date (`amazon-shawna/<year>/files`), so Amazon's album
   structure was never in it — the manifests are bare filename lists
   and Immich's `originalPath` is its own UUID storage layout, so it is
-  not recoverable on this side either. Apple Photos is the one source
-  that still has album structure *and* was never properly imported, so
-  it leads. Key enabler, verified 2026-09-26 by dry run: `immich-go`
+  not recoverable on this side either. Apple Photos was expected to lead on
+  album structure; the 2026-09-26 survey found **zero albums on
+  either Mac** (183 photos on the Air, 184 on the Pro, apparently the
+  same set), so that phase is a small content import instead. Its one
+  piece of album structure is a *shared* album, `Family` (48), on the
+  Air only — and **iCloud shared albums hold ~2048px derivatives, not
+  originals**, so importing it wholesale would manufacture up to 48
+  new resolution-variant duplicates right before the stacking pass.
+  Only the photos *other people* contributed are unique content;
+  Photos.app shows the contributor per photo. Key enabler, verified 2026-09-26 by dry run: `immich-go`
   reports `added to album` for an asset it also reports as
   `server has duplicate` — **album membership attaches to assets
   already on the server, with no re-upload**, which is what makes this
