@@ -69,7 +69,7 @@ which cloud the bytes came from.
 | Google Photos | Already imported, 21 albums | Done |
 | **Apple Photos** | **Yes** — Photos.app exports album-per-folder, and this library was never properly imported at all | **Phase 1** |
 | Local / network drives | Maybe — folder names may or may not be meaningful | Phase 2, survey first |
-| Amazon Photos | No. Not in the export, not in the manifests, not in Immich | Phase 3 — a decision, not an import |
+| **Amazon Photos** | Not in the export or the manifests — but recoverable from filenames alone | **Phase 3**, 12 albums on Shawna's account |
 
 ## Phase 1 — Apple Photos
 
@@ -171,29 +171,94 @@ run as Phase 1 and the files are already on the server, so it is
 cheap. If they are not, skip it — say so explicitly rather than
 leaving the phase open.
 
-## Phase 3 — the Amazon half: a decision, not an import
+## Phase 3 — the Amazon half: names, not photographs
 
 Roughly half the library (~15,600 assets, Shawna's 2011–2025) has no
-album membership and no recoverable source for it. The options:
+album membership. Confirmed 2026-09-26: **Tom's Amazon account has no
+albums at all, and Shawna's has 12.** So the scope here is twelve
+albums, not fifteen years of camera roll.
 
-1. **Leave it timeline-only.** The strategy doc states the
-   requirement directly: *"albums work for curated sets, but
-   day-to-day photos really just need to land in a browsable timeline
-   rather than be filed into albums one at a time."* Fifteen years of
-   camera roll is the definition of day-to-day.
-2. **Re-export per album from Amazon's web UI.** Recovers real album
-   names, but the UI caps downloads at 200 files, the assets are
-   already in Immich so the download is purely to learn membership,
-   and it is a many-hour manual grind. Hard to justify.
-3. **Build a few albums in Immich directly.** Date-range or
-   smart-search selections for the handful of events actually worth
-   curating. No import involved, and it is the only option whose cost
-   scales with the number of albums that matter rather than the
-   number of photos.
+The original framing — "re-export per album through a 200-file cap" —
+was wrong, and it was wrong in a way worth writing down.
 
-Recommendation: **1, with 3 for anything specific that comes up.**
-Option 2 should not be started without a named list of albums worth
-the effort.
+### The bytes are already here. Only the names are missing.
+
+Every one of those photographs is in Immich. The only thing Amazon
+still holds that Immich does not is *which album each name belonged
+to*. And filenames resolve to assets almost perfectly:
+
+```
+live assets                         32,809
+globally unique originalFileName    32,484   (99.0%)
+ambiguous names (>=2 assets)           155 names / 325 assets
+```
+
+Tested directly against the 16,236 names in `~/amazon-manifests/`:
+
+```
+resolve to exactly one asset   16,046   98.8%
+ambiguous                          15
+not in Immich                     175    mostly "name(1).jpg" copies
+                                         immich-go skipped as duplicates
+```
+
+So album membership can be **reconstructed from a filename list
+alone** — no download, no re-import, no 200-file grind. Whatever gets
+a list of names per album out of Amazon is sufficient, including
+downloading an album and reading `unzip -l` without ever extracting
+it.
+
+### Mechanism
+
+Confirmed present on v3.1.0 by probing a non-existent album id, which
+creates nothing:
+
+```
+PUT  /api/albums/{id}/assets  -> 400   (route exists, empty ids rejected)
+POST /api/albums/{id}/assets  -> 404   (no such route)
+```
+
+So the sequence per album is:
+
+1. Get the album's filenames from Amazon.
+2. Resolve each against `originalFileName` (the map is one query:
+   `SELECT "originalFileName", id FROM asset WHERE "deletedAt" IS NULL`).
+3. `POST /api/albums` to create it, then
+   `PUT /api/albums/{id}/assets` with the resolved ids.
+
+Handle the ~1.2% remainder explicitly rather than silently: report
+ambiguous and unresolved names per album and decide them by hand.
+An unresolved `name(1).jpg` is usually a duplicate Immich already
+holds under the un-suffixed name, so the album is not actually missing
+the photograph — but confirm that rather than assume it.
+
+### Scope
+
+Twelve albums, all on Shawna's account. Cost scales with that twelve,
+not with the 15,600 photographs — which is the whole point of
+resolving by name.
+
+What is still needed from Amazon is **only the album names and their
+file lists**. Ways to get that, cheapest first:
+
+1. If an album's contents can be listed in the web UI, the names can
+   be read off directly.
+2. Otherwise download the album and read `unzip -l` — the zip's
+   central directory has every name without extracting a byte. The
+   200-file cap still applies to *downloading*, but it no longer
+   matters much: a capped download that gets thrown away after its
+   listing is read is cheap, and nothing gets re-imported.
+
+Either way the photographs are already in Immich and stay untouched.
+
+### Where the albums would land
+
+Worth deciding before creating any: Shawna's content was imported
+with Tom's API key, so all 31,455 assets belong to `immadmin` and her
+account holds zero. Albums built from her Amazon content would
+therefore be **Tom's albums**, not hers. That is consistent with how
+the library already works and partner sharing covers visibility, but
+it should be a choice rather than a side effect.
 
 ## Verification
 
@@ -302,5 +367,8 @@ keep-or-delete decision rather than a stack.
    Format? Decides GUI vs `osxphotos` in 1a.
 2. Are the local/network drive folder names meaningful enough to be
    albums? Decides whether Phase 2 exists.
-3. Is there a named list of Amazon-era albums worth a manual re-export?
-   If not, Phase 3 closes as "timeline-only, by design".
+3. ~~Are there Amazon-era albums worth recovering?~~ **Answered
+   2026-09-26: none on Tom's account, 12 on Shawna's.** What remains
+   is getting those 12 names and file lists out of Amazon, and
+   deciding whether they should be created as Tom's albums (see
+   "Where the albums would land").

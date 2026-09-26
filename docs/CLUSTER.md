@@ -305,6 +305,14 @@ for 6+ days as of 2026-09-05. Nothing currently open here.)*
   already on the server, with no re-upload**, which is what makes this
   cheap given 95–99% redundancy. Plan:
   `docs/plan-immich-album-import.md`.
+  Second enabler, same day: **album membership can be rebuilt from a
+  filename list alone** — 32,484 of 32,809 live assets (99.0%) have a
+  globally unique `originalFileName`, and 16,046 of the 16,236 Amazon
+  manifest names (98.8%) resolve to exactly one asset. So recovering
+  an album never needs the photographs re-downloaded, only its list
+  of names, then `PUT /api/albums/{id}/assets` (confirmed present on
+  v3.1.0; `POST` to that path is 404). Scope as of 2026-09-26: Tom's
+  Amazon account has no albums, Shawna's has **12**.
 - **Immich: review resolution-duplicate stacks** — Amazon stored some
   photos at two resolutions, and they are now in Immich as separate
   assets. Confirmed case: `20160516_183350.jpg` exists at 259 KB and
