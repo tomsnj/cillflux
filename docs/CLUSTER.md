@@ -290,6 +290,21 @@ for 6+ days as of 2026-09-05. Nothing currently open here.)*
   32 of Shawna's 12,135 assets were already present), so budget
   storage at or above the high end of the 180–230 GB estimate and dry-
   run Amazon before committing to a full export.
+- **Immich: album import** — only **562 of 31,938 assets (1.8%)** are
+  in an album, and all 21 albums were created 2026-09-12/13 by the
+  Google Takeout stage. Nothing else produced one: all fifteen Amazon
+  runs are logged with `--folder-as-album=NONE`, but the download was
+  organised by date (`amazon-shawna/<year>/files`), so Amazon's album
+  structure was never in it — the manifests are bare filename lists
+  and Immich's `originalPath` is its own UUID storage layout, so it is
+  not recoverable on this side either. Apple Photos is the one source
+  that still has album structure *and* was never properly imported, so
+  it leads. Key enabler, verified 2026-09-26 by dry run: `immich-go`
+  reports `added to album` for an asset it also reports as
+  `server has duplicate` — **album membership attaches to assets
+  already on the server, with no re-upload**, which is what makes this
+  cheap given 95–99% redundancy. Plan:
+  `docs/plan-immich-album-import.md`.
 - **Immich: review resolution-duplicate stacks** — Amazon stored some
   photos at two resolutions, and they are now in Immich as separate
   assets. Confirmed case: `20160516_183350.jpg` exists at 259 KB and
@@ -304,6 +319,14 @@ for 6+ days as of 2026-09-05. Nothing currently open here.)*
   mid-import would just re-detect against a moving target. Also worth
   a pass over near-duplicates that dedup cannot catch by checksum,
   e.g. a Google-resized copy alongside an Amazon original.
+  **Scoped 2026-09-26**: `duplicateDetection` has found 512 groups
+  covering 1,188 assets, but only **64 of those groups differ in
+  resolution** — the actual stacking target, and worth just 60 MB.
+  The other 448 are same-resolution duplicates, which is a
+  keep-or-delete decision rather than a stack, so the two piles want
+  separate passes. Runs **after** the album import
+  (`docs/plan-immich-album-import.md` explains the ordering), with a
+  fresh `duplicateDetection` in between.
 - **`gsfarmctl` is memory-constrained** — 5.7 GB total, with a UniFi
   controller (`java` ~765 MB + `mongod` ~358 MB) taking roughly 30% of
   what's in use. This is not theoretical: it killed a bulk `immich-go`
