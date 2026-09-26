@@ -451,6 +451,28 @@ for 6+ days as of 2026-09-05. Nothing currently open here.)*
   stacking would have buried). "Resolution-variant group" does
   **not** imply "same photo at different sizes" — check aspect
   ratio and identical-dimension pairs before stacking in bulk.
+  **Review outcome, same day.** Tom reviewed the seven in Immich and
+  had the five screenshot copies deleted (to trash, 30-day
+  retention): photos 31,687 -> **31,682**, all five confirmed
+  `status=trashed` and all six paired photos still live. Four of the
+  seven groups dissolved entirely, the screenshot having been their
+  only partner — resolution-variant groups **66 -> 2**, total
+  duplicate groups 521 -> **458**.
+  Worth noting one of the five was **not** a screenshot of a photo
+  at all: `Screenshot_20211230-174635_Gmail.jpg` was a birthday
+  party invitation carrying place, time and an RSVP number found
+  nowhere else. Deleted deliberately after review, but it is the
+  reason to look at "worthless screenshots" before bulk-deleting
+  them — and note **1,020 assets library-wide** are named
+  `Screenshot_*`, so any sweeping rule needs far more care than
+  these five did.
+  Three groups remain, all genuine same-photo pairs awaiting only a
+  primary-copy choice: `IMG_0196[1].JPG` 2304x3072 (2007, red-eye)
+  vs `20201101_063453.jpg` 1080x1410 (2020, red-eye corrected);
+  `20211202_201450.jpg` 4032x2268 vs `20211226_162315.jpg`
+  3550x2268 (a right-side crop of it, same EXIF timestamp); and
+  `20220429_204244.jpg` / `...204245.jpg`, which are **two distinct
+  frames a second apart and must not be stacked**.
   Verified first on a single album-affected group that **stacking
   does not disturb album membership**: `charmer` stayed at 61 and
   still returns the stacked child.
