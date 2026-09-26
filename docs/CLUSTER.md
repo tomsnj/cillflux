@@ -496,6 +496,10 @@ for 6+ days as of 2026-09-05. Nothing currently open here.)*
   (`980b17cb…`) to the copy already preserved at
   `~/immich-unimported/`, so still the same single rotation variant,
   not a new one.
+
+  Folder deleted 2026-09-25 after re-verifying all 472 immediately
+  beforehand; 97 MB reclaimed. No batch folders remain on
+  `gsfarmctl`. Total reclaimed across all four: 826 MB.
 - **`gitops.gs-farm.net` returns 504** (low priority, 2026-09-25) — the
   Weave GitOps UI. The app is fine: an in-cluster probe against
   `weave-gitops.flux-system.svc:9001` returns 200 immediately, the pod
