@@ -12,7 +12,7 @@ spec:
       # chart in the repo on every reconcile, which is how this drifted to
       # 13.2.5 unattended on 2026-09-15 and left the HelmRelease stalled.
       # It also hides Grafana from Renovate, since there is no version to bump.
-      version: 13.2.3
+      version: 13.2.5
       sourceRef:
         kind: HelmRepository
         name: grafana-community
