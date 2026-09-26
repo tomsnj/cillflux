@@ -560,6 +560,13 @@ Only once Immich has been in normal use for several days:
   rollback from the 2026-09-18 NVMe move) if it is still around — it is
   already an open item in `CLUSTER.md` and will by then be two
   migrations stale.
+- Delete `/dumps/immich-pg17-migration.dump` from the
+  `immich-postgres-dumps` PVC. It matches the CronJob's
+  `immich-*.dump` retention glob, so it is already occupying one of
+  the seven nightly slots and will age out on its own in about a week
+  — but removing it deliberately is tidier than letting a
+  one-off migration artifact quietly displace a night of backups.
+  (Rollback never depended on it; that is the v14 PVC.)
 - Point the Volsync `ReplicationSource` at the new PVC. **Check this
   during Phase 2, not here** — `immich-postgres-data` currently has
   `sourcePVC: immich-postgres-data-nvme`, so it silently keeps backing
