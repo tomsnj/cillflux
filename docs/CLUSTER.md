@@ -329,8 +329,8 @@ for 6+ days as of 2026-09-05. Nothing currently open here.)*
   `WIN_20190505_07_44_26_Pro.mp4` in `~/immich-oversize` (exceeds
   Cloudflare's 100 MiB proxy cap — needs the LAN/browser path), and
   `~/Downloads` was never imported — **now in progress, see below**.
-- **`~/Downloads` import (MacBook Pro) — started 2026-09-25, batch 1 of
-  n done.** Tom stages a slice at a time into `~/Download_batch1` on
+- **`~/Downloads` import (MacBook Pro) — started 2026-09-25, batches 1
+  and 2 done.** Tom stages a slice at a time into `~/Download_batch1` on
   `gsfarmctl` and it is imported from there (never from the Mac —
   macOS Local Network privacy blocks `immich-go` outright).
   Batch 1: 39 JPEGs, 119 MB, flat folder, no non-photo junk.
@@ -359,6 +359,41 @@ for 6+ days as of 2026-09-05. Nothing currently open here.)*
     (`…074946 (1).jpg`, `…130554 (1).jpg`) were byte-identical to
     their unsuffixed siblings and were deduped by checksum, not by
     name. No need to clean them out of a batch beforehand.
+
+  **Batch 2 (2026-09-25): 102 files, 0 new — 100% redundant.** Verified
+  with Immich's own `/api/assets/bulk-upload-check`, the endpoint
+  `immich-go` dedups against: all 102 rejected as duplicates. Nothing
+  was uploaded and the import was not run, because it could only have
+  been a no-op.
+
+  Batch 2 was structurally harder than batch 1 and is the better model
+  for what is left:
+  - **Two ZIPs, one of them never extracted.** `Qatar.zip` (65 MB, 50
+    JPEGs) had no extracted copy, and `immich-go upload from-folder`
+    does **not** read ZIP archives — it logs them as
+    `discovered unknown file` and moves on. Running the batch as
+    delivered would have reported success while silently ignoring 92%
+    of it. **Always check for archives before importing a batch**, and
+    extract with `unzip` rather than a GUI: unzip restores the stored
+    timestamps, which is the only date these files have.
+  - **`SWA09/` and `SWA09 2/` were byte-identical** (macOS's name for
+    a second extraction of the same archive). Harmless — checksum
+    dedup catches it — but it inflates file counts.
+  - **26 files had no EXIF date and unparseable names** (`686.jpg`).
+    Their mtimes were the moment of the move, so a fresh import would
+    have dated them 2026. Their existing copies on the server are
+    dated 2010-01-10, from the ZIP's stored timestamps. If a future
+    batch contains genuinely new files like these, extract from the
+    archive rather than copying the extracted folder, or the date is
+    lost.
+
+  **`immich-go`'s "metadata updated: N" line does not write to the
+  server.** It appears for every duplicate and reads like a
+  modification of existing assets. Checked directly after batch 1: the
+  sampled asset's `updatedAt` was 2026-09-16, unchanged by the import,
+  and its dates were identical before and after. Useful to know before
+  worrying about a batch whose local files have worse metadata than
+  the copies already on the server.
 
   Source folders are left in place — `immich-go` never deletes them.
   Clear a batch only after confirming its assets are on the server.
