@@ -222,14 +222,50 @@ Approaches ruled out along the way:
   of the 44 unbounded at the ends of runs. Not worth it when a
   transfer flag recovers the real dates.
 
-### Still open in Phase 1
+### 1d-result. The Pro's 184 — imported 2026-09-26, Phase 1 closed
 
-The **MacBook Pro's 184 photos**. The 183-vs-184 question stands: if
-both machines share one iCloud Photos library the sets are identical
-and there is nothing left to do, but that was a visual check. Settle
-it by exporting with `scp -rp` and comparing sha1 against the 183
-just imported — anything already present will simply report
-`server has duplicate`.
+Transferred with `scp -rp`, so the mtimes survived: the spread was
+identical to the Air's, plus a single file in 2026-09 — which turned
+out to be exactly the extra one.
+
+**183 of 184 byte-identical to the Air's set**, 0 only on the Air, 1
+only on the Pro. So the two libraries are the same set and the visual
+"looks like a complete overlap" was right, now confirmed by sha1
+rather than by eye. Predicted 99% overlap; actual **99.46%**.
+
+The one extra file, `Snapshot_20161201_2.JPG` — 640x480, 49 KB, no
+EXIF, no make/model, mtime 2026-09-03 — is the `~/Downloads` case
+again, and this time `--date-from-name` *does* rescue it:
+
+```
+file.FileDate    = 2026-09-03 22:00:22     <- would have been wrong
+file.CaptureDate = 2016-12-01 00:00:00     <- parsed from the filename
+```
+
+Imported: `server has duplicate` 183, `uploaded successfully` 1.
+Photos **31,686 → 31,687**, the asset filed at **2016-12-01**,
+checksum verified, nothing in 2026, no new job failures, pods
+healthy.
+
+## Phase 1 result
+
+Apple Photos is done. **232 new assets and one new album**, across
+three imports:
+
+| Source | New assets |
+|---|---|
+| `Family` shared album (48 iPad 2 originals) | **+48**, album created |
+| MacBook Air library, 183 loose photos | **+183** |
+| MacBook Pro library, 184 photos | **+1** (183 duplicates of the Air) |
+
+Photos **31,455 → 31,687**. Zero assets misfiled to 2026 despite 45
+of the 232 having no EXIF date at all — 44 saved by preserved
+mtimes, 1 by `--date-from-name`.
+
+Staging folders left on disk, all verified byte-present on the
+server: `~/ipadExport2` (8.8 MB), `~/ipadExport3` (55 MB,
+superseded by the `-p` re-transfer), `~/ipadExport4` (55 MB),
+`~/macbookProExport` (55 MB).
 
 ## Phase 2 — local and network drive folders
 
