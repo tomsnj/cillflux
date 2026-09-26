@@ -340,8 +340,21 @@ for 6+ days as of 2026-09-05. Nothing currently open here.)*
   second**, which is what proves the mtimes are real capture dates
   and the 44 can be trusted. Placement came out 2018-10 -> 2021-07
   with **zero assets in 2026**. See the `scp -rp` gotcha in
-  CLAUDE.md. Still open: the **MacBook Pro's 184**, which may be the
-  same set.
+  CLAUDE.md. **The Pro's 184 imported too, and Phase 1 is closed.**
+  `scp -rp` again; **183 of 184 were byte-identical to the Air's
+  set**, 0 Air-only and 1 Pro-only, so the two libraries are the
+  same set - confirmed by sha1 rather than by eye (predicted 99%
+  overlap, actual 99.46%). The one extra,
+  `Snapshot_20161201_2.JPG` (640x480, no EXIF, mtime 2026-09-03),
+  was rescued by `--date-from-name` parsing `20161201` out of the
+  filename: `CaptureDate=2016-12-01` against
+  `FileDate=2026-09-03`. **Apple Photos total: 232 new assets and
+  one new album** (48 shared-album + 183 Air + 1 Pro), photos
+  31,455 -> **31,687**, zero misfiled to 2026 despite 45 of the 232
+  having no EXIF date - 44 saved by preserved mtimes, 1 by
+  filename. Staging folders still on disk, all verified
+  byte-present: `~/ipadExport2`, `~/ipadExport3` (superseded),
+  `~/ipadExport4`, `~/macbookProExport`, ~174 MB total.
   Key enabler, verified 2026-09-26 by dry run: `immich-go`
   reports `added to album` for an asset it also reports as
   `server has duplicate` — **album membership attaches to assets
