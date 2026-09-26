@@ -1,0 +1,104 @@
+{
+  "created": "2026-09-26",
+  "what": "Album membership repointed from stack children to stack primaries. To undo, re-add each child id to its album and remove any primary listed as added.",
+  "endpoint_add": "PUT /api/albums/{album_id}/assets  {\"ids\":[...]}",
+  "endpoint_remove": "DELETE /api/albums/{album_id}/assets  {\"ids\":[...]}",
+  "swaps": [
+    {
+      "album": "charmer",
+      "album_id": "13bead70-4d85-4a73-b8a8-ca4a8bca768d",
+      "child_removed": "1e39c835-39b1-4e51-b731-f9e979348aba",
+      "primary": "62d38f46-428d-408c-947f-96ef36540593",
+      "primary_was_added": false,
+      "note": "20210314_150753.jpg 4032x1960 <- Resized_20210314_150753.jpeg"
+    },
+    {
+      "album": "charmer",
+      "album_id": "13bead70-4d85-4a73-b8a8-ca4a8bca768d",
+      "child_removed": "b5907850-5fc8-409e-aed5-3c87076b2646",
+      "primary": "610619ce-2c00-44c2-9e9e-2813755eb433",
+      "primary_was_added": false,
+      "note": "20210314_150838.jpg 4032x1960 <- Resized_20210314_150838.jpeg"
+    },
+    {
+      "album": "charmer",
+      "album_id": "13bead70-4d85-4a73-b8a8-ca4a8bca768d",
+      "child_removed": "733fc936-2231-40a1-bae3-1ecd46b99fb0",
+      "primary": "eac743a5-ec20-4d57-8174-cbb19c15c19c",
+      "primary_was_added": false,
+      "note": "20210314_150658.jpg 4032x1960 <- Resized_20210314_150658.jpg"
+    },
+    {
+      "album": "charmer",
+      "album_id": "13bead70-4d85-4a73-b8a8-ca4a8bca768d",
+      "child_removed": "d606e7a3-909a-4656-a45e-5e01f1d32f22",
+      "primary": "7c33a342-ed7f-4218-89d8-69a094f4f3a7",
+      "primary_was_added": false,
+      "note": "20210314_150700.jpg 4032x1960 <- Resized_20210314_150700.jpg"
+    },
+    {
+      "album": "charmer",
+      "album_id": "13bead70-4d85-4a73-b8a8-ca4a8bca768d",
+      "child_removed": "7d92bea3-74d8-441c-961d-316823d85588",
+      "primary": "8679719a-1198-4a10-bc54-0e4299ed1296",
+      "primary_was_added": false,
+      "note": "20210314_150749.jpg 4032x1960 <- Resized_20210314_150749.jpeg"
+    },
+    {
+      "album": "charmer",
+      "album_id": "13bead70-4d85-4a73-b8a8-ca4a8bca768d",
+      "child_removed": "028c7bf0-0815-4942-ae80-84dd87c87359",
+      "primary": "b533b69c-dd9f-4417-8270-71003c8058c3",
+      "primary_was_added": false,
+      "note": "20210314_150830.jpg 4032x1960 <- Resized_20210314_150830.jpeg"
+    },
+    {
+      "album": "charmer",
+      "album_id": "13bead70-4d85-4a73-b8a8-ca4a8bca768d",
+      "child_removed": "4db2cb3b-4496-4719-8a07-d153610e78cf",
+      "primary": "f930fee0-fdaa-48ba-8190-bd19770a0f99",
+      "primary_was_added": false,
+      "note": "20210314_150659.jpg 4032x1960 <- Resized_20210314_150659.jpg"
+    },
+    {
+      "album": "charmer",
+      "album_id": "13bead70-4d85-4a73-b8a8-ca4a8bca768d",
+      "child_removed": "5dc281bc-81fb-4023-9d29-86aaa9775c3a",
+      "primary": "00fd4854-db32-4990-8733-59475bebc9fb",
+      "primary_was_added": false,
+      "note": "20210314_150836.jpg 4032x1960 <- Resized_20210314_150836.jpg"
+    },
+    {
+      "album": "charmer",
+      "album_id": "13bead70-4d85-4a73-b8a8-ca4a8bca768d",
+      "child_removed": "4210762b-9d4e-476c-ae02-c7d7faf6a74e",
+      "primary": "fe75ed2d-3e0a-420d-8379-782019340d16",
+      "primary_was_added": false,
+      "note": "20210314_150834.jpg 4032x1960 <- Resized_20210314_150834.jpeg"
+    },
+    {
+      "album": "camping 2022",
+      "album_id": "e0997dc1-e217-4259-9a81-4d4405e02910",
+      "child_removed": "71237314-1b8b-4e10-9f4a-d38f77953bf1",
+      "primary": "958e1850-2ff6-4c23-b16b-e7cad2e11d4f",
+      "primary_was_added": true,
+      "note": "20220821_170037.jpg 4032x2268 <- Resized_20220821_170037.jpg"
+    },
+    {
+      "album": "Untitled",
+      "album_id": "ff7eb18a-ba87-4c8d-a9f1-7a94a559863a",
+      "child_removed": "877cc26f-fda7-4a28-a327-0b391b9ae749",
+      "primary": "83bbb873-b922-4cd5-9d5d-de8b6049b23e",
+      "primary_was_added": true,
+      "note": "PXL_20250706_171353719.jpg 4080x3072 <- IMG_20250706_130219.jpg"
+    },
+    {
+      "album": "Lake Ozark July 25",
+      "album_id": "af7538fb-2abe-4f01-884c-362fd0f18b51",
+      "child_removed": "877cc26f-fda7-4a28-a327-0b391b9ae749",
+      "primary": "83bbb873-b922-4cd5-9d5d-de8b6049b23e",
+      "primary_was_added": true,
+      "note": "PXL_20250706_171353719.jpg 4080x3072 <- IMG_20250706_130219.jpg"
+    }
+  ]
+}

@@ -453,11 +453,26 @@ for 6+ days as of 2026-09-05. Nothing currently open here.)*
   ratio and identical-dimension pairs before stacking in bulk.
   Verified first on a single album-affected group that **stacking
   does not disturb album membership**: `charmer` stayed at 61 and
-  still returns the stacked child. 11 non-primary members sit in
-  albums (10 of them in the Amazon albums created the same day,
-  which held the `Resized_` copies) — those albums still show the
-  smaller copy, which is worth repointing at the primary but is a
-  separate job.
+  still returns the stacked child.
+  **Albums repointed at the primaries, same day.** 11 non-primary
+  members sat in albums across 12 album/asset pairs. For the nine in
+  `charmer` the primary was **already in the album**, so those were
+  simply redundant `Resized_` copies alongside the full-res original
+  and were removed (61 -> **52**). The other three (`camping 2022`,
+  `Untitled`, `Lake Ozark July 25`) had the primary absent, so it was
+  added and the child removed — counts unchanged at 39/47/42. Total
+  memberships 872 -> **863**, photo/video totals untouched at
+  31,687/483. A cross-check over **all 479 stacks** then returned
+  **zero** albums holding a stack child, so this is complete rather
+  than just done for today's batch:
+  `SELECT al."albumName", a."originalFileName" FROM album_asset aa`
+  `JOIN album al ON al.id=aa."albumId" JOIN asset a ON a.id=aa."assetId"`
+  `JOIN stack st ON st.id=a."stackId"`
+  `WHERE a."deletedAt" IS NULL AND al."deletedAt" IS NULL`
+  `AND a.id <> st."primaryAssetId";`
+  Undo manifest with every id: `docs/restore/2026-09-26-album-repoint.json`.
+  Note `album_asset` columns are `albumId`/`assetId`, not the
+  `albumsId`/`assetsId` an older schema used.
   The other 455 same-resolution groups remain a keep-or-delete
   decision rather than a stack, and are untouched.
 - **`gsfarmctl` is memory-constrained** — 5.7 GB total, with a UniFi
