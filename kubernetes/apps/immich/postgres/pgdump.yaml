@@ -89,7 +89,15 @@ spec:
                   # Rename only on success, so a failed or truncated
                   # run never leaves a file that looks like a backup.
                   mv "$${out}.partial" "$${out}"
-                  echo "wrote $$(du -h "$${out}" | cut -f1)"
+                  # stat, not du: du reports ALLOCATED BLOCKS, and on
+                  # this NFS-backed gsks1 volume that is read before
+                  # writeback completes - the 2026-09-26 run logged
+                  # "wrote 512" for a file that was a full 190 MB and
+                  # restored cleanly. A backup log that reads like a
+                  # truncated backup is worse than no log. stat -c %s
+                  # reports st_size, which is correct immediately.
+                  sz=$$(stat -c %s "$${out}")
+                  echo "wrote $${out} - $${sz} bytes ($$((sz / 1048576)) MiB)"
                   # Keep 7 most recent; prune the rest.
                   ls -1t /dumps/immich-*.dump 2>/dev/null | tail -n +8 | while read -r old; do
                     echo "pruning $${old}"
@@ -98,7 +106,9 @@ spec:
                   # Clear any .partial left by an earlier crash.
                   find /dumps -name '*.partial' -mtime +1 -delete 2>/dev/null || true
                   echo "retained:"
-                  ls -1sh /dumps/immich-*.dump 2>/dev/null || true
+                  # ls -l (st_size), not ls -s (allocated blocks) - same
+                  # trap as du above.
+                  ls -1lh /dumps/immich-*.dump 2>/dev/null || true
               volumeMounts:
                 - name: dumps
                   mountPath: /dumps
