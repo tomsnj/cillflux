@@ -321,8 +321,24 @@ for 6+ days as of 2026-09-05. Nothing currently open here.)*
   Then mount the share read-only rather than staging 154 GB on
   `gsfarmctl` (5.7 GB RAM; a 12,000-asset run already died at 53%
   once), and note NFS preserves mtimes — which EXIF-less files
-  depend on. Full approach in `docs/plan-immich-album-import.md`
-  phase 2.
+  depend on.
+  **Ownership reframes this (2026-09-26):** `cgsteck/` and
+  `cgsteck_a/` are **Calvin's**, not Tom's — 633 GB of the 658 GB,
+  and so nearly all the photo/video — and must not land in Tom's
+  library. Tom's read is that they are largely horse-show photos
+  taken *for other people*, work output rather than an archive
+  anyone revisits, so the likely answer is they should not go into
+  Immich at all. That leaves nothing here for Tom's library; the
+  third share, `shawna-laptop-backup/` (25 GB), is Shawna's. If
+  Calvin does want his: **`--admin-api-key` cannot do it** (it only
+  manages server jobs, not uploads on another user's behalf), so it
+  needs Calvin's own API key; and **his quota is 107 GB against
+  154.2 GB**, so it would not fit as configured. The hash pass is
+  still worth finishing, but it now answers "did Calvin's photos
+  already get swept into Tom's library under the wrong owner?"
+  rather than "how much work is left" — split the comparison by
+  top-level share, not in aggregate.
+  Full approach in `docs/plan-immich-album-import.md` phase 2.
 - **Immich: album import** — only **562 of 31,938 assets (1.8%)** are
   in an album, and all 21 albums were created 2026-09-12/13 by the
   Google Takeout stage. Nothing else produced one: all fifteen Amazon
