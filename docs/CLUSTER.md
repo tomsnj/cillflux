@@ -434,14 +434,32 @@ for 6+ days as of 2026-09-05. Nothing currently open here.)*
   mid-import would just re-detect against a moving target. Also worth
   a pass over near-duplicates that dedup cannot catch by checksum,
   e.g. a Google-resized copy alongside an Amazon original.
-  **Scoped 2026-09-26**: `duplicateDetection` has found 512 groups
-  covering 1,188 assets, but only **64 of those groups differ in
-  resolution** — the actual stacking target, and worth just 60 MB.
-  The other 448 are same-resolution duplicates, which is a
-  keep-or-delete decision rather than a stack, so the two piles want
-  separate passes. Runs **after** the album import
-  (`docs/plan-immich-album-import.md` explains the ordering), with a
-  fresh `duplicateDetection` in between.
+  **DONE 2026-09-26.** After a full `force: true` sweep of all
+  33,041 assets (521 groups / 1,219 assets, 66 of them
+  resolution-variant), **59 stacks were created covering 119
+  assets** — stacks 420 -> **479**, stacked assets 763 -> **882**.
+  All 59 verified afterwards for correct primary and membership;
+  photo/video totals unchanged at 31,687/483 and albums unchanged at
+  32/872, so nothing was deleted or moved.
+  Primary is the largest copy by pixel count. **7 groups were held
+  back for human review**, filtered out by two rules worth reusing:
+  *aspect ratios differ* (six of them pair a photo with a phone
+  **screenshot of** that photo, AR 2.056 vs 1.333/1.778 — visually
+  similar to the detector, not the same asset), and *two members at
+  identical dimensions* (`20220429_204244.jpg` and
+  `...204245.jpg`, two distinct shots one second apart, which
+  stacking would have buried). "Resolution-variant group" does
+  **not** imply "same photo at different sizes" — check aspect
+  ratio and identical-dimension pairs before stacking in bulk.
+  Verified first on a single album-affected group that **stacking
+  does not disturb album membership**: `charmer` stayed at 61 and
+  still returns the stacked child. 11 non-primary members sit in
+  albums (10 of them in the Amazon albums created the same day,
+  which held the `Resized_` copies) — those albums still show the
+  smaller copy, which is worth repointing at the primary but is a
+  separate job.
+  The other 455 same-resolution groups remain a keep-or-delete
+  decision rather than a stack, and are untouched.
 - **`gsfarmctl` is memory-constrained** — 5.7 GB total, with a UniFi
   controller (`java` ~765 MB + `mongod` ~358 MB) taking roughly 30% of
   what's in use. This is not theoretical: it killed a bulk `immich-go`
