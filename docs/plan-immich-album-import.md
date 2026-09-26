@@ -118,50 +118,55 @@ should be identical and the 183/184 gap is sync lag. If they are
 separate local libraries, the difference is real and both need
 importing.
 
-### 1b. The *Family* shared album — import it, the derivative worry does not apply
+### 1b-result. Imported 2026-09-26 — 48 new assets, `Family` album created
 
-The concern was that iCloud Shared Albums hold ~2048px derivatives
-rather than originals, so importing 48 of them would manufacture up
-to 48 new resolution-variant duplicate groups right before the
-stacking pass. **That does not apply here**, and the reason is the
-source device.
+Exported from the MacBook Air with Export Unmodified Originals,
+default options, to `~/ipadExport2` — 48 files, 8.8 MB, flat folder,
+all `.JPG`, `IMG_0001`–`IMG_0048`.
 
-All 48 came from an **Apple iPad 2**, whose rear camera is 0.7 MP —
-**960x720 native**. The sample (`IMG_0001.JPG`, 2017-11-18, 960x720,
-146 KB) is therefore already *below* the shared-album cap, so Apple
-never downscaled it. These are originals, not derivatives.
-
-They are also not in Immich. Checked against the live library
-2026-09-26:
+Pre-flight confirmed every expectation:
 
 | Check | Result |
 |---|---|
-| Assets with `model = 'iPad 2'` | **1** in 31,938 — `File_000.jpeg`, 720x720, 2017-01-14. Not this set |
-| Assets named `IMG_0001.*` | **0** |
-| Assets at 960x720 | 27, **all Facebook downloads** (`*_n.jpg`, `FB_IMG_*`, `_facebook_*`), no EXIF, unrelated |
-| Library coverage Nov 2017 | 237 assets — the period is well covered, so the gap is device-specific, not date-specific |
+| Dimensions | **48/48 at 960x720** — iPad 2 native, no downscaling |
+| Device | **48/48 `Apple` / `iPad 2`** |
+| EXIF dates | **48/48 present**, 2017-11-18 → 2018-02-19 |
+| Already on server (sha1) | **0 of 48** |
 
-So the 48 are genuinely unique content that exists nowhere else in
-the library, at their original resolution, and the
-"which-contributor" split from the earlier draft is moot: one device,
-one contributor, none of it already held.
+Imported with `--into-album "Family"` rather than
+`--folder-as-album`, since the staging directory is named
+`ipadExport2` and would otherwise have become the album name.
 
-**Import them, and recreate `Family` as a real album** — it is the
-only album structure in the entire Apple phase. No name clash exists
-(checked, case-insensitively, against all 31 albums).
-
-```bash
-# folder named exactly "Family", one level under the staging dir
-immich-go upload from-folder --no-ui --dry-run --pause-immich-jobs=false \
-  --folder-as-album=FOLDER --concurrent-tasks 1 ~/apple-shared
+```
+uploaded successfully : 48  (8.6 MB)
+added to album        : 48
+discarded             :  0
 ```
 
-Expect ~48 uploads rather than `server has duplicate` — the opposite
-of every other batch this month, and the sign it is working. Total
-size is trivial: 48 x ~146 KB is about 7 MB.
+Verified after: photos **31,455 → 31,503 (+48)**, albums **31 → 32**,
+memberships **824 → 872**, `Family` holds 48, all 48 byte-present by
+sha1, no new job failures against the 7/3/2/2/5 baseline, all queues
+idle and none left paused, all pods ready.
 
-Because this genuinely adds assets, re-run **Duplicate Detection**
-afterwards before the stacking pass, per the ordering section.
+Dates filed correctly rather than defaulting to today: **47 in
+2017-11, 1 in 2018-02**, matching the EXIF range exactly.
+
+**A filename collision worth recording.** `IMG_0016.JPG` already
+existed on the server — a Canon PowerShot ELPH 360 HS shot from
+2020-12-25 at 3888x5184. Entirely different photograph, same name.
+`immich-go` weighs name *and date* and size together, so the
+differing dates meant it did not trip the "same name and date but
+bigger on the server" skip; both now coexist. Two consequences:
+
+- The library now has a genuine duplicate `originalFileName`, so
+  name-based resolution would find it ambiguous. This is exactly why
+  `immich-album-from-names.py` skips ambiguous names instead of
+  guessing — had these 48 needed name resolution rather than upload,
+  `IMG_0016.JPG` would have been correctly refused.
+- Generic camera filenames (`IMG_00NN.JPG`) collide across devices
+  far more readily than the timestamped names Amazon and Google use.
+  Any future name-resolution work on camera-roll exports should
+  expect ambiguity rates well above the 0.1% seen on the Amazon set.
 
 ### 1c. Export, stage, dry run
 

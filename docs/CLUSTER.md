@@ -312,8 +312,23 @@ for 6+ days as of 2026-09-05. Nothing currently open here.)*
   are named `IMG_0001.*`, and the 27 assets at 960x720 are all
   Facebook downloads. November 2017 is otherwise well covered (237
   assets), so the gap is device-specific rather than a missing
-  period. **Import them and recreate `Family` as an album** — the
-  only album structure in the whole Apple phase, ~7 MB.
+  period. **DONE 2026-09-26**: exported from the Air with Export
+  Unmodified Originals (default options) to `~/ipadExport2` and
+  imported with `--into-album "Family"`. Pre-flight confirmed 48/48
+  at 960x720, 48/48 `Apple`/`iPad 2`, 48/48 with EXIF dates
+  (2017-11-18 -> 2018-02-19), and **0 of 48 already on the server**.
+  Result: photos 31,455 -> **31,503 (+48)**, albums 31 -> **32**,
+  memberships 824 -> **872**, dates filed correctly (47 in 2017-11,
+  1 in 2018-02), no new job failures, queues idle and unpaused.
+  One filename collision to note: `IMG_0016.JPG` already existed as
+  a 2020 Canon PowerShot shot at 3888x5184 — different photograph,
+  same name. `immich-go` weighs name *and* date, so the differing
+  dates meant it did not trip the "same name and date but bigger on
+  the server" skip, and both coexist. The library now has a genuine
+  duplicate `originalFileName`, which is precisely why
+  `immich-album-from-names.py` refuses ambiguous names rather than
+  guessing; generic camera filenames collide far more readily than
+  the timestamped names Amazon and Google use.
   Key enabler, verified 2026-09-26 by dry run: `immich-go`
   reports `added to album` for an asset it also reports as
   `server has duplicate` — **album membership attaches to assets
