@@ -466,13 +466,21 @@ for 6+ days as of 2026-09-05. Nothing currently open here.)*
   them — and note **1,020 assets library-wide** are named
   `Screenshot_*`, so any sweeping rule needs far more care than
   these five did.
-  Three groups remain, all genuine same-photo pairs awaiting only a
-  primary-copy choice: `IMG_0196[1].JPG` 2304x3072 (2007, red-eye)
-  vs `20201101_063453.jpg` 1080x1410 (2020, red-eye corrected);
-  `20211202_201450.jpg` 4032x2268 vs `20211226_162315.jpg`
-  3550x2268 (a right-side crop of it, same EXIF timestamp); and
-  `20220429_204244.jpg` / `...204245.jpg`, which are **two distinct
-  frames a second apart and must not be stacked**.
+  The last two were then stacked on Tom's call — **higher
+  resolution for group 1, uncropped for group 6**, both of which the
+  largest-by-pixel-count rule already picked: `IMG_0196[1].JPG`
+  2304x3072 over the 2020 red-eye-corrected `20201101_063453.jpg`
+  1080x1410, and `20211202_201450.jpg` 4032x2268 over its
+  right-side crop `20211226_162315.jpg` 3550x2268 (same EXIF
+  timestamp; the Dec 26 filename is only when the crop was saved).
+  `20220429_204244.jpg` / `...204245.jpg` were deliberately **left
+  unstacked** — two distinct frames a second apart. They will keep
+  appearing in the duplicates view, which is correct.
+  **The resolution-duplicate pass is complete: 0 resolution-variant
+  groups remain.** Final state 481 stacks / 886 assets, 456
+  duplicate groups all same-resolution, photos 31,682, and zero
+  albums holding a stack child. The 456 are a keep-or-delete
+  decision, not a stack, and are untouched.
   Verified first on a single album-affected group that **stacking
   does not disturb album membership**: `charmer` stayed at 61 and
   still returns the stacked child.
