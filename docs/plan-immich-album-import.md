@@ -68,7 +68,7 @@ which cloud the bytes came from.
 |---|---|---|
 | Google Photos | Already imported, 21 albums | Done |
 | Apple Photos | **No — zero albums on either Mac.** One *shared* album, `Family` (48), on the Air only | **Phase 1**, now a ~184-photo content import, not an album import |
-| Local / network drives | Maybe — folder names may or may not be meaningful | Phase 2, survey first |
+| **WD MyCloud network drive** | **Never imported** — 52,816 photo/video files, 154.2 GB | **Phase 2**, the last untouched source |
 | Amazon Photos | Not in the export or the manifests — but recoverable from filenames alone | **Done** — all 12 imported 2026-09-26 |
 
 ## Phase 1 — Apple Photos
@@ -267,24 +267,83 @@ server: `~/ipadExport2` (8.8 MB), `~/ipadExport3` (55 MB,
 superseded by the `-p` re-transfer), `~/ipadExport4` (55 MB),
 `~/macbookProExport` (55 MB).
 
-## Phase 2 — local and network drive folders
+## Phase 2 — the WD MyCloud: an unfinished migration stage
 
-Stage 1 imported 359 assets from `~/Pictures/pics` and similar with
-no album structure. Whether those folders *deserve* to be albums is a
-judgement call that needs eyes on the folder names first — a tree of
-`2015`, `misc`, `new folder` should stay timeline-only.
+**Rewritten 2026-09-26.** This phase originally read "look at the
+stage-1 source folder names and decide whether any deserve to be
+albums." That was thin — 359 assets of 31,682, from folders on a Mac
+that may not exist in that shape any more — and it was also aimed at
+the wrong thing. Checking it turned up a genuine gap.
 
-Survey before planning:
+The strategy doc's stage was **"local/network drives first"**. Only
+the *local* half ever happened: `~/Pictures` on the MacBook,
+2026-09-08, 359 assets. **The network drives were never imported.**
 
-```bash
-find <drive-root> -maxdepth 2 -type d -printf '%p\t' \
-  -exec sh -c 'find "$1" -maxdepth 1 -type f | wc -l' _ {} \;
+### What is actually there
+
+A WD MyCloud at `10.0.0.201`, mirrored weekly to TrueNAS as
+`backups/mycloud-photos` (Sun 04:00, `/root/mycloud-sync.sh`).
+Measured 2026-09-26:
+
+```
+52,816 photo/video files, 154.2 GB
+  cgsteck/                 448G total
+  cgsteck_a/               185G total
+  shawna-laptop-backup/     25G total
 ```
 
-If the names are meaningful, this is the same `--folder-as-album`
-run as Phase 1 and the files are already on the server, so it is
-cheap. If they are not, skip it — say so explicitly rather than
-leaving the phase open.
+For scale, the whole Immich library is 31,682 photos / 170 GB. So
+this is **not** a stray-files problem — it is comparable in size to
+everything imported so far, and it is the last untouched source.
+
+The 154.2 GB is the photo/video subset of ~658 GB; the rest is
+ordinary files and backup content. Note `shawna-laptop-backup` shows
+25 GB live here against the 672 GB in the dataset table — that table
+counts snapshots, and the 2026-09-22 `--exclude WindowsImageBackup/`
+change plus `--delete` removed the mirrored Windows image from the
+live copy.
+
+### Do the cheap thing first: checksum before copying anything
+
+Do **not** start by staging 154 GB. Immich's `asset.checksum` is
+plain sha1 of the original bytes, so overlap can be measured without
+moving a file — the same method that made today's imports safe:
+
+1. On TrueNAS, hash the candidates (local read, no network):
+   ```bash
+   sudo find /mnt/storage1/backups/mycloud-photos -type f \
+     \( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.heic' -o -iname '*.png' \
+        -o -iname '*.mp4' -o -iname '*.mov' -o -iname '*.dng' -o -iname '*.cr2' \) \
+     -print0 | xargs -0 -P4 sha1sum > /mnt/storage1/home/stecktf_a/mycloud-sha1.txt
+   ```
+2. On `gsfarmctl`, pull Immich's side and compare:
+   ```sql
+   SELECT encode(checksum,'hex') FROM asset WHERE "deletedAt" IS NULL;
+   ```
+   `comm -23` the two sorted lists gives the genuinely-new count
+   before a single byte is copied.
+
+Given Google Takeout and Amazon already cover 2011–2026, overlap
+could be large — but 52,816 files against a 31,682-asset library
+means it could equally be mostly new. The hash pass settles it in
+under an hour and decides whether this is a weekend or an afternoon.
+
+### Then, if there is real new content
+
+- **Mount, do not copy.** `gsfarmctl` has 5.7 GB of RAM and an
+  `immich-go` run indexes the whole server list first; it died at 53%
+  on a 12,000-asset run on 2026-09-12. Mount the share read-only over
+  NFS and point `immich-go` at the mount rather than staging 154 GB
+  on a host with 393 GB free but not the memory. NFS preserves
+  mtimes natively, which matters — see the `scp -rp` gotcha in
+  `CLAUDE.md`; any EXIF-less file depends on its mtime for timeline
+  placement.
+- **Split the runs** so the tool never indexes tens of thousands of
+  assets at once.
+- **Check the date spread before and after**, per the same gotcha.
+- Album structure: only if the folder names turn out to be
+  meaningful. Judge that after the survey, not before — and a tree of
+  `2015`, `misc`, `new folder` should stay timeline-only.
 
 ## Phase 3 — the Amazon half: names, not photographs
 
@@ -652,8 +711,12 @@ a stack.
 2. Are the 183 photos on the Air and the 184 on the Pro the same set?
    Looks like a complete overlap visually. Settle it with sha1 after
    export (1a) rather than by eye.
-3. Are the local/network drive folder names meaningful enough to be
-   albums? Decides whether Phase 2 exists.
+3. ~~Are the local/network drive folder names meaningful enough to be
+   albums?~~ **Wrong question, replaced 2026-09-26.** The real one:
+   how much of the WD MyCloud's **52,816 photo/video files / 154.2
+   GB** is already in Immich? A sha1 pass on TrueNAS answers it
+   before anything is copied. Album structure there is a later,
+   smaller question.
 4. ~~Are there Amazon-era albums worth recovering?~~ **Done
    2026-09-26** — none on Tom's account, 12 on Shawna's, all 12
    imported.

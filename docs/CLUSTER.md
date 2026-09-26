@@ -305,6 +305,24 @@ for 6+ days as of 2026-09-05. Nothing currently open here.)*
   consistent with the same photo arriving from both Google and
   Amazon. Full list in the 2026-09-26 session notes. Worth a pass to
   re-fetch or drop them, but not blocking anything.
+- **Immich: the WD MyCloud was never imported** — the original
+  staged plan said "local/network drives first", but only the *local*
+  half happened (`~/Pictures` on the MacBook, 359 assets,
+  2026-09-08). The WD MyCloud at `10.0.0.201`, mirrored weekly to
+  TrueNAS as `backups/mycloud-photos`, holds **52,816 photo/video
+  files totalling 154.2 GB** (measured 2026-09-26) across
+  `cgsteck/` 448G, `cgsteck_a/` 185G and `shawna-laptop-backup/`
+  25G. For scale the entire Immich library is 31,682 photos / 170
+  GB, so this is the last untouched source and is comparable in size
+  to everything migrated so far. **Measure overlap before copying
+  anything**: `asset.checksum` is plain sha1 of the original bytes,
+  so hashing the candidates on TrueNAS and diffing against Immich's
+  checksum list gives the genuinely-new count without moving a file.
+  Then mount the share read-only rather than staging 154 GB on
+  `gsfarmctl` (5.7 GB RAM; a 12,000-asset run already died at 53%
+  once), and note NFS preserves mtimes — which EXIF-less files
+  depend on. Full approach in `docs/plan-immich-album-import.md`
+  phase 2.
 - **Immich: album import** — only **562 of 31,938 assets (1.8%)** are
   in an album, and all 21 albums were created 2026-09-12/13 by the
   Google Takeout stage. Nothing else produced one: all fifteen Amazon
