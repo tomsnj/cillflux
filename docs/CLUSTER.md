@@ -329,6 +329,19 @@ for 6+ days as of 2026-09-05. Nothing currently open here.)*
   `immich-album-from-names.py` refuses ambiguous names rather than
   guessing; generic camera filenames collide far more readily than
   the timestamped names Amazon and Google use.
+  **The Air's 183 loose photos imported the same day** (photos
+  31,503 -> **31,686**), but only after a date trap: 44 of them had
+  no EXIF date, no make/model and no parseable date in the filename,
+  so the file mtime was their only date source - and the first
+  transfer, a plain `scp -r`, had collapsed every mtime to the
+  moment of the copy. They would have landed silently in the 2026
+  timeline. Re-transferred with `scp -rp`; the mtimes of the 139
+  files that *do* carry EXIF then matched their EXIF to within **1
+  second**, which is what proves the mtimes are real capture dates
+  and the 44 can be trusted. Placement came out 2018-10 -> 2021-07
+  with **zero assets in 2026**. See the `scp -rp` gotcha in
+  CLAUDE.md. Still open: the **MacBook Pro's 184**, which may be the
+  same set.
   Key enabler, verified 2026-09-26 by dry run: `immich-go`
   reports `added to album` for an asset it also reports as
   `server has duplicate` — **album membership attaches to assets

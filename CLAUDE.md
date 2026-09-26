@@ -123,6 +123,26 @@ file covers working conventions, not the full reference.
   `sudo midclt call nfs.update '{"bindip": []}'`.
 - Renovate's strict YAML parser crashes on aliases referenced before their
   anchors are defined.
+- **Copy photo staging folders with `scp -rp` or `rsync -a`, never plain
+  `scp -r`.** For any file without an EXIF date, the file mtime is the
+  *only* remaining date source: `immich-go` sends it as `FileDate`, and
+  Immich files the asset in the timeline by it. A plain `scp -r` resets
+  every mtime to the moment of the copy, so those assets land under
+  today's date with nothing to flag it — the import reports 100%
+  success. Hit on 2026-09-26 with an Apple Photos export: 44 of 183
+  files had no EXIF date and no parseable date in the name
+  (`IMG_1432.JPG`), and all 183 mtimes had collapsed to two timestamps
+  a minute apart. Re-transferred with `-p`, and the mtimes of the 139
+  files that *did* carry EXIF matched their EXIF to within **1 second**
+  (median 0) — which is what proves the mtime is the capture date
+  rather than an export artifact, and therefore that the other 44 can
+  be trusted. Check before importing:
+  `find <dir> -type f -printf '%TY-%Tm\n' | sort | uniq -c` — a single
+  clump means the dates are gone.
+  Note `--date-from-name` only rescues files whose *name* carries a
+  timestamp, and XMP sidecars do not help: immich-go v0.32.0 logs
+  `discovered sidecar` but still reports `CaptureDate=0001-01-01`,
+  under both the `IMG_1433.xmp` and `IMG_1433.JPG.xmp` conventions.
 - `home-operations` images aren't published with semver tags — pin by
   digest (`@sha256:...`), which Renovate's docker datasource handles fine.
 - Files with `600` permissions block reads as non-root UID in CI — sweep

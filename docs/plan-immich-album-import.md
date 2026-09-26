@@ -168,28 +168,68 @@ bigger on the server" skip; both now coexist. Two consequences:
   Any future name-resolution work on camera-roll exports should
   expect ambiguity rates well above the 0.1% seen on the Amazon set.
 
-### 1c. Export, stage, dry run
+### 1c-result. The Air's 183 loose photos — imported 2026-09-26
 
-Export Unmodified Originals into a plain folder — **not** Export
-Photos, which writes edited renders and is what produced the 293
-derivatives in 2026-09-08. With zero albums there is no subfolder
-format to worry about.
+Exported from the MacBook Air with Export Unmodified Originals,
+default options. 183 files, 55 MB, flat folder, 158 JPG + 25 PNG,
+`IMG_1432`–`IMG_5097`. **All 183 new** — 0 already on the server, and
+no filename collisions.
 
-```bash
-rsync -avP ~/Desktop/apple-air/ stecktf@10.0.100.240:~/apple-air/
-find ~/apple-air -name '*.photoslibrary' -o -name 'AlbumData.xml'   # must be empty
+**The date trap, and the fix.** 139 files carried an EXIF date; the
+other **44 carried none, no make/model, and no parseable date in the
+filename** (`IMG_1432.JPG`), so `--date-from-name` could not rescue
+them the way it saved `202312031443160000.jpg` in the `~/Downloads`
+batch. With no EXIF, `immich-go` falls back to the file mtime as
+`FileDate` — and the first transfer, a plain `scp -r`, had collapsed
+all 183 mtimes onto two timestamps a minute apart. Those 44 would
+have landed in the 2026 timeline, with the import reporting complete
+success.
 
-immich-go upload from-folder --no-ui --dry-run --pause-immich-jobs=false \
-  --concurrent-tasks 1 --on-errors 200 ~/apple-air
+Re-transferred with `scp -rp` (`rsync -a` equivalent), which
+preserves mtime. The validation that made this trustworthy: for the
+**139 files that do have EXIF, mtime matched EXIF to within 1 second**
+(median 0, max 1s, none over a minute). That is what proves the mtime
+is the genuine capture date rather than an export artifact — and
+therefore that the 44 undated files' mtimes can be believed too.
+Their sequence corroborates it: `IMG_1432`–`1439` sit at 11:39–11:45
+on 2018-10-06, consecutive minutes, exactly like a real burst.
+
+Byte-identical to the first transfer (183/183 same sha1), so only
+metadata changed.
+
+**Result:** photos **31,503 → 31,686 (+183)**, all 183 byte-present
+by sha1, no new job failures against the 7/3/2/2/5 baseline, pods
+healthy. Timeline placement matched the mtime spread exactly, with
+**zero assets in 2026**:
+
+```
+2018-10  85     2019-02   7     2019-05  17     2020-04  13
+2018-11  21     2019-03   8     2019-06   6     2021-07   1
+2018-12  10     2019-04   8     2019-07   2
+2019-01   5
 ```
 
-Read `uploaded` against `server has duplicate`. If the new-asset count
-is near zero, as the `~/Downloads` stage was, the value of the
-exercise is confirming it rather than growing the library.
+The 44 previously-undated assets span 2018-10-06 → 2021-07-30.
 
-`--folder-as-album` is deliberately **absent** — there are no albums,
-and pointing it at a staging folder would create an album named after
-the folder.
+Approaches ruled out along the way:
+
+- **XMP sidecars.** `immich-go` v0.32.0 logs `discovered sidecar` but
+  still reports `CaptureDate=0001-01-01`, under both the
+  `IMG_1433.xmp` and `IMG_1433.JPG.xmp` conventions. The "Export IPTC
+  as XMP" checkbox does not help.
+- **Bracketing undated files between dated neighbours** in the
+  `IMG_NNNN` sequence. Median uncertainty 8.9 days, max 273, and 10
+  of the 44 unbounded at the ends of runs. Not worth it when a
+  transfer flag recovers the real dates.
+
+### Still open in Phase 1
+
+The **MacBook Pro's 184 photos**. The 183-vs-184 question stands: if
+both machines share one iCloud Photos library the sets are identical
+and there is nothing left to do, but that was a visual check. Settle
+it by exporting with `scp -rp` and comparing sha1 against the 183
+just imported — anything already present will simply report
+`server has duplicate`.
 
 ## Phase 2 — local and network drive folders
 
