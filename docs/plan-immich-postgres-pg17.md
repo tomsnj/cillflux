@@ -1,6 +1,6 @@
 # Work plan: Immich Postgres 14 → 17
 
-Status: **Phase 1 (rehearsal) complete and passed, 2026-09-26. Phase 2 ready to execute.** Written 2026-09-26 against PR
+Status: **COMPLETE — migrated to PostgreSQL 17.6 on 2026-09-26.** Phases 1 and 2 both passed; only the Phase 5 cleanup remains, due on or after 2026-10-03. Written 2026-09-26 against PR
 [#960](https://github.com/tomsnj/cillflux/pull/960)
 (`ghcr.io/immich-app/postgres` 14 → 16), which is queued as "needs Tom"
 from that day's Renovate review.
@@ -372,6 +372,50 @@ Downtime starts at step 3 and ends at step 11.
     the explicit scale just avoids waiting for it.
 
 12. **Delete the restore Job** once its logs are read.
+
+## 6a. Phase 2 — **DONE 2026-09-26, passed**
+
+Executed exactly as written below. **Total downtime 11:53:20 → 11:57:26
+UTC: 4 minutes 6 seconds**, against a 15-minute estimate.
+
+| Step | Measured |
+|---|---|
+| Suspend, scale down, confirm 0 connections | < 1 min |
+| Migration dump (17.6 client vs 14.19 server) | **26 s**, 190 MB, 515 TOC entries |
+| Commit, reconcile, `initdb`, pod ready | **~1 min** (pod ready 5 s after apply) |
+| `pg_restore` incl. vchordrq rebuild | **27 s** |
+| `ANALYZE` | **2 s** |
+| Immich back and serving | 15 s |
+
+Rehearsal predicted 27 s / 3 s; production came in at 27 s / 2 s. The
+rehearsal was worth exactly what it measured.
+
+Verification results:
+
+- PostgreSQL **17.6** on `immich-postgres-data-nvme-pg17`.
+- Extensions as predicted: `vchord 0.4.3`, `vector 0.8.0`,
+  `earthdistance 1.2`, rest unchanged.
+- **All 66 tables identical to the pre-migration `count(*)` baseline —
+  zero differences.** Database 596 MB vs 621 MB before (no bloat).
+- Both vchordrq indexes valid at identical sizes, and serving:
+  `Index Scan using clip_index` 3.9 ms, `face_index` 3.1 ms.
+- Immich API: `photos=31455 videos=483`, matching pre-migration exactly.
+- **Smart search through the API returned real results**, which is the
+  end-to-end proof that `clip_index` works for users and not just for
+  `EXPLAIN`.
+- Job queues idle, failure counts unchanged from the pre-migration
+  baseline (no new failures).
+- Volsync `sourcePVC` confirmed following to the pg17 volume.
+- The nightly dump CronJob was run manually on 17 and produced a valid
+  198,817,526-byte dump with 513 TOC entries.
+
+One cosmetic wart found, **not a defect**: the CronJob logged
+`wrote 512`. Its `du -h` runs immediately after `mv` on the NFS-backed
+`gsks1` volume and reports allocated blocks before writeback, so the
+figure is meaningless at that instant. The file is a full 190 MB and
+restores cleanly. Anyone reading that log line would reasonably think
+the backup had truncated — worth switching to `stat -c %s` at some
+point.
 
 ## 7. Verification
 

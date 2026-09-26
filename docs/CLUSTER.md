@@ -499,23 +499,24 @@ for 6+ days as of 2026-09-05. Nothing currently open here.)*
   Folder deleted 2026-09-25 after re-verifying all 472 immediately
   beforehand; 97 MB reclaimed. No batch folders remain on
   `gsfarmctl`. Total reclaimed across all four: 826 MB.
-- **Immich Postgres 14 → 17** (target decided 2026-09-26) — **PR #960
-  should be closed, not merged.** It proposes 16, which is no longer
-  the destination, and an image bump alone cannot work anyway:
-  Postgres will not read a v14 data directory with a newer binary, and
-  this database is a plain Deployment rather than PGO, so there is no
-  `PGUpgrade` path. It needs a logical dump/restore onto a second PVC.
-  Treat *any* future Renovate bump of this image the same way — it is
-  never a merge, it is always the runbook.
-  **Not urgent** — Immich supports `>= 14, < 20`, so the driver is
-  PostgreSQL 14's community EOL in **November 2026**; landing on 17
-  rather than 16 moves the next forced round from Nov 2028 to Nov 2029
-  for identical effort. Target image
-  `17-vectorchord0.4.3-pgvector0.8.0`: `vchord` stays at 0.4.3 (so no
-  reindex guidance applies) and the only cost is pgvector 0.8.1 → 0.8.0,
-  which is inert — 0.8.1 added no SQL objects. Full runbook, with
-  measured state and a zero-risk rehearsal phase, in
-  `docs/plan-immich-postgres-pg17.md`.
+- **Immich Postgres → 17.6 — DONE 2026-09-26** (commit `e4bdeab0`).
+  Migrated 14.19 → 17.6 by logical dump/restore onto a new PVC;
+  **4 min 6 s downtime**, all 66 tables verified identical by real
+  `count(*)`, both vchordrq indexes rebuilt and serving, smart search
+  confirmed working through the API. PR #960 was **closed, not
+  merged** — it targeted 16, and an image bump alone can never work
+  here: Postgres will not read a v14 data directory with a newer
+  binary and this database is a plain Deployment, not PGO, so there is
+  no `PGUpgrade` path. **Treat every future Renovate bump of this
+  image the same way: it is never a merge, it is always
+  `docs/plan-immich-postgres-pg17.md`.** Next forced round is PG17's
+  EOL, November 2029.
+  **Outstanding — Phase 5 cleanup, due on or after 2026-10-03:** the
+  two rollback PVCs `immich-postgres-data-nvme` (the PG14 directory)
+  and `immich-postgres-data` (gsks0, pre-NVMe) are still declared in
+  `postgres.yaml` and consuming 40 Gi. Remove them from git only after
+  a week of normal use — Flux prunes by inventory diff, so deleting
+  the block deletes the volume.
 - **`gitops.gs-farm.net` returns 504** (low priority, 2026-09-25) — the
   Weave GitOps UI. The app is fine: an in-cluster probe against
   `weave-gitops.flux-system.svc:9001` returns 200 immediately, the pod
