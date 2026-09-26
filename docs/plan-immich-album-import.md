@@ -303,6 +303,53 @@ counts snapshots, and the 2026-09-22 `--exclude WindowsImageBackup/`
 change plus `--delete` removed the mirrored Windows image from the
 live copy.
 
+### Ownership: this is mostly not Tom's content
+
+Established 2026-09-26, and it reframes the whole phase.
+`cgsteck/` and `cgsteck_a/` — 633 GB of the 658 GB, and so almost
+all of the 154.2 GB of photo/video — are **Calvin's**, not Tom's.
+They must not be imported into Tom's library.
+
+Tom's read on the content: largely photographs taken *at horse shows
+for other people*, i.e. work output rather than a personal archive
+anyone revisits. So the likely answer is that most of it should not
+go into Immich at all, by anyone.
+
+That leaves **nothing in this phase that belongs in Tom's library** —
+the third share, `shawna-laptop-backup/` (25 GB), is Shawna's.
+
+Two hard constraints if Calvin does want his:
+
+- **`--admin-api-key` will not do it.** Despite the name it only
+  manages *server jobs* (pause/resume); it does not upload on another
+  user's behalf. An import into Calvin's account needs **Calvin's own
+  API key**, so he has to be involved — this is not something to do
+  for him.
+- **His quota is 107 GB against 154.2 GB of photo/video.** Even
+  wanting all of it, it would not fit as configured.
+
+So the decision is Calvin's, the credential is Calvin's, and the
+default is "leave it on the MyCloud, which is already backed up
+weekly to TrueNAS."
+
+### What the hash is now for
+
+The overlap number is still worth having, but it answers a different
+question than when this phase was written. It is no longer "how much
+work is left" — it is:
+
+> **Did Calvin's photographs already end up in Tom's library?**
+
+A high overlap would mean an earlier import swept them in under the
+wrong owner, which is a correctness problem to fix rather than a
+migration to run. A near-zero overlap means the libraries are cleanly
+separate and Tom's side needs nothing here.
+
+Because the hash output carries full paths, split the comparison by
+top-level share (`cgsteck`, `cgsteck_a`, `shawna-laptop-backup`)
+rather than reporting one aggregate — the per-share split is the
+answer, the total is not.
+
 ### Do the cheap thing first: checksum before copying anything
 
 Do **not** start by staging 154 GB. Immich's `asset.checksum` is
