@@ -1,6 +1,6 @@
 # Work plan: Immich Postgres 14 → 17
 
-Status: **proposed, not started.** Written 2026-09-26 against PR
+Status: **Phase 1 (rehearsal) complete and passed, 2026-09-26. Phase 2 ready to execute.** Written 2026-09-26 against PR
 [#960](https://github.com/tomsnj/cillflux/pull/960)
 (`ghcr.io/immich-app/postgres` 14 → 16), which is queued as "needs Tom"
 from that day's Renovate review.
@@ -174,11 +174,64 @@ same glibc), and a dump/restore rebuilds every index from DDL anyway, so
 the text-sort-order hazard that bites `pg_upgrade` across glibc versions
 does not arise.
 
-## 5. Phase 1 — rehearsal (no downtime, nothing production touched)
+## 5. Phase 1 — rehearsal — **DONE 2026-09-26, passed**
 
-Do this first, on a normal day. It answers the only open question —
-how long the vchordrq rebuild takes — and proves the procedure end to
-end against the real data, at zero risk.
+Ran against the real 02:30 dump on a throwaway 17.6 instance. Nothing
+production was touched; the live 14 pod kept its 8-day uptime and 0
+restarts throughout.
+
+### Result
+
+| | |
+|---|---|
+| Source dump | `immich-20260926-0230.dump`, 190 MB compressed, 513 TOC entries |
+| `pg_restore` | **27 s** |
+| `ANALYZE` | **3 s** |
+| **Total** | **30 s** |
+| Restored size | 596 MB (vs 621 MB live — no bloat, as expected of a fresh restore) |
+
+**The vchordrq rebuild is not a long pole.** It was the one unknown in
+this plan and the answer is that it disappears into the 27 s. Both
+indexes came back valid at byte-identical sizes to production —
+`clip_index` 90 MB, `face_index` 85 MB, `indisvalid = t`.
+
+Everything else predicted in §3 held exactly: PostgreSQL 17.6,
+`vchord 0.4.3`, `vector 0.8.0`, `earthdistance 1.2`, the rest
+unchanged. **All 66 tables matched the live database by real
+`count(*)`** — not one row out.
+
+Both vector indexes serve live ANN queries, which is the check that
+matters, since a valid-but-unused index looks perfect until someone
+searches:
+
+```
+Index Scan using clip_index on smart_search   (actual rows=5)  4.8 ms
+Index Scan using face_index on face_search    (actual rows=5)
+```
+
+**The pgvector 0.8.1 → 0.8.0 downgrade is confirmed inert**, as §3
+reasoned — the restore installed 0.8.0 and every vector operation
+works.
+
+### Two bugs the rehearsal caught, both since fixed in this document
+
+1. **`time` does not exist in this image's `/bin/sh`.** The restore Job
+   below originally read `time pg_restore …`; `/bin/sh` is dash, which
+   has no `time` builtin and the image has no `/usr/bin/time`. The Job
+   died with `/bin/sh: 6: time: not found` **before restoring
+   anything**. In Phase 2 that would have burned a maintenance window
+   on a shell typo. Step 8 now uses epoch arithmetic.
+2. **`n_live_tup` is not a row count.** The original §7 check compared
+   `pg_stat_user_tables.n_live_tup` between old and new. On the freshly
+   `ANALYZE`d copy those are accurate; on the live 14 database they
+   were badly stale — it reported `album = 0` against a true 21, and 26
+   of 66 tables "differed". Comparing real `count(*)` showed all 66
+   identical. Verifying with `n_live_tup` would have manufactured a
+   panic mid-window. §7 now uses `count(*)`.
+
+### How it was run, for repeating it
+
+Restore **last night's dump** into a throwaway v17 instance:
 
 Restore **last night's dump** into a throwaway v17 instance:
 
@@ -282,10 +335,15 @@ Downtime starts at step 3 and ends at step 11.
              args:
                - |
                  set -eu
-                 time pg_restore --no-owner --no-privileges --exit-on-error \
+                 # NOT `time pg_restore` -- /bin/sh here is dash, which has
+                 # no time builtin, and the image ships no /usr/bin/time.
+                 # That cost a failed rehearsal run on 2026-09-26.
+                 t0=$(date +%s)
+                 pg_restore --no-owner --no-privileges --exit-on-error \
                    -d "$PGDATABASE" /dumps/immich-pg17-migration.dump
-                 echo "--- ANALYZE ---"
-                 time psql -d "$PGDATABASE" -c 'ANALYZE;'
+                 t1=$(date +%s); echo "pg_restore: $((t1-t0))s"
+                 psql -d "$PGDATABASE" -q -c 'ANALYZE;'
+                 echo "ANALYZE: $(($(date +%s)-t1))s"
              volumeMounts: [{name: dumps, mountPath: /dumps}]
          volumes:
            - name: dumps
@@ -333,10 +391,15 @@ kubectl get deploy -n immich immich-postgres \
 kubectl exec -n immich ${PG#pod/} -- psql -U immich -d immich \
   -c 'select extname, extversion from pg_extension order by 1;'
 
-# 3. Row counts against the §3 baseline (ANALYZE must have run first,
-#    or n_live_tup reads zero and looks alarming for no reason)
-kubectl exec -n immich ${PG#pod/} -- psql -U immich -d immich -At -F'|' \
-  -c 'select relname, n_live_tup from pg_stat_user_tables order by n_live_tup desc limit 8;'
+# 3. Row counts -- REAL counts, not n_live_tup. Planner statistics are
+#    stale on a long-running server (the live 14 reported album=0
+#    against a true 21 during the rehearsal) and would invent a crisis.
+#    Run this against BOTH old and new and diff the output.
+kubectl exec -n immich ${PG#pod/} -- psql -U immich -d immich -At -c "
+  select relname||'|'||(xpath('/row/cnt/text()',
+    query_to_xml(format('select count(*) as cnt from %I.%I', schemaname, relname),
+                 false, true, '')))[1]::text
+  from pg_stat_user_tables order by relname;" | sort
 
 # 4. Both vchordrq indexes exist and are valid
 kubectl exec -n immich ${PG#pod/} -- psql -U immich -d immich -At -F'|' -c "
@@ -350,6 +413,16 @@ Then, in the Immich UI:
 - **Smart search** for something textual ("beach", "dog"). This is the
   only thing that exercises `clip_index`; if the vector index did not
   rebuild, search returns nothing while everything else looks perfect.
+  To check it from SQL instead, **`vchordrq.probes` must be set first**
+  or the query errors with `need 1 probes, but 0 probes provided` —
+  Immich sets it per query, `psql` does not:
+  ```sql
+  SET vchordrq.probes = 1;
+  EXPLAIN ANALYZE SELECT "assetId" FROM smart_search
+    ORDER BY embedding <=> (SELECT embedding FROM smart_search LIMIT 1) LIMIT 5;
+  ```
+  Expect `Index Scan using clip_index`. A `Seq Scan` means the index
+  is not being used even though it exists.
 - **People / faces** view loads and a person's photos open — exercises
   `face_index`.
 - A map view loads (that is `earthdistance` 1.2 in use).
@@ -382,18 +455,26 @@ independent copies before this starts.
 
 ## 9. Time and downtime
 
-| Step | Estimate |
-|---|---|
-| Scale down, confirm no connections | 1–2 min |
-| Migration dump (v17 client, 621 MB) | ~1 min (the nightly takes ~30 s) |
-| Commit, reconcile, `initdb`, pod ready | 2–3 min |
-| `pg_restore` + vchordrq rebuild | **unknown — Phase 1 measures this** |
-| `ANALYZE` | ~1 min |
-| Verification | 5 min |
+| Step | Time | Source |
+|---|---|---|
+| Scale down, confirm no connections | 1–2 min | estimate |
+| Migration dump (v17 client) | ~30 s | nightly measured at 29–31 s |
+| Commit, reconcile, `initdb`, pod ready | 2–3 min | rehearsal pod was ready in 10 s; Flux reconcile dominates |
+| `pg_restore` incl. vchordrq rebuild | **27 s** | **measured, Phase 1** |
+| `ANALYZE` | **3 s** | **measured, Phase 1** |
+| Verification | 5–10 min | §7, mostly the UI checks |
 
-Budget **an hour** and expect to use far less. The single unknown is the
-index rebuild; do not schedule the window until Phase 1 has produced a
-real number.
+**Realistic window: 15 minutes, of which about 30 seconds is the
+database.** Budget half an hour and expect to be idle in it.
+
+The feared long pole — rebuilding two vchordrq indexes over 175 MB of
+embeddings — turned out to be a non-event at this data size. The
+dominant costs are now Kubernetes and human: pod scheduling, Flux
+reconcile, and clicking through Immich to confirm search works.
+
+This is comfortably a quiet-evening task. It does not need a
+maintenance window in any formal sense; it needs twenty minutes when
+nobody is mid-upload.
 
 ## 10. Gotchas specific to this cluster
 
@@ -443,13 +524,18 @@ Only once Immich has been in normal use for several days:
 
 ## 12. Open questions
 
-1. How long does the vchordrq rebuild actually take? → Phase 1.
-2. Is a maintenance window needed at all, or is a quiet evening enough?
-   → decide once (1) has a number.
+1. ~~How long does the vchordrq rebuild actually take?~~ **Answered
+   2026-09-26: 27 s for the entire restore, rebuild included.**
+2. ~~Is a maintenance window needed?~~ **No.** Fifteen minutes on a
+   quiet evening. See §9.
 3. ~~16 or 17?~~ **Resolved 2026-09-26: 17.** Identical work, three
    more years of runway. The only cost found was pgvector 0.8.1 → 0.8.0,
    which is inert (no SQL objects changed between those releases).
    Phase 1 must therefore rehearse against **17**, not 16.
-4. Does the pgvector patch downgrade restore cleanly in practice? It
-   should, on the reasoning above — confirm it in Phase 1 rather than
-   discovering it during the window.
+4. ~~Does the pgvector patch downgrade restore cleanly in practice?~~
+   **Yes, verified 2026-09-26.** 0.8.0 installed, all 66 tables
+   restored to identical `count(*)`, and both vector indexes serve ANN
+   queries.
+
+**No open questions remain. Phase 2 is ready to run whenever there is
+a quiet twenty minutes.**
