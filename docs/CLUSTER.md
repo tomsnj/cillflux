@@ -329,15 +329,14 @@ for 6+ days as of 2026-09-05. Nothing currently open here.)*
   `WIN_20190505_07_44_26_Pro.mp4` in `~/immich-oversize` (exceeds
   Cloudflare's 100 MiB proxy cap — needs the LAN/browser path), and
   `~/Downloads` was never imported — **now in progress, see below**.
-- **`~/Downloads` import (MacBook Pro) — 2026-09-25, believed
-  COMPLETE. 1,196 files across 4 batches, 2 new assets.** Tom's read is that batches 1-3 were everything in
-  `~/Downloads`; that has not been verified against the Mac itself,
-  so treat it as done-pending-confirmation rather than closed. Staged
-  as `~/Download_batch1` / `Download_Batch2` / `Download_Batch3` on
-  `gsfarmctl` and imported from there (never from the Mac — macOS
-  Local Network privacy blocks `immich-go` outright). Tom stages a slice at a time into `~/Download_batch1` on
-  `gsfarmctl` and it is imported from there (never from the Mac —
-  macOS Local Network privacy blocks `immich-go` outright).
+- **`~/Downloads` import (MacBook Pro) — COMPLETE 2026-09-26.**
+  1,196 files across 4 batches, **2 new assets**. Tom confirmed
+  `~/Downloads` is emptied; all four staging folders on `gsfarmctl`
+  were verified against the server and deleted (826 MB reclaimed).
+  Staged as `~/Download_batch1` / `Download_Batch2` /
+  `Download_Batch3` / `Download_Batch4` and imported from
+  `gsfarmctl`, never from the Mac — macOS Local Network privacy
+  blocks `immich-go` outright.
   Batch 1: 39 JPEGs, 119 MB, flat folder, no non-photo junk.
   **2 uploaded, 37 already on the server** — checksum-identical, with
   full EXIF, GPS and timezone intact, so the "metadata updated: 38"
