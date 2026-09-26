@@ -67,15 +67,30 @@ which cloud the bytes came from.
 | Source | Album data recoverable? | Verdict |
 |---|---|---|
 | Google Photos | Already imported, 21 albums | Done |
-| **Apple Photos** | **Yes** — Photos.app exports album-per-folder, and this library was never properly imported at all | **Phase 1** |
+| Apple Photos | **No — zero albums on either Mac.** One *shared* album, `Family` (48), on the Air only | **Phase 1**, now a ~184-photo content import, not an album import |
 | Local / network drives | Maybe — folder names may or may not be meaningful | Phase 2, survey first |
-| **Amazon Photos** | Not in the export or the manifests — but recoverable from filenames alone | **Phase 3**, 12 albums on Shawna's account |
+| Amazon Photos | Not in the export or the manifests — but recoverable from filenames alone | **Done** — all 12 imported 2026-09-26 |
 
 ## Phase 1 — Apple Photos
 
-This is the only source where the album import and an outstanding
-content import are the same job, so it goes first regardless of how
-the other phases land.
+**Rescoped 2026-09-26, after surveying both Macs.** This was expected
+to be the large phase. It is not:
+
+| | MacBook Air | MacBook Pro |
+|---|---|---|
+| Photos | 183 | 184 |
+| Regular albums | **0** | **0** |
+| Shared albums | *Family* (48) | none |
+
+**Zero regular albums on either machine.** So there is no album
+structure to import here at all — `--folder-as-album` has nothing to
+do, and the phase's original justification is gone. What remains is a
+small content import of ~184 photographs, plus one shared album that
+needs handling on its own terms.
+
+Given the last three import stages ran 95–99% redundant against the
+Google Takeout library, expect most of the 184 to already be in
+Immich. The dry run will say for free.
 
 Background in `docs/CLUSTER.md`: the 2026-09-08 attempt pointed
 `immich-go` at all of `~/Pictures`, walked into the
@@ -85,72 +100,90 @@ membership). All 477 were deleted. **Never point the tool at the
 `.photoslibrary` package** — it is an opaque bundle, not a photo
 directory, and its internal layout is exactly the wrong shape.
 
-### 1a. Export on the Mac, with album structure
+### 1a. The 183 vs 184 question
 
-This step has to happen on the Mac — the library lives there and
-Photos.app is the only thing that can read it. Everything after it
-runs on `gsfarmctl`.
-
-The requirement is one folder per album, named for the album. Two
-ways to get there:
-
-- **GUI.** Select an album in the sidebar → File → Export → *Export
-  Unmodified Originals*, into a folder named for that album. Reliable
-  and needs nothing installed, but it is per-album, so it only scales
-  to a handful.
-- **`osxphotos`** (`brew install osxphotos`) — exports the whole
-  library with album structure in one pass, roughly
-  `osxphotos export <dest> --directory "{album,_no_album}"`.
-
-I could not verify from `gsfarmctl` whether this macOS version's
-Export dialog offers an album-named Subfolder Format, so **check that
-before committing to the GUI route**: if it does, one export covers
-everything; if it does not, the per-album loop or `osxphotos` is the
-way. Worth deciding by album count — under ~10, the GUI is fine.
-
-Either way: **Export Unmodified Originals**, not Export Photos. The
-latter writes edited renders, which is precisely what produced the
-293 derivative assets last time.
-
-### 1b. Stage to `gsfarmctl`
+They look like a complete overlap, but that was a visual check. It
+does not need to stay a guess: export both, sha1 them, and compare.
+The answer also decides whether both machines need importing or just
+one.
 
 ```bash
-rsync -avP ~/Desktop/photos-albums/ stecktf@10.0.100.240:~/apple-albums/
+cd ~/apple-air   && find . -type f -print0 | xargs -0 sha1sum | awk '{print $1}' | sort -u > /tmp/air.txt
+cd ~/apple-pro   && find . -type f -print0 | xargs -0 sha1sum | awk '{print $1}' | sort -u > /tmp/pro.txt
+comm -3 /tmp/air.txt /tmp/pro.txt      # empty = identical sets
 ```
 
-Then confirm the shape before importing anything — one level of
-folders, each an album, no `.photoslibrary` anywhere:
+If both Macs are signed into the same iCloud Photos library the sets
+should be identical and the 183/184 gap is sync lag. If they are
+separate local libraries, the difference is real and both need
+importing.
+
+### 1b. The *Family* shared album needs different handling
+
+This is the one piece of album structure in the whole phase, and it
+is the piece most likely to cause harm if imported naively.
+
+**iCloud Shared Albums do not hold originals.** Apple downscales
+shared-album photos to roughly 2048px on the long edge; the
+full-resolution file stays in the contributor's own library.
+"Export Unmodified Originals" from a shared album therefore exports
+the *shared* version, which is already a derivative.
+
+That matters because of what comes next. Importing 48 downscaled
+copies of photographs already in Immich at full resolution would
+manufacture up to 48 new resolution-variant duplicate groups —
+precisely the thing the stacking pass exists to clean up, created
+deliberately, immediately before running it.
+
+But the album is not worthless, because a shared album has **two**
+kinds of content:
+
+- **Photos Tom or Shawna contributed** — downscaled copies of
+  originals already in the library. Importing these is pure harm.
+- **Photos other people contributed** — genuinely unique content that
+  exists nowhere else in Immich, at whatever resolution the shared
+  album holds. These are the reason to bother.
+
+Photos.app shows the contributor per photo in a shared album, so the
+split is visible before exporting. **Export only the photos
+contributed by others.**
+
+Two checks on whatever does get exported:
 
 ```bash
-find ~/apple-albums -maxdepth 1 -type d | head -30
-find ~/apple-albums -name '*.photoslibrary' -o -name 'AlbumData.xml'   # must be empty
-du -sh ~/apple-albums
+# confirm the downscaling (expect long edge ~2048)
+identify -format '%f %wx%h\n' ~/apple-shared/* 2>/dev/null | sort -u -k2
+# and whether Immich already holds the bytes
+find ~/apple-shared -type f -print0 | xargs -0 sha1sum
 ```
 
-### 1c. Dry run
+A checksum match means it is already present and should be skipped. A
+miss does **not** prove uniqueness — a downscaled copy never matches
+its original by checksum — so for anything unmatched, check it
+against the library visually or by filename/date before uploading.
+
+### 1c. Export, stage, dry run
+
+Export Unmodified Originals into a plain folder — **not** Export
+Photos, which writes edited renders and is what produced the 293
+derivatives in 2026-09-08. With zero albums there is no subfolder
+format to worry about.
 
 ```bash
-immich-go upload from-folder --no-ui --dry-run \
-  --folder-as-album=FOLDER --concurrent-tasks 1 --on-errors 200 \
-  ~/apple-albums 2>&1 | tee ~/apple-albums-dryrun.log
+rsync -avP ~/Desktop/apple-air/ stecktf@10.0.100.240:~/apple-air/
+find ~/apple-air -name '*.photoslibrary' -o -name 'AlbumData.xml'   # must be empty
+
+immich-go upload from-folder --no-ui --dry-run --pause-immich-jobs=false \
+  --concurrent-tasks 1 --on-errors 200 ~/apple-air
 ```
 
-`FOLDER` uses the immediate folder name; `PATH` joins the whole path
-with `--album-path-joiner` (default `" / "`). Use `FOLDER` for a flat
-album-per-directory export, `PATH` only if the export nests.
+Read `uploaded` against `server has duplicate`. If the new-asset count
+is near zero, as the `~/Downloads` stage was, the value of the
+exercise is confirming it rather than growing the library.
 
-Read three numbers off the report before proceeding:
-
-- `added to album` — the point of the exercise. Should approach the
-  file count.
-- `server has duplicate` — expected to be most of them. High is good.
-- `uploaded` — new content. If this is large, the export included
-  more than albums and needs a second look.
-
-### 1d. Real run
-
-Same command without `--dry-run`. Then re-run the album inventory
-from the Verification section.
+`--folder-as-album` is deliberately **absent** — there are no albums,
+and pointing it at a staging folder would create an album named after
+the folder.
 
 ## Phase 2 — local and network drive folders
 
@@ -378,7 +411,16 @@ an album named 'charmer' already exists (differs from 'Charmer' only in case):
 Pass --album-id to add to it.
 ```
 
-## Final state, 2026-09-26
+### Where the albums landed
+
+Shawna's content was imported with Tom's API key, so all 31,455
+assets belong to `immadmin` and her account holds zero. Albums built
+from her Amazon content are therefore **Tom's albums**. Confirmed as
+a deliberate choice on 2026-09-26 rather than left as a side effect;
+partner sharing covers visibility, and moving asset ownership is a
+much larger question that this phase does not touch.
+
+### Phase 3 result
 
 All 12 Amazon albums are in. **31 albums, 824 memberships**, up from
 21 / 606 at the start of the day. Photo and video totals are
@@ -400,15 +442,6 @@ Amazon albums, and it resolved to one asset added to both, which is
 the correct outcome.
 
 **Phase 3 is closed.**
-
-### Where the albums would land
-
-Worth deciding before creating any: Shawna's content was imported
-with Tom's API key, so all 31,455 assets belong to `immadmin` and her
-account holds zero. Albums built from her Amazon content would
-therefore be **Tom's albums**, not hers. That is consistent with how
-the library already works and partner sharing covers visibility, but
-it should be a choice rather than a side effect.
 
 ## Verification
 
@@ -484,41 +517,61 @@ Baseline 2026-09-26: `thumbnailGeneration` 7, `ocr` 5, `faceDetection`
 
 ## Ordering against the stacking pass
 
-**Albums first, stacking second.** Reasons, measured 2026-09-26:
+**Updated 2026-09-26, after Phase 3 and the Apple survey.** The
+original argument was that album imports can add assets, so stacking
+should wait. Most of that has now resolved itself:
 
-- An album import can add assets — an export holding a downscaled or
-  re-encoded copy of something already in the library has a different
-  checksum and lands as a new asset, which is a new duplicate group.
-  Stacking first means re-running it against a library that grew.
-- `immich-go`'s stacking flags (`--manage-raw-jpeg`,
-  `--manage-heic-jpeg`, `--manage-burst`) are import-time only. Any
-  coupled files in the Apple export get stacked for free during
-  Phase 1; hand-stacking first does that work twice.
-- Album membership is the signal for choosing a stack's primary copy,
-  and at 1.8% coverage it barely exists yet.
-- Deferring costs almost nothing today: of 512 duplicate groups, 10
-  touch an album, 2 of those differ in resolution, and exactly **one**
-  album entry points at a smaller copy
-  (`IMG_20250706_130219.jpg` 2048x1542 where
-  `PXL_20250706_171353719.jpg` 4080x3072 exists).
+- **Phase 3 added nothing.** All 12 Amazon albums were built by name
+  resolution; photo/video totals never moved off 31,455 / 483. It
+  cannot have changed the duplicate picture.
+- **Album coverage is no longer the problem it was.** 562 assets in
+  albums became **824 memberships across 31 albums**, so the "which
+  copy did someone actually curate" signal now exists where it did
+  not.
+- **Phase 1 has no albums at all**, so `--folder-as-album` and its
+  import-time stacking flags are irrelevant to it.
 
-Re-run **Duplicate Detection** after Phase 1 settles, before starting
-the stacking pass, so its numbers reflect the post-import library.
+What survives, and it is the sharp one:
 
-Note for that pass, since it changes its scope: of the 512 groups,
-only **64** differ in resolution — the actual stacking target, worth
-60 MB. The other 448 are same-resolution duplicates, which is a
-keep-or-delete decision rather than a stack.
+> The `Family` shared album is the only remaining source that can add
+> assets, and what it would add is **specifically downscaled copies**
+> of photographs already held at full resolution — up to 48 brand-new
+> resolution-variant duplicate groups, created immediately before the
+> pass whose whole job is cleaning those up.
+
+So the ordering still holds, for a narrower reason: **settle the
+shared album before stacking.** Either import only the
+other-contributor photos (see 1b), or decide to skip it entirely.
+Either way the answer must land first, because the alternative is
+stacking a library that is about to grow in exactly the dimension
+being stacked.
+
+The ~184 ordinary Apple photos are lower risk — if they behave like
+the `~/Downloads` batches they will be near-100% redundant and add
+nothing — but they are cheap to settle first too.
+
+Re-run **Duplicate Detection** once Phase 1 is done, before starting
+the stacking pass, so its numbers reflect the final library.
+
+Scope for that pass, unchanged: of 512 groups only **64** differ in
+resolution — the actual stacking target, worth 60 MB. The other 448
+are same-resolution duplicates, a keep-or-delete decision rather than
+a stack.
 
 ## Open questions
 
-1. How many albums does the Apple Photos library have, and does this
-   macOS version's Export dialog offer an album-named Subfolder
-   Format? Decides GUI vs `osxphotos` in 1a.
-2. Are the local/network drive folder names meaningful enough to be
+1. ~~How many albums does the Apple Photos library have?~~
+   **Answered 2026-09-26: zero on both Macs.** One shared album,
+   `Family` (48 photos), on the Air only. Phase 1 is therefore a
+   small content import, and the only real question left in it is
+   which of the 48 shared-album photos were contributed by *other
+   people* — those are the unique content; the rest are downscaled
+   copies of originals already in the library.
+2. Are the 183 photos on the Air and the 184 on the Pro the same set?
+   Looks like a complete overlap visually. Settle it with sha1 after
+   export (1a) rather than by eye.
+3. Are the local/network drive folder names meaningful enough to be
    albums? Decides whether Phase 2 exists.
-3. ~~Are there Amazon-era albums worth recovering?~~ **Answered
-   2026-09-26: none on Tom's account, 12 on Shawna's.** What remains
-   is getting those 12 names and file lists out of Amazon, and
-   deciding whether they should be created as Tom's albums (see
-   "Where the albums would land").
+4. ~~Are there Amazon-era albums worth recovering?~~ **Done
+   2026-09-26** — none on Tom's account, 12 on Shawna's, all 12
+   imported.
