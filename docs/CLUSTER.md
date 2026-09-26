@@ -328,7 +328,40 @@ for 6+ days as of 2026-09-05. Nothing currently open here.)*
   kept. Still outstanding from the same batch: the 114 MB
   `WIN_20190505_07_44_26_Pro.mp4` in `~/immich-oversize` (exceeds
   Cloudflare's 100 MiB proxy cap — needs the LAN/browser path), and
-  `~/Downloads` was never imported.
+  `~/Downloads` was never imported — **now in progress, see below**.
+- **`~/Downloads` import (MacBook Pro) — started 2026-09-25, batch 1 of
+  n done.** Tom stages a slice at a time into `~/Download_batch1` on
+  `gsfarmctl` and it is imported from there (never from the Mac —
+  macOS Local Network privacy blocks `immich-go` outright).
+  Batch 1: 39 JPEGs, 119 MB, flat folder, no non-photo junk.
+  **2 uploaded, 37 already on the server** — checksum-identical, with
+  full EXIF, GPS and timezone intact, so the "metadata updated: 38"
+  line in the report was a no-op rather than an overwrite.
+  Photos went 31,453 → 31,455; zero errors; no new job-queue failures
+  against the pre-import baseline.
+
+  **Plan the rest around ~95% redundancy.** If that slice is
+  representative, most of `~/Downloads` is already in Immich from the
+  Google Takeout migration, and the value of the exercise is the small
+  remainder plus getting the folder emptied. Confirm per batch with a
+  `--dry-run` first — it reports the new-asset count before anything
+  is written, and costs a couple of minutes.
+
+  Two details worth carrying forward:
+  - **Filename dating saves the no-EXIF files.**
+    `202312031443160000.jpg` was the one file in the batch with no
+    EXIF date, and its mtime was the moment of the move. Immich would
+    have filed it under 2026 in the timeline; `immich-go` parsed
+    `20231203144316` out of the name and dated it 2023-12-03 14:43:16
+    correctly. Always spot-check the no-EXIF files after an import
+    rather than assuming the count is the whole story.
+  - **Browser-style `(1)` copies are harmless.** Two files
+    (`…074946 (1).jpg`, `…130554 (1).jpg`) were byte-identical to
+    their unsuffixed siblings and were deduped by checksum, not by
+    name. No need to clean them out of a batch beforehand.
+
+  Source folders are left in place — `immich-go` never deletes them.
+  Clear a batch only after confirming its assets are on the server.
 - **`gitops.gs-farm.net` returns 504** (low priority, 2026-09-25) — the
   Weave GitOps UI. The app is fine: an in-cluster probe against
   `weave-gitops.flux-system.svc:9001` returns 200 immediately, the pod
