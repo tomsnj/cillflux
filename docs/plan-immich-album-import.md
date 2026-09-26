@@ -238,18 +238,76 @@ Twelve albums, all on Shawna's account. Cost scales with that twelve,
 not with the 15,600 photographs — which is the whole point of
 resolving by name.
 
-What is still needed from Amazon is **only the album names and their
-file lists**. Ways to get that, cheapest first:
+The Windows Amazon Photos desktop app exports **one album at a time**,
+which is the piece that makes this practical.
 
-1. If an album's contents can be listed in the web UI, the names can
-   be read off directly.
-2. Otherwise download the album and read `unzip -l` — the zip's
-   central directory has every name without extracting a byte. The
-   200-file cap still applies to *downloading*, but it no longer
-   matters much: a capped download that gets thrown away after its
-   listing is read is cheap, and nothing gets re-imported.
+### Tooling
 
-Either way the photographs are already in Immich and stay untouched.
+`scripts/immich-album-from-names.py` does the resolution and the
+album write. Dry run by default:
+
+```bash
+scripts/immich-album-from-names.py --dir ~/amazon-albums/"Summer 2014"
+scripts/immich-album-from-names.py --names-file list.txt --album "Summer 2014"
+scripts/immich-album-from-names.py --dir ... --create     # actually write
+```
+
+It builds its name index from **one read-only SELECT against
+Postgres**, not the search API. That is deliberate:
+`/api/search/metadata`'s `originalFileName` filter is a **substring**
+match, not an exact one — `0190101_091427.jpg`, missing its leading
+digit, still returns the asset — so resolving through it needs
+per-name post-filtering and can truncate at the page limit. Writes go
+through the API (`POST /api/albums`, `PUT /api/albums/{id}/assets`),
+never the database.
+
+Behaviour worth knowing:
+
+- Exact match first, then case-insensitive as a fallback, reported
+  separately — Windows exports can differ in case.
+- **Ambiguous names are skipped, never guessed**, and listed.
+- Refuses to create an album whose name already exists; pass
+  `--album-id` to add to that one instead.
+- Skips `Thumbs.db`, `.DS_Store`, `desktop.ini`, `picasa.ini`.
+- Resolved ids are deduped — two source names can point at one asset.
+
+Verified 2026-09-26: dry run against 60 real manifest names plus three
+planted failures resolved 60 exact, 1 case-insensitive, 1 unresolvable,
+`Thumbs.db` skipped. The `PUT` response shape
+(`[{"id":…,"success":false,"error":"duplicate"}]`) was confirmed by
+re-adding an asset already in the *Drop Box* album — a genuine no-op,
+count stayed 3.
+
+### The pilot: validate name-matching against checksum-matching
+
+Do **one** album end to end before the other eleven, and pick a small
+one. The point is not to get one album done — it is to find out
+whether matching by name is as good as matching by bytes.
+
+1. Export the album from the Windows app into a folder named for it.
+2. Copy the *whole folder* to `gsfarmctl` this once
+   (`~/amazon-albums/<Album Name>/`).
+3. Run both methods in dry run and compare what each would attach:
+
+   ```bash
+   # by checksum - what immich-go would do
+   immich-go upload from-folder --no-ui --dry-run --pause-immich-jobs=false \
+     --folder-as-album=FOLDER --concurrent-tasks 1 ~/amazon-albums
+
+   # by name - what the resolver would do
+   scripts/immich-album-from-names.py --dir ~/amazon-albums/"<Album Name>"
+   ```
+
+4. If the two agree, name resolution is trustworthy and the remaining
+   eleven albums need only a filename list — on Windows,
+   `dir /b > album.txt` in the exported folder — with no bulk
+   transfer at all. If they disagree, the difference says exactly
+   which cases name-matching gets wrong, and that is worth knowing
+   before it is applied eleven more times.
+
+Either tool can then do the real write. `immich-go` is
+checksum-exact and will also upload anything genuinely missing;
+the resolver moves no photographs and needs only names.
 
 ### Where the albums would land
 
