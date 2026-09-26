@@ -330,7 +330,7 @@ for 6+ days as of 2026-09-05. Nothing currently open here.)*
   Cloudflare's 100 MiB proxy cap — needs the LAN/browser path), and
   `~/Downloads` was never imported — **now in progress, see below**.
 - **`~/Downloads` import (MacBook Pro) — started 2026-09-25, batches 1
-  and 2 done.** Tom stages a slice at a time into `~/Download_batch1` on
+  through 3 done. Running total: 724 files processed, 2 new assets.** Tom stages a slice at a time into `~/Download_batch1` on
   `gsfarmctl` and it is imported from there (never from the Mac —
   macOS Local Network privacy blocks `immich-go` outright).
   Batch 1: 39 JPEGs, 119 MB, flat folder, no non-photo junk.
@@ -394,6 +394,43 @@ for 6+ days as of 2026-09-05. Nothing currently open here.)*
   and its dates were identical before and after. Useful to know before
   worrying about a batch whose local files have worse metadata than
   the copies already on the server.
+
+  **Batch 3 (2026-09-25): 583 files, 0 new.** Two more archives —
+  `iraq.zip` (422 JPEGs) and `VBC Taji.zip` (155, 190 MB) — plus 6
+  loose files. Neither archive had been extracted, so as delivered
+  `immich-go` would have imported 6 files out of 583. Extracted both
+  with `unzip`; 582 came back as exact-checksum duplicates.
+
+  The 583rd is worth recording, because it is the one case where
+  **`bulk-upload-check` and `immich-go` legitimately disagree**.
+  `iraq/479.jpg` is a distinct file by checksum, so the API said
+  `accept`, but `immich-go` skipped it:
+
+  > `An asset with the same name:"479.jpg" and date:"2010-01-10
+  > 17:04:08" but with bigger size:82.2 KB exists on the server.`
+
+  That is the name+date+size heuristic described in the
+  resolution-duplicate entry above. Here it was **right**, confirmed
+  by pixel comparison rather than assumed: the server copy is
+  480x600, the local one 600x480, and rotating the local 270 degrees
+  matches the server to within JPEG re-encode noise (mean absolute
+  difference 1.3 per channel, identical mean RGB). Same photograph,
+  stored at a different orientation, already on the server in the
+  correct one and slightly larger.
+
+  The lesson for future batches: **a non-zero `accept` count from
+  `bulk-upload-check` is an upper bound, not the number that will be
+  uploaded.** Checksums see bytes; `immich-go` also weighs name, date
+  and size. When the two disagree, compare the images before assuming
+  either is wrong — the heuristic can equally well be discarding a
+  genuinely different photo that happens to share a name and date.
+
+  **Cumulative after three batches: 724 files, 2 new assets (both in
+  batch 1) — 99.7% redundant.** Whatever remains in `~/Downloads` is
+  almost certainly already in Immich via the Google Takeout
+  migration. Continue to verify rather than import blind, but expect
+  the remaining value to be emptying the folder, not growing the
+  library.
 
   Source folders are left in place — `immich-go` never deletes them.
   Clear a batch only after confirming its assets are on the server.
