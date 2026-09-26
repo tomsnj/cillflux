@@ -1,9 +1,14 @@
-# Work plan: Immich Postgres 14 → 16
+# Work plan: Immich Postgres 14 → 17
 
 Status: **proposed, not started.** Written 2026-09-26 against PR
 [#960](https://github.com/tomsnj/cillflux/pull/960)
 (`ghcr.io/immich-app/postgres` 14 → 16), which is queued as "needs Tom"
 from that day's Renovate review.
+
+**Target decided 2026-09-26: PostgreSQL 17, not 16.** The work is
+identical either way and a single hop buys three more years of runway,
+so PR #960 should be **closed rather than merged** — it proposes the
+wrong destination, not merely a premature one.
 
 ---
 
@@ -16,15 +21,15 @@ PR #960 changes one thing in two files — the image tag:
 +  ghcr.io/immich-app/postgres:16-vectorchord0.4.3-pgvectors0.2.0@sha256:1a078b2…
 ```
 
-**PostgreSQL does not read a version-14 data directory with a version-16
+**PostgreSQL does not read a version-14 data directory with a version-17
 binary.** The on-disk format changes between majors. Merging this PR as
-delivered starts a 16.10 server against the existing `PG_VERSION = 14`
+delivered starts a newer server against the existing `PG_VERSION = 14`
 directory, it refuses to start with
 
 ```
 FATAL: database files are incompatible with server
 DETAIL: The data directory was initialized by PostgreSQL version 14,
-        which is not compatible with this version 16.10.
+        which is not compatible with this version 17.6.
 ```
 
 and `immich-postgres` crash-loops. Immich itself then follows, because
@@ -44,7 +49,7 @@ managed path. This is a manual dump-and-restore.
 **There is no deadline.** Immich's own documentation states it "is known
 to work with Postgres versions `>= 14, < 20`", so 14.19 is a supported
 configuration today and will be for a long time. Nothing in Immich
-v3.1.0 requires 16.
+v3.1.0 requires 17 — or even 15.
 
 Reasons to do it anyway, in honest order:
 
@@ -54,8 +59,11 @@ Reasons to do it anyway, in honest order:
   base. That is the real driver.
 - Renovate will keep re-opening this PR, and a standing "needs Tom" item
   trains the eye to skip it.
-- 16 is measurably faster for some of what Immich does, but on a 621 MB
+- 17 is measurably faster for some of what Immich does, but on a 621 MB
   database that is not a reason on its own.
+- Landing on 17 rather than 16 pushes the *next* forced round of this
+  same work from PostgreSQL 16's EOL (November 2028) to 17's
+  (November 2029), for identical effort today.
 
 Reasons to wait: none urgent. **This is a "do it on a quiet evening"
 task, not a "do it now" task.** If it is deferred, note the November
@@ -68,7 +76,7 @@ All figures taken 2026-09-26, not estimated.
 | | |
 |---|---|
 | Server | PostgreSQL **14.19** (Debian 14.19-1.pgdg12+1) |
-| Target | PostgreSQL **16.10** (Debian 16.10-1.pgdg12+1) |
+| Target | PostgreSQL **17.6** (Debian 17.6-1.pgdg12+1), image `17-vectorchord0.4.3-pgvector0.8.0` |
 | Database size | **621 MB** |
 | Workload | `Deployment/immich-postgres`, 1 replica, `Recreate` |
 | Data PVC | `immich-postgres-data-nvme`, `local-hostpath` 20 Gi (node NVMe) |
@@ -78,26 +86,50 @@ All figures taken 2026-09-26, not estimated.
 | Volsync | `immich-postgres-data` ReplicationSource, 03:00 daily, last 2026-09-26T03:00:22Z |
 | Flux | Kustomizations `postgres-immich` (DB) and `immich` (app, `dependsOn: postgres-immich`); **both `prune: true`** |
 
-Extensions, live vs. what the v16 image ships (verified by running the
-v16 image as a throwaway pod):
+Extensions, live vs. what the v17 image ships (verified by running the
+v17 image as a throwaway pod, not read off the tag):
 
-| Extension | Live on 14 | Available on 16 | |
+| Extension | Live on 14 | On the 17 image | |
 |---|---|---|---|
-| `vchord` | 0.4.3 | 0.4.3 | identical |
-| `vector` | 0.8.1 | 0.8.1 | identical |
+| `vchord` | 0.4.3 | 0.4.3 | identical — this is the one that matters |
+| `vector` | 0.8.1 | **0.8.0** | one patch *back*, see below |
 | `cube` | 1.5 | 1.5 | identical |
 | `pg_trgm` | 1.6 | 1.6 | identical |
 | `unaccent` | 1.1 | 1.1 | identical |
 | `uuid-ossp` | 1.1 | 1.1 | identical |
-| `earthdistance` | 1.1 | **1.2** | only difference |
+| `earthdistance` | 1.1 | **1.2** | forward, trivial |
 | `plpgsql` | 1.0 | 1.0 | built in |
+| `vectors` (pgvecto.rs) | not installed | **absent from the image** | unused, see below |
 
-**The vector extensions do not move.** `vchord` and `vector` are
-byte-identical versions on both sides, so none of Immich's
+**`vchord` does not move**, which is the important one: it owns both
+vector indexes. Because 0.4.3 is on both sides, none of Immich's
 "`ALTER EXTENSION vchord UPDATE;` then reindex" guidance applies — that
 is for changing the *extension* version, which this does not.
 
-`earthdistance` 1.1 → 1.2 is the only extension change. `pg_dump` emits
+**`vector` goes backwards by one patch, 0.8.1 → 0.8.0, and that is
+fine.** The 17 line simply has no `-pgvector0.8.1` build yet; at
+vectorchord 0.4.3 it offers only `17-vectorchord0.4.3` and
+`17-vectorchord0.4.3-pgvector0.8.0`. pgvector 0.8.1 was a maintenance
+release — Postgres 18 rc1 build support and a `binary_quantize`
+performance fix — and **added no SQL objects at all**. Nothing in a
+0.8.1 dump can therefore reference anything 0.8.0 lacks, and `pg_dump`
+emits `CREATE EXTENSION vector` with no version pin, so the restore
+installs 0.8.0 cleanly. Verify it anyway in the Phase 1 rehearsal;
+that is what the rehearsal is for.
+
+**`vectors` (pgvecto.rs) is absent from the 17 image entirely**, and
+this costs nothing: it is present but *not installed* on the current
+14 image — `pg_extension` lists only `vchord` and `vector`. Immich
+moved from pgvecto.rs to VectorChord some releases ago and this
+database already reflects that.
+
+Note the tag lineage changes shape, from
+`14-vectorchord0.4.3-pgvectors0.2.0` to
+`17-vectorchord0.4.3-pgvector0.8.0` — dropping the dead pgvecto.rs
+component and naming pgvector explicitly. Renovate pins by digest, so
+it will simply track the new tag pattern from then on.
+
+`earthdistance` 1.1 → 1.2 is the only other change. `pg_dump` emits
 `CREATE EXTENSION` without a version pin, so the restore installs 1.2.
 It is a trivial catalogue change used only by Immich's geo queries;
 treat it as expected, not as a surprise.
@@ -127,7 +159,7 @@ asset_job_status 32819   smart_search 31893   face_search 30224   asset_face 302
 **Logical dump and restore onto a second, new PVC**, leaving the v14
 volume untouched.
 
-Why not `pg_upgrade`: it needs the 14 *and* 16 binaries present in one
+Why not `pg_upgrade`: it needs the 14 *and* 17 binaries present in one
 filesystem. `ghcr.io/immich-app/postgres` ships exactly one major
 version, so using it would mean building a custom image carrying both
 plus matching `vchord`/`vector` builds for each. That is more work and
@@ -148,10 +180,10 @@ Do this first, on a normal day. It answers the only open question —
 how long the vchordrq rebuild takes — and proves the procedure end to
 end against the real data, at zero risk.
 
-Restore **last night's dump** into a throwaway v16 instance:
+Restore **last night's dump** into a throwaway v17 instance:
 
 1. Create a scratch PVC (`local-hostpath`, 20 Gi) and a scratch
-   Deployment running the v16 image with its own Service, in the
+   Deployment running the v17 image with its own Service, in the
    `immich` namespace but with different labels so it does not join the
    `immich-postgres` Service selector. **Apply by hand, not through
    Flux** — it must never enter a Kustomization's inventory, or prune
@@ -194,25 +226,25 @@ Downtime starts at step 3 and ends at step 11.
    ```
    Expect `0`. Anything else, find it before continuing.
 
-4. **Take the migration dump — with the v16 client.** PostgreSQL's own
+4. **Take the migration dump — with the v17 client.** PostgreSQL's own
    guidance is to dump with the *newer* `pg_dump`, which is the opposite
    of what `pgdump.yaml` does day to day (it deliberately pins the
-   client to the server version). Run a one-off Job using the **v16**
+   client to the server version). Run a one-off Job using the **v17**
    image against the still-running v14 server, writing to the same
-   dumps PVC with a distinct name, e.g. `immich-pg16-migration.dump`.
+   dumps PVC with a distinct name, e.g. `immich-pg17-migration.dump`.
 
 5. **Verify the dump before destroying anything.** Not just that the
    file exists:
    ```bash
-   pg_restore --list /dumps/immich-pg16-migration.dump | wc -l   # non-trivial count
+   pg_restore --list /dumps/immich-pg17-migration.dump | wc -l   # non-trivial count
    ```
    A dump you have not listed is not a backup.
 
 6. **Commit the change.** In one commit:
-   - `postgres.yaml`: add PVC `immich-postgres-data-nvme-pg16`
-     (`local-hostpath`, 20 Gi); change the container image to the v16
+   - `postgres.yaml`: add PVC `immich-postgres-data-nvme-pg17`
+     (`local-hostpath`, 20 Gi); change the container image to the v17
      digest; change `claimName` to the new PVC.
-   - `pgdump.yaml`: change the image to the v16 digest.
+   - `pgdump.yaml`: change the image to the v17 digest.
    - **Leave the `immich-postgres-data-nvme` PVC declared in git.**
      Removing it in the same commit would have Flux prune it and destroy
      the rollback. It comes out later, in Phase 5.
@@ -232,7 +264,7 @@ Downtime starts at step 3 and ends at step 11.
    ```yaml
    apiVersion: batch/v1
    kind: Job
-   metadata: {name: immich-pg16-restore, namespace: immich}
+   metadata: {name: immich-pg17-restore, namespace: immich}
    spec:
      backoffLimit: 0
      template:
@@ -240,7 +272,7 @@ Downtime starts at step 3 and ends at step 11.
          restartPolicy: Never
          containers:
            - name: restore
-             image: ghcr.io/immich-app/postgres:16-vectorchord0.4.3-pgvectors0.2.0@sha256:1a078b237c1d9b420b0ee59147386b4aa60d3a07a8e6a402fc84a57e41b043a4
+             image: ghcr.io/immich-app/postgres:17-vectorchord0.4.3-pgvector0.8.0@sha256:51f6abbfc720dde5cad9a39133d1c5247da8f073a449004da781c07b2cd9ee9c
              env:
                - {name: PGHOST, value: immich-postgres.immich.svc.cluster.local}
                - {name: PGUSER,     valueFrom: {secretKeyRef: {name: immich-postgres-secret, key: DB_USERNAME}}}
@@ -251,7 +283,7 @@ Downtime starts at step 3 and ends at step 11.
                - |
                  set -eu
                  time pg_restore --no-owner --no-privileges --exit-on-error \
-                   -d "$PGDATABASE" /dumps/immich-pg16-migration.dump
+                   -d "$PGDATABASE" /dumps/immich-pg17-migration.dump
                  echo "--- ANALYZE ---"
                  time psql -d "$PGDATABASE" -c 'ANALYZE;'
              volumeMounts: [{name: dumps, mountPath: /dumps}]
@@ -263,7 +295,7 @@ Downtime starts at step 3 and ends at step 11.
    the `$$` escaping in `pgdump.yaml` exists only because Flux runs
    envsubst over it. `--exit-on-error` is deliberate: a restore that
    half-succeeds is worse than one that stops. Follow with
-   `kubectl logs -n immich -f job/immich-pg16-restore`.
+   `kubectl logs -n immich -f job/immich-pg17-restore`.
 
 9. **`ANALYZE` is not optional** and is easy to forget — it is folded
    into the Job above. `pg_restore` does not carry planner statistics
@@ -291,12 +323,13 @@ that actually matter to a user.
 ```bash
 PG=$(kubectl get pods -n immich -l app=immich-postgres -o name | head -1)
 
-# 1. It really is 16, and on the new volume
+# 1. It really is 17, and on the new volume
 kubectl exec -n immich ${PG#pod/} -- psql -U immich -At -c 'select version();'
 kubectl get deploy -n immich immich-postgres \
   -o jsonpath='{.spec.template.spec.volumes[?(@.name=="data")].persistentVolumeClaim.claimName}{"\n"}'
 
-# 2. Extensions, expecting vchord 0.4.3 / vector 0.8.1 / earthdistance 1.2
+# 2. Extensions: expect vchord 0.4.3 / vector 0.8.0 / earthdistance 1.2
+#    vector 0.8.0 (not 0.8.1) is correct here - see the extension table
 kubectl exec -n immich ${PG#pod/} -- psql -U immich -d immich \
   -c 'select extname, extversion from pg_extension order by 1;'
 
@@ -325,7 +358,7 @@ Then, in the Immich UI:
 Finally, confirm the nightly dump still works on the new version rather
 than waiting to find out:
 ```bash
-kubectl create job -n immich --from=cronjob/immich-postgres-dump pg16-dumptest
+kubectl create job -n immich --from=cronjob/immich-postgres-dump pg17-dumptest
 ```
 
 ## 8. Rollback
@@ -352,7 +385,7 @@ independent copies before this starts.
 | Step | Estimate |
 |---|---|
 | Scale down, confirm no connections | 1–2 min |
-| Migration dump (v16 client, 621 MB) | ~1 min (the nightly takes ~30 s) |
+| Migration dump (v17 client, 621 MB) | ~1 min (the nightly takes ~30 s) |
 | Commit, reconcile, `initdb`, pod ready | 2–3 min |
 | `pg_restore` + vchordrq rebuild | **unknown — Phase 1 measures this** |
 | `ANALYZE` | ~1 min |
@@ -381,12 +414,16 @@ real number.
   envsubst across everything it renders.
 - **`pgdump.yaml`'s image must move with the server.** Its comment says
   the client is pinned to the server version on purpose; leaving it at
-  14 after the server is 16 means the nightly dump starts failing, and
+  14 after the server is 17 means the nightly dump starts failing, and
   it would fail quietly into a CronJob nobody reads.
-- **PR #960 stays closed or unmerged until Phase 2.** If it is merged
-  early by reflex, the symptom is `immich-postgres` crash-looping with
-  the incompatible-data-directory FATAL; revert the image and it comes
-  straight back.
+- **Close PR #960 rather than merging it, ever.** It targets 16, which
+  is no longer the destination, and merging it at any point starts a
+  16.10 binary on a 14 data directory. The symptom is
+  `immich-postgres` crash-looping with the incompatible-data-directory
+  FATAL; reverting the image brings it straight back. Renovate will
+  re-raise a 17 or 18 PR later — that one is equally un-mergeable on
+  its own, for the same reason. **No image bump to this Deployment is
+  ever a merge; it is always this runbook.**
 
 ## 11. Phase 5 — cleanup, a week after
 
@@ -409,7 +446,10 @@ Only once Immich has been in normal use for several days:
 1. How long does the vchordrq rebuild actually take? → Phase 1.
 2. Is a maintenance window needed at all, or is a quiet evening enough?
    → decide once (1) has a number.
-3. Do we want to go to 17 instead of 16? Immich supports `< 20`, and the
-   work is identical either way, so a single hop to the newest supported
-   major buys a longer runway. Worth deciding **before** Phase 1 so the
-   rehearsal measures the version we will actually run.
+3. ~~16 or 17?~~ **Resolved 2026-09-26: 17.** Identical work, three
+   more years of runway. The only cost found was pgvector 0.8.1 → 0.8.0,
+   which is inert (no SQL objects changed between those releases).
+   Phase 1 must therefore rehearse against **17**, not 16.
+4. Does the pgvector patch downgrade restore cleanly in practice? It
+   should, on the reasoning above — confirm it in Phase 1 rather than
+   discovering it during the window.
