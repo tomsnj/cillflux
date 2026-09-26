@@ -330,8 +330,7 @@ for 6+ days as of 2026-09-05. Nothing currently open here.)*
   Cloudflare's 100 MiB proxy cap — needs the LAN/browser path), and
   `~/Downloads` was never imported — **now in progress, see below**.
 - **`~/Downloads` import (MacBook Pro) — 2026-09-25, believed
-  COMPLETE. 724 files across 3 batches, 2 new assets, 99.7%
-  redundant.** Tom's read is that batches 1-3 were everything in
+  COMPLETE. 1,196 files across 4 batches, 2 new assets.** Tom's read is that batches 1-3 were everything in
   `~/Downloads`; that has not been verified against the Mac itself,
   so treat it as done-pending-confirmation rather than closed. Staged
   as `~/Download_batch1` / `Download_Batch2` / `Download_Batch3` on
@@ -467,6 +466,36 @@ for 6+ days as of 2026-09-05. Nothing currently open here.)*
      `immich-go` dedups against, it is read-only, and it answers in
      seconds what a dry run takes minutes to approximate.
   5. Only then import — and only if the count is non-zero.
+
+  **Batch 4 (2026-09-25): 472 files, 0 new — and a live demonstration
+  of why step 2 exists.** It re-delivered the same `iraq/` (422) and
+  `Qatar/` (50) sets as batches 2 and 3, but this time as folders
+  already extracted on the Mac rather than as ZIPs. The consequence,
+  visible immediately:
+
+  | | EXIF dates | mtimes as delivered |
+  |---|---|---|
+  | `iraq/` (422) | 0 of 422 | **2026-09-25 21:44 — 2010 stamps lost** |
+  | `Qatar/` (50) | 50 of 50 | 2026-09-25 21:45 (harmless, EXIF wins) |
+
+  Copying an extracted folder discards the archive timestamps that
+  `unzip` would have restored. For `Qatar/` it does not matter —
+  every file carries EXIF. For `iraq/`, where **no** file has an EXIF
+  date and the names are bare numbers, the mtime is the only date
+  there is, so any genuinely new file would have landed in 2026
+  instead of 2010. Nothing was lost here only because all 472 were
+  already on the server.
+
+  Also contained `BigSur/macOS Big Sur ISO by Techsprobe` — an empty
+  directory plus a `.DS_Store`, i.e. non-photo content swept in with
+  the rest. Worth a glance at the directory listing before import;
+  `immich-go` would have logged it as an unknown file and moved on,
+  but a real ISO would have been a large pointless read.
+
+  The 473rd file was `iraq/479.jpg` again — byte-identical
+  (`980b17cb…`) to the copy already preserved at
+  `~/immich-unimported/`, so still the same single rotation variant,
+  not a new one.
 - **`gitops.gs-farm.net` returns 504** (low priority, 2026-09-25) — the
   Weave GitOps UI. The app is fine: an in-cluster probe against
   `weave-gitops.flux-system.svc:9001` returns 200 immediately, the pod
