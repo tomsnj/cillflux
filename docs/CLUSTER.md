@@ -329,8 +329,14 @@ for 6+ days as of 2026-09-05. Nothing currently open here.)*
   `WIN_20190505_07_44_26_Pro.mp4` in `~/immich-oversize` (exceeds
   Cloudflare's 100 MiB proxy cap — needs the LAN/browser path), and
   `~/Downloads` was never imported — **now in progress, see below**.
-- **`~/Downloads` import (MacBook Pro) — started 2026-09-25, batches 1
-  through 3 done. Running total: 724 files processed, 2 new assets.** Tom stages a slice at a time into `~/Download_batch1` on
+- **`~/Downloads` import (MacBook Pro) — 2026-09-25, believed
+  COMPLETE. 724 files across 3 batches, 2 new assets, 99.7%
+  redundant.** Tom's read is that batches 1-3 were everything in
+  `~/Downloads`; that has not been verified against the Mac itself,
+  so treat it as done-pending-confirmation rather than closed. Staged
+  as `~/Download_batch1` / `Download_Batch2` / `Download_Batch3` on
+  `gsfarmctl` and imported from there (never from the Mac — macOS
+  Local Network privacy blocks `immich-go` outright). Tom stages a slice at a time into `~/Download_batch1` on
   `gsfarmctl` and it is imported from there (never from the Mac —
   macOS Local Network privacy blocks `immich-go` outright).
   Batch 1: 39 JPEGs, 119 MB, flat folder, no non-photo junk.
@@ -432,8 +438,35 @@ for 6+ days as of 2026-09-05. Nothing currently open here.)*
   the remaining value to be emptying the folder, not growing the
   library.
 
-  Source folders are left in place — `immich-go` never deletes them.
-  Clear a batch only after confirming its assets are on the server.
+  **Cleanup, 2026-09-25.** All three folders removed after
+  re-verifying every file against `/api/assets/bulk-upload-check`:
+  723 of 724 byte-present on the server, and every archive's
+  *extracted* contents checked, so deleting the ZIPs lost nothing.
+  729 MB reclaimed.
+
+  One file was deliberately kept back at
+  **`~/immich-unimported/iraq-479.jpg`** (with a README explaining
+  why). It is the only one of the 724 whose exact bytes are not on
+  the server — not a missing photograph, but the 600x480 rotation of
+  an image the server already holds at 480x600 and correctly
+  oriented. Safe to delete; kept only because it would have been the
+  single irreversible byte-level loss in the exercise.
+
+  **What to reuse if more folders turn up.** The sequence that
+  worked, in order, and each step caught something:
+  1. Inspect before importing — file types, subdirectories, and
+     above all **archives**. Two of three batches arrived with
+     unextracted ZIPs holding most of their content.
+  2. Extract with `unzip`, never a GUI copy of an extracted folder —
+     `unzip` restores the stored timestamps, which for the undated
+     files is the only date they have.
+  3. Check EXIF coverage. 448 of the 724 files carried no EXIF date
+     at all; for those the mtime *is* the date.
+  4. Ask `/api/assets/bulk-upload-check` for the real new-asset
+     count before running anything. It is the same endpoint
+     `immich-go` dedups against, it is read-only, and it answers in
+     seconds what a dry run takes minutes to approximate.
+  5. Only then import — and only if the count is non-zero.
 - **`gitops.gs-farm.net` returns 504** (low priority, 2026-09-25) — the
   Weave GitOps UI. The app is fine: an in-cluster probe against
   `weave-gitops.flux-system.svc:9001` returns 200 immediately, the pod
