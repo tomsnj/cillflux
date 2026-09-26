@@ -124,18 +124,18 @@ file covers working conventions, not the full reference.
 - Renovate's strict YAML parser crashes on aliases referenced before their
   anchors are defined.
 - **Immich's `duplicateDetection` skips any asset that belongs to a
-  stack**, in both `force` modes, and there is no signal that it did
-  — `asset_job_status.duplicatesDetectedAt` simply stays NULL
-  forever. Established 2026-09-26 by a full `force: true` sweep of
-  all 33,041 assets: afterwards, of the timeline images that have a
-  CLIP embedding, **30,922 unstacked were detected with none
-  missing, while 738 of the 752 stacked were not**. So a population
-  of permanently-NULL `duplicatesDetectedAt` rows is expected and
-  correct, not a backlog — the stack is already the statement that
-  those assets are known duplicates of each other. Do not read that
-  NULL count as a gap (this was misdiagnosed here first, on the
+  stack**, in both `force` modes, and gives no signal that it did —
+  `asset_job_status.duplicatesDetectedAt` simply stays NULL forever.
+  Established 2026-09-26 by a full `force: true` sweep of all 33,041
+  assets. Afterwards, of the timeline images holding a CLIP
+  embedding: **30,922 unstacked were detected with none missing,
+  while 738 of the 752 stacked were not.** So a population of
+  permanently-NULL `duplicatesDetectedAt` rows is expected and
+  correct, not a backlog — a stack is already the statement that
+  those assets are known duplicates of one another. **Do not read
+  that NULL count as a gap.** It was misdiagnosed here first, on the
   strength of 704 of them dating from the Google Takeout import
-  window, which is really just when `immich-go` created the stacks).
+  window — which is really just when the stacks were created.
   Always break the count down by `asset."stackId" IS NOT NULL`
   before concluding anything:
   `SELECT (a."stackId" IS NOT NULL) AS stacked,`
@@ -146,37 +146,13 @@ file covers working conventions, not the full reference.
   `AND a.visibility='timeline' AND ss."assetId" IS NOT NULL GROUP BY 1,2;`
   Two genuine exclusions to keep separate from this: hidden
   motion-photo videos (871 here) are never detected because
-  detection is image-only, and 13 images have no CLIP embedding at
-  all so they are invisible to both duplicate detection and smart
-  search.
-  Cost note: that full sweep of 33,041 assets never took the node
-  past its 70% warn threshold and finished with CPU back at 12% —
-  it is far cheaper than it sounds. `scripts/immich-job-watchdog.py`
-  pauses the queues if a future one behaves differently.
-- After TrueNAS interface changes, NFS may bind to only the most recently
-  configured interface — clear with
-  `sudo midclt call nfs.update '{"bindip": []}'`.
-- Renovate's strict YAML parser crashes on aliases referenced before their
-  anchors are defined.
-- **Immich's `duplicateDetection` with `force: false` does not sweep
-  assets whose `duplicatesDetectedAt` is NULL** — it only queues
-  assets it considers newly eligible, so anything that missed its
-  turn stays missed forever and the job reports success with
-  `completed: 0`. Found 2026-09-26: **737 timeline images, all with
-  CLIP embeddings, metadata extracted and faces recognised, had
-  never been duplicate-detected**; 704 of them were imported on
-  2026-09-12/13, the Google Takeout window, when `immich-go` pauses
-  the job queues (`--pause-immich-jobs` defaults to true). The
-  duplicate view is therefore an undercount, which matters before
-  any stacking or dedupe pass. Check with:
-  `SELECT count(*) FROM asset a LEFT JOIN asset_job_status js ON js."assetId"=a.id`
-  `LEFT JOIN smart_search ss ON ss."assetId"=a.id WHERE a."deletedAt" IS NULL`
-  `AND js."duplicatesDetectedAt" IS NULL AND a.type='IMAGE'`
-  `AND a.visibility='timeline' AND ss."assetId" IS NOT NULL;`
-  Only `force: true` clears it, and that reprocesses the whole
-  library. Note hidden motion-photo videos (871 here) legitimately
-  never get detected — filter to `visibility='timeline'` and
-  `type='IMAGE'` or the number looks far worse than it is.
+  detection is image-only, and 13 images carry no CLIP embedding at
+  all, so they are invisible to duplicate detection *and* smart
+  search. Cost note: that full 33,041-asset sweep never took the
+  node past a 70% CPU warn threshold and ended with CPU at 12% — a
+  full reprocess is far cheaper than it sounds, and
+  `scripts/immich-job-watchdog.py` will pause the queues if a future
+  one behaves differently.
 - **Copy photo staging folders with `scp -rp` or `rsync -a`, never plain
   `scp -r`.** For any file without an EXIF date, the file mtime is the
   *only* remaining date source: `immich-go` sends it as `FileDate`, and
