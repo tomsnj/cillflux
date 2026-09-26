@@ -345,7 +345,10 @@ for 6+ days as of 2026-09-05. Nothing currently open here.)*
   **All 12 done: 21 -> 31 albums, 606 -> 824 memberships, asset
   totals unchanged at 31,455/483 throughout** (nothing re-uploaded).
   Name-matching agreed with checksum-matching on 218 of 218 files.
-  `~/AmazonAlbum2` (666 MB) is still on disk pending cleanup.
+  Both staging folders re-verified byte-present and deleted
+  (`~/AmazonAlbum` 115 MB, `~/AmazonAlbum2` 666 MB; 781 MB
+  reclaimed). **Phase 3 closed** — what remains of the album work is
+  Apple Photos (phase 1) and the local-drive survey (phase 2).
 - **Immich: review resolution-duplicate stacks** — Amazon stored some
   photos at two resolutions, and they are now in Immich as separate
   assets. Confirmed case: `20160516_183350.jpg` exists at 259 KB and

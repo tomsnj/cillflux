@@ -388,6 +388,19 @@ re-uploaded, which was the entire point of resolving by name.
 Name-matching agreed with checksum-matching on **218 of 218 files**
 across both batches, with zero disagreements.
 
+Both staging folders are gone: `~/AmazonAlbum` (115 MB) and
+`~/AmazonAlbum2` (666 MB), each re-verified byte-present on the
+server by sha1 immediately before deletion. 781 MB reclaimed, nothing
+left on disk from this phase.
+
+One incidental finding from that verification: the 187 files carry
+only 186 distinct checksums — `20210306_170417.jpg` appears in both
+`rabbits` and `Igloo`. That is a photograph genuinely filed in two
+Amazon albums, and it resolved to one asset added to both, which is
+the correct outcome.
+
+**Phase 3 is closed.**
+
 ### Where the albums would land
 
 Worth deciding before creating any: Shawna's content was imported
