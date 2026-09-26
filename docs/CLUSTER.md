@@ -290,6 +290,21 @@ for 6+ days as of 2026-09-05. Nothing currently open here.)*
   32 of Shawna's 12,135 assets were already present), so budget
   storage at or above the high end of the 180–230 GB estimate and dry-
   run Amazon before committing to a full export.
+- **Immich: 13 images that will not embed** — 13 timeline JPEGs of
+  31,687 (0.04%) have no `smart_search` row and did not gain one when
+  `smartSearch` was re-run on 2026-09-26 (it filled 41 of the 54 then
+  missing, leaving these). **They are invisible to duplicate
+  detection and to smart search**, since both work off the CLIP
+  embedding. `20140315_173153.jpg` has no recorded width/height and
+  no `metadataExtractedAt` either, so it is likely truncated; the
+  rest have metadata and dimensions and fail only at embedding. They
+  line up with the longstanding 7 `thumbnailGeneration` / 5 `ocr`
+  failures in the job baseline, so this is one small set of bad
+  files rather than anything new. Two are exact filename duplicates
+  of each other (`20211105_113523.jpg`, `20211106_154610.jpg`),
+  consistent with the same photo arriving from both Google and
+  Amazon. Full list in the 2026-09-26 session notes. Worth a pass to
+  re-fetch or drop them, but not blocking anything.
 - **Immich: album import** — only **562 of 31,938 assets (1.8%)** are
   in an album, and all 21 albums were created 2026-09-12/13 by the
   Google Takeout stage. Nothing else produced one: all fifteen Amazon
