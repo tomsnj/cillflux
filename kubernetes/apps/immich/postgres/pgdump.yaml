@@ -51,7 +51,7 @@ spec:
               # Same image as the server, so pg_dump matches the
               # server version exactly - a newer/older client can
               # refuse outright.
-              image: ghcr.io/immich-app/postgres:14-vectorchord0.4.3-pgvectors0.2.0@sha256:bcf63357191b76a916ae5eb93464d65c07511da41e3bf7a8416db519b40b1c23
+              image: ghcr.io/immich-app/postgres:17-vectorchord0.4.3-pgvector0.8.0@sha256:51f6abbfc720dde5cad9a39133d1c5247da8f073a449004da781c07b2cd9ee9c
               env:
                 - name: PGHOST
                   value: immich-postgres.immich.svc.cluster.local

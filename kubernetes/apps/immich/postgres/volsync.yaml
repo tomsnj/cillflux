@@ -10,7 +10,12 @@ spec:
   # left this naming the old gsks0 PVC - Volsync would have kept
   # reporting successful nightly backups of a frozen copy. If the data
   # directory is ever moved again, change this in the same commit.
-  sourcePVC: immich-postgres-data-nvme
+  # Must track the claimName in postgres.yaml. This does NOT follow it
+  # automatically: when the database moved to the pg17 PVC on
+  # 2026-09-26 this still named the old volume, which would have meant
+  # faithfully backing up a frozen v14 directory while the live
+  # database went unprotected, with nothing reporting an error.
+  sourcePVC: immich-postgres-data-nvme-pg17
   trigger:
     schedule: "0 3 * * *"
   # The mover must run as the postgres user. PGDATA is mode 0700 owned

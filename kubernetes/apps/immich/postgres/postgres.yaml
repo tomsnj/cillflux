@@ -20,14 +20,39 @@ spec:
     requests:
       storage: 20Gi
 ---
-# Live data directory since 2026-09-18 - the node's NVMe via
-# local-hostpath, not NFS. See the claimName comment below for why.
-# WaitForFirstConsumer binding, so this stays Pending until the
-# Postgres pod mounts it.
+# The node's NVMe via local-hostpath, not NFS. Live data directory
+# from 2026-09-18 until 2026-09-26, and now the **PostgreSQL 14
+# rollback** for the 14 -> 17 migration.
+#
+# Postgres cannot read a v14 data directory with a v17 binary, so that
+# upgrade was a logical dump/restore onto the pg17 PVC below. This
+# volume was never written to by it: rolling back is reverting the
+# image and the claimName, nothing more.
+#
+# Do NOT delete this block until the cutover has proven itself for a
+# week - Flux prunes by inventory diff, so removing it here destroys
+# the volume and the rollback with it. See
+# docs/plan-immich-postgres-pg17.md phase 5.
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: immich-postgres-data-nvme
+  namespace: immich
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: local-hostpath
+  resources:
+    requests:
+      storage: 20Gi
+---
+# Live data directory since 2026-09-26: PostgreSQL 17.6, restored from
+# a logical dump of the v14 database. WaitForFirstConsumer binding, so
+# this stays Pending until the Postgres pod mounts it.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: immich-postgres-data-nvme-pg17
   namespace: immich
 spec:
   accessModes:
@@ -58,7 +83,7 @@ spec:
     spec:
       containers:
         - name: postgres
-          image: ghcr.io/immich-app/postgres:14-vectorchord0.4.3-pgvectors0.2.0@sha256:bcf63357191b76a916ae5eb93464d65c07511da41e3bf7a8416db519b40b1c23
+          image: ghcr.io/immich-app/postgres:17-vectorchord0.4.3-pgvector0.8.0@sha256:51f6abbfc720dde5cad9a39133d1c5247da8f073a449004da781c07b2cd9ee9c
           envFrom:
             - secretRef:
                 name: immich-postgres-secret
@@ -111,10 +136,13 @@ spec:
             # media on NFS, hot database local.
             # Tradeoff: primary and restic snapshots now share the
             # node's disk, so pgdump.yaml writes a nightly logical dump
-            # to gsks1 for a second failure domain. The old
-            # immich-postgres-data PVC is deliberately retained as
-            # rollback. See docs/proposal-immich-postgres-nvme.md.
-            claimName: immich-postgres-data-nvme
+            # to gsks1 for a second failure domain. See
+            # docs/proposal-immich-postgres-nvme.md.
+            #
+            # Two earlier volumes are deliberately retained above as
+            # rollbacks: immich-postgres-data (gsks0, pre-NVMe) and
+            # immich-postgres-data-nvme (the PG14 directory, pre-17).
+            claimName: immich-postgres-data-nvme-pg17
         # Matches upstream docker-compose's shm_size: 128mb
         - name: dshm
           emptyDir:
