@@ -172,10 +172,59 @@ changelog_links_of() {
   jq -r '.body' <<<"$1" | grep -oP '\[[^]]+\]\(https?://[^)]+\)' | sort -u
 }
 
+# ---- reviewed-head tracking ---------------------------------------------
+
+# On 2026-09-26 PR #974 was reviewed as "kube-prometheus-stack v91.5.3"
+# (a patch) and merged, minutes later, as "v91.6.0" -- a minor. Renovate
+# had force-updated the branch in between. Nothing caught it: `merge`
+# re-runs the mechanical check against the *live* head, so the new head
+# was independently green, CLEAN and non-major and sailed through. The
+# mechanical criteria were never the problem. What was missing is any
+# link between the head whose CHANGELOG a human actually read and the
+# head that gets merged -- and reading the changelog is the one
+# criterion in CLAUDE.md that cannot be automated.
+#
+# So `check` now records the head SHA it evaluated, and `merge` refuses
+# if the branch has moved since. The upgrade was harmless that day; the
+# next one might not be.
+REVIEW_STATE_FILE="${REVIEW_STATE_FILE:-${XDG_STATE_HOME:-$HOME/.local/state}/weekly-renovate-review/reviewed.json}"
+
+record_review() {
+  # pr sha title update_type. Best-effort: never fail a review because
+  # the state file could not be written.
+  local pr="$1" sha="$2" title="$3" ut="$4" tmp existing
+  mkdir -p "$(dirname "$REVIEW_STATE_FILE")" 2>/dev/null || return 0
+  # || true: on the first ever run this file does not exist, and a bare
+  # failing $(cat ...) assignment aborts the whole script under set -e.
+  existing=$(cat "$REVIEW_STATE_FILE" 2>/dev/null) || true
+  [[ -n "$existing" ]] || existing='{}'
+  jq -e . >/dev/null 2>&1 <<<"$existing" || existing='{}'
+  tmp=$(mktemp) || return 0
+  if jq --arg pr "$pr" --arg sha "$sha" --arg title "$title" --arg ut "$ut" \
+        --arg at "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+        '.[$pr] = {sha: $sha, title: $title, update_type: $ut, at: $at}' \
+        <<<"$existing" > "$tmp" 2>/dev/null; then
+    mv "$tmp" "$REVIEW_STATE_FILE"
+  else
+    rm -f "$tmp"
+  fi
+  return 0
+}
+
+reviewed_field() {
+  # pr field -> value on stdout, non-zero if there is no record.
+  [[ -s "$REVIEW_STATE_FILE" ]] || return 1
+  jq -er --arg pr "$1" --arg f "$2" '.[$pr][$f] // empty' "$REVIEW_STATE_FILE" 2>/dev/null
+}
+
 # ---- check: mechanical criteria for one PR ----------------------------
 
 check_pr() {
-  local pr="$1" as_json="${2:-false}"
+  # $3: record this head SHA as "reviewed" (default true). cmd_merge
+  # passes false -- otherwise its own pre-merge check would overwrite
+  # the record it is about to verify against, and the guard would
+  # always pass.
+  local pr="$1" as_json="${2:-false}" record="${3:-true}"
   local data files update_type ci flux_diff forbidden crd chart_bumps head_sha
   data=$(fetch_pr "$pr") || die "could not fetch PR #$pr"
   files=$(jq -r '.files[].path' <<<"$data")
@@ -189,6 +238,10 @@ check_pr() {
   chart_bumps=$(chart_major_bump_files_of "$head_sha" "$files")
   local mergeable
   mergeable=$(jq -r '.mergeStateStatus' <<<"$data")
+
+  if [[ "$record" == "true" ]]; then
+    record_review "$pr" "$head_sha" "$(jq -r '.title' <<<"$data")" "$update_type"
+  fi
 
   local -a fail_reasons=()
   [[ "$update_type" == "major" ]] && fail_reasons+=("update type is major")
@@ -212,17 +265,20 @@ check_pr() {
     jq -n \
       --arg number "$pr" --arg title "$title" --arg url "$url" \
       --arg update_type "$update_type" --arg ci "$ci" --arg mergeable "$mergeable" \
+      --arg head_sha "$head_sha" \
       --argjson mechanical_pass "$pass" \
       --argjson fail_reasons "$(printf '%s\n' "${fail_reasons[@]:-}" | jq -R . | jq -s 'map(select(length>0))')" \
       --argjson files "$(jq -c '[.files[].path]' <<<"$data")" \
       --argjson changelog_links "$(printf '%s\n' "$links" | jq -R . | jq -s 'map(select(length>0))')" \
       '{number: ($number|tonumber), title: $title, url: $url, update_type: $update_type,
-        ci: $ci, mergeStateStatus: $mergeable, mechanical_pass: $mechanical_pass,
+        ci: $ci, mergeStateStatus: $mergeable, head_sha: $head_sha,
+        mechanical_pass: $mechanical_pass,
         fail_reasons: $fail_reasons, files: $files, changelog_links: $changelog_links}'
   else
     echo "PR #$pr — $title"
     echo "  $url"
     echo "  update type: $update_type   CI: $ci   mergeState: $mergeable"
+    echo "  head: ${head_sha:0:9} (recorded as reviewed; merge refuses if it moves)"
     if [[ "$pass" == true ]]; then
       echo "  MECHANICAL: PASS (still read the changelog links below before merging)"
     else
@@ -319,8 +375,10 @@ cmd_merge() {
   local force=false
   [[ "${1:-}" == "--force" ]] && force=true
 
+  # record=false: this check must not overwrite the reviewed-head record
+  # it is about to be compared against.
   local check_out
-  check_out=$(check_pr "$pr" true)
+  check_out=$(check_pr "$pr" true false)
   local mech_pass
   mech_pass=$(jq -r '.mechanical_pass' <<<"$check_out")
 
@@ -329,6 +387,39 @@ cmd_merge() {
     jq -r '.fail_reasons[]' <<<"$check_out" | sed 's/^/  - /' >&2
     log "Re-run with --force only if you (Tom) have explicitly reviewed and approved this despite the failure."
     exit 1
+  fi
+
+  # Has the branch moved since its changelog was read? The mechanical
+  # criteria above are re-evaluated live and will happily pass a
+  # different, equally-green commit -- which is exactly how a patch
+  # reviewed as v91.5.3 was merged as the minor v91.6.0 on 2026-09-26.
+  local cur_sha reviewed_sha reviewed_title reviewed_type cur_title cur_type
+  cur_sha=$(jq -r '.head_sha' <<<"$check_out")
+  cur_title=$(jq -r '.title' <<<"$check_out")
+  cur_type=$(jq -r '.update_type' <<<"$check_out")
+  reviewed_sha=$(reviewed_field "$pr" sha) || reviewed_sha=""
+
+  if [[ -z "$reviewed_sha" ]]; then
+    if [[ "$force" != true ]]; then
+      log "PR #$pr has no recorded review — refusing to merge."
+      log "  Run:  $0 check $pr"
+      log "  then read the changelog links it prints before merging."
+      log "  (--force skips this, and skips the changelog criterion with it.)"
+      exit 1
+    fi
+    log "WARNING: no recorded review for #$pr; merging anyway because --force was given."
+  elif [[ "$reviewed_sha" != "$cur_sha" ]]; then
+    reviewed_title=$(reviewed_field "$pr" title) || reviewed_title="(unknown)"
+    reviewed_type=$(reviewed_field "$pr" update_type) || reviewed_type="(unknown)"
+    log "PR #$pr has been force-updated since it was reviewed — refusing to merge."
+    log "  reviewed: ${reviewed_sha:0:9}  [$reviewed_type]  $reviewed_title"
+    log "  current : ${cur_sha:0:9}  [$cur_type]  $cur_title"
+    log ""
+    log "Renovate rewrites these branches in place, so the changelog you read"
+    log "may describe a different release than the one about to merge."
+    log "Re-run:  $0 check $pr    and read the changelog again."
+    if [[ "$force" != true ]]; then exit 1; fi
+    log "Merging anyway because --force was given."
   fi
 
   log "==> snapshotting pods before merge"

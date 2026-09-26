@@ -208,6 +208,22 @@ file covers working conventions, not the full reference.
   but unresolvable from gsfarmctl. Check the status code, not the
   resolution: anything on the internal class should answer 200/302, and
   a 404 or 503 means the route is wrong rather than the app being down.
+- **Renovate rewrites its PR branches in place, and the title changes
+  with them.** On 2026-09-26 PR #974 was reviewed as
+  `kube-prometheus-stack v91.5.3` (a *patch*) and merged minutes later
+  as `v91.6.0` (a *minor*) — Renovate had force-updated the branch in
+  between. Nothing caught it, because `merge` re-runs the mechanical
+  criteria against the **live** head and the new commit was
+  independently green, CLEAN and non-major. The criteria were never
+  the problem: what was missing was any link between the head whose
+  *changelog* was read and the head that merged, and reading the
+  changelog is the one criterion in this file that cannot be
+  automated. `check` now records the head SHA it evaluated (in
+  `~/.local/state/weekly-renovate-review/reviewed.json`) and `merge`
+  refuses if the branch has moved since, printing both. A `merge` with
+  no recorded `check` is also refused. `--force` overrides both — and
+  skips the changelog criterion with them. The hint that day was in
+  the first `git pull`: `renovate/… (forced update)`.
 - The Alloy chart's ingress backend port is `faroPort`, its only knob
   for that, defaulting to `12347` (the Faro browser-telemetry
   receiver). Faro is not enabled here, so the Service opens only
