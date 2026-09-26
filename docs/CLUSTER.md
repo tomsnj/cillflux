@@ -302,11 +302,19 @@ for 6+ days as of 2026-09-05. Nothing currently open here.)*
   either Mac** (183 photos on the Air, 184 on the Pro, apparently the
   same set), so that phase is a small content import instead. Its one
   piece of album structure is a *shared* album, `Family` (48), on the
-  Air only — and **iCloud shared albums hold ~2048px derivatives, not
-  originals**, so importing it wholesale would manufacture up to 48
-  new resolution-variant duplicates right before the stacking pass.
-  Only the photos *other people* contributed are unique content;
-  Photos.app shows the contributor per photo. Key enabler, verified 2026-09-26 by dry run: `immich-go`
+  Air only — but the derivative worry it raised turned out not to
+  apply. iCloud shared albums *do* hold ~2048px derivatives rather
+  than originals, but all 48 came from an **Apple iPad 2**, whose
+  rear camera is 0.7 MP — **960x720 native**, already below the cap,
+  so Apple never downscaled them. Verified absent from the library
+  too: exactly **1** asset in 31,938 has `model = 'iPad 2'` (a
+  720x720 `File_000.jpeg` from 2017-01-14, not this set), **zero**
+  are named `IMG_0001.*`, and the 27 assets at 960x720 are all
+  Facebook downloads. November 2017 is otherwise well covered (237
+  assets), so the gap is device-specific rather than a missing
+  period. **Import them and recreate `Family` as an album** — the
+  only album structure in the whole Apple phase, ~7 MB.
+  Key enabler, verified 2026-09-26 by dry run: `immich-go`
   reports `added to album` for an asset it also reports as
   `server has duplicate` — **album membership attaches to assets
   already on the server, with no re-upload**, which is what makes this
