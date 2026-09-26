@@ -350,32 +350,43 @@ identical to its checksum-derived truth set.
 `~/AmazonAlbum` (the pilot, 115 MB) was re-verified — all 31 files
 byte-present on the server by sha1 — and deleted.
 
-### Held back: `Charmer` and `Edie` collide with existing albums by case only
+### `Charmer` and `Edie` — merged 2026-09-26
 
-Two names differ from existing albums only in capitalisation:
+Two names differed from existing albums only in capitalisation, with
+**zero asset overlap**: the existing pair came from Google Takeout and
+are 2024 Pixel files (`PXL_2024…`), the Amazon sets are entirely
+different photographs of the same subjects.
 
-| Amazon export | Existing album | Overlap |
+| Amazon export | Existing album | Result |
 |---|---|---|
-| `Charmer` (54) | `charmer` (7) | **0 assets** |
-| `Edie` (33) | `edie` (5) | **0 assets** |
+| `Charmer` (54) | `charmer` (7) | merged -> **61** |
+| `Edie` (33) | `edie` (5) | merged -> **38** |
 
-The existing pair came from Google Takeout and are 2024 Pixel files
-(`PXL_2024…`); the Amazon sets are entirely different photographs of
-the same subjects. The resolver's duplicate-name guard compares
-**exact** names, so it would happily create `Charmer` alongside
-`charmer` — two albums differing only in case, which is exactly the
-confusion the guard exists to prevent. Held for a decision rather
-than guessed:
+Merged with `--album-id`, keeping the existing lowercase names, so
+each subject is one complete album. No case-only duplicate album
+names remain anywhere in the library.
 
-- **Merge** — add the Amazon assets to the existing lowercase albums
-  with `--album-id`. Zero overlap means nothing is lost and each
-  subject ends up with one complete album.
-- **Keep separate** — create `Charmer`/`Edie` as distinct albums,
-  preserving provenance at the cost of two near-identical names in
-  the UI.
+**This exposed a defect in the resolver's duplicate-name guard**,
+which compared names exactly and would have created `Charmer`
+alongside `charmer` without complaint — precisely the mess the guard
+exists to prevent, and Immich itself does not stop you. It is now
+case-insensitive and says which it found:
 
-Worth noting for the guard: case-insensitive clash detection would
-have caught this, and should probably be added.
+```
+an album named 'charmer' already exists (differs from 'Charmer' only in case):
+13bead70-…, 61 assets.
+Pass --album-id to add to it.
+```
+
+## Final state, 2026-09-26
+
+All 12 Amazon albums are in. **31 albums, 824 memberships**, up from
+21 / 606 at the start of the day. Photo and video totals are
+**unchanged at 31,455 / 483** throughout — not one byte was
+re-uploaded, which was the entire point of resolving by name.
+
+Name-matching agreed with checksum-matching on **218 of 218 files**
+across both batches, with zero disagreements.
 
 ### Where the albums would land
 

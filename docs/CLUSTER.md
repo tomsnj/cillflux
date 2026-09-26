@@ -334,13 +334,18 @@ for 6+ days as of 2026-09-05. Nothing currently open here.)*
   187, so 218 of 218 across both batches. Albums 23 -> 31,
   memberships 637 -> 737, asset totals still unchanged. Pilot folder
   `~/AmazonAlbum` re-verified byte-present and deleted (115 MB).
-  **Two held back**: `Charmer` (54) and `Edie` (33) collide with
-  existing Takeout albums `charmer` (7) and `edie` (5) by **case
-  only**, with **zero asset overlap** — same subjects, different
-  photographs. The resolver's duplicate-name guard is exact-match, so
-  it would create a near-identical second album; awaiting a
-  merge-or-separate decision, and the guard should gain
-  case-insensitive detection.
+  **`Charmer`/`Edie` merged**: they collided with the existing
+  Takeout albums `charmer` (7) and `edie` (5) by **case only**, with
+  **zero asset overlap** — same subjects, different photographs — so
+  they were merged with `--album-id` into the existing lowercase
+  albums, giving 61 and 38. That exposed a real defect: the
+  resolver's duplicate-name guard was exact-match and would have
+  created a second album differing only in capitalisation, which
+  Immich permits. It is now case-insensitive.
+  **All 12 done: 21 -> 31 albums, 606 -> 824 memberships, asset
+  totals unchanged at 31,455/483 throughout** (nothing re-uploaded).
+  Name-matching agreed with checksum-matching on 218 of 218 files.
+  `~/AmazonAlbum2` (666 MB) is still on disk pending cleanup.
 - **Immich: review resolution-duplicate stacks** — Amazon stored some
   photos at two resolutions, and they are now in Immich as separate
   assets. Confirmed case: `20160516_183350.jpg` exists at 259 KB and

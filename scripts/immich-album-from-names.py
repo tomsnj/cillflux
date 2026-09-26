@@ -160,10 +160,20 @@ def main():
     if args.album_id:
         album_id = args.album_id
     else:
-        clash = [a for a in api("/api/albums") if a["albumName"] == album]
+        # Case-insensitive on purpose. An exact-match guard let
+        # "Charmer" through alongside an existing "charmer" on
+        # 2026-09-26 - two albums differing only in capitalisation is
+        # exactly the mess this is meant to prevent, and Immich will
+        # not stop you.
+        existing = api("/api/albums")
+        clash = [a for a in existing if a["albumName"].lower() == album.lower()]
         if clash:
-            sys.exit(f"an album named {album!r} already exists "
-                     f"({clash[0]['id']}). Pass --album-id to add to it.")
+            found = clash[0]
+            qualifier = "" if found["albumName"] == album else \
+                        f" (differs from {album!r} only in case)"
+            sys.exit(f"an album named {found['albumName']!r} already exists"
+                     f"{qualifier}: {found['id']}, {found['assetCount']} assets."
+                     f"\nPass --album-id to add to it.")
         album_id = api("/api/albums", "POST",
                        {"albumName": album, "assetIds": []})["id"]
         print(f"created album {album_id}")
