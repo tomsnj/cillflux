@@ -332,24 +332,50 @@ JOIN album_user au ON au."albumId" = a.id
 JOIN "user" u ON u.id = au."userId";
 ```
 
-### Remaining: 10 albums
+### Batch 2 — 2026-09-26, 8 of the remaining 10 created
 
-No bulk transfer needed. Per album, in the exported folder on
-Windows:
+The other ten exported in one capture to
+`~/AmazonAlbum2/Amazon Photos Downloads/`: 187 files, 666 MB, all
+JPEG, no junk, no nesting. Name-matching held again — **187 of 187
+resolved identically under sha1-vs-`asset.checksum` and under
+`originalFileName`**, zero disagreements, so that is now 218 of 218
+across both batches.
 
-```
-dir /b > "<Album Name>.txt"
-```
+Created: `camping 2022` (39), `Dutches` (12), `Hens` (6), `HVAC` (10),
+`Igloo` (3), `L120` (5), `Macy` (18), `rabbits` (7). Verified 23 ->
+**31 albums**, 637 -> **737 memberships**, photo/video totals
+**unchanged at 31,455 / 483**, and every album's live membership
+identical to its checksum-derived truth set.
 
-then on `gsfarmctl`:
+`~/AmazonAlbum` (the pilot, 115 MB) was re-verified — all 31 files
+byte-present on the server by sha1 — and deleted.
 
-```bash
-scripts/immich-album-from-names.py --names-file "<Album Name>.txt" --album "<Album Name>"
-scripts/immich-album-from-names.py --names-file "<Album Name>.txt" --album "<Album Name>" --create
-```
+### Held back: `Charmer` and `Edie` collide with existing albums by case only
 
-Exporting the files works equally well (`--dir`) and is what the
-pilot did; it is just 115 MB per two albums for no added accuracy.
+Two names differ from existing albums only in capitalisation:
+
+| Amazon export | Existing album | Overlap |
+|---|---|---|
+| `Charmer` (54) | `charmer` (7) | **0 assets** |
+| `Edie` (33) | `edie` (5) | **0 assets** |
+
+The existing pair came from Google Takeout and are 2024 Pixel files
+(`PXL_2024…`); the Amazon sets are entirely different photographs of
+the same subjects. The resolver's duplicate-name guard compares
+**exact** names, so it would happily create `Charmer` alongside
+`charmer` — two albums differing only in case, which is exactly the
+confusion the guard exists to prevent. Held for a decision rather
+than guessed:
+
+- **Merge** — add the Amazon assets to the existing lowercase albums
+  with `--album-id`. Zero overlap means nothing is lost and each
+  subject ends up with one complete album.
+- **Keep separate** — create `Charmer`/`Edie` as distinct albums,
+  preserving provenance at the cost of two near-identical names in
+  the UI.
+
+Worth noting for the guard: case-insensitive clash detection would
+have caught this, and should probably be added.
 
 ### Where the albums would land
 

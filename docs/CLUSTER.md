@@ -327,6 +327,20 @@ for 6+ days as of 2026-09-05. Nothing currently open here.)*
   of the original bytes as `bytea`, so `encode(checksum,'hex')`
   compares straight against `sha1sum`; and album ownership is not a
   column on `album` in v3.1.0 but a role in `album_user`.
+  **Batch 2 same day — 10 of 12 now done.** The remaining ten
+  exported in one capture (187 files, 666 MB) and eight were created:
+  `camping 2022`, `Dutches`, `Hens`, `HVAC`, `Igloo`, `L120`, `Macy`,
+  `rabbits`. Name-matching agreed with checksum-matching on 187 of
+  187, so 218 of 218 across both batches. Albums 23 -> 31,
+  memberships 637 -> 737, asset totals still unchanged. Pilot folder
+  `~/AmazonAlbum` re-verified byte-present and deleted (115 MB).
+  **Two held back**: `Charmer` (54) and `Edie` (33) collide with
+  existing Takeout albums `charmer` (7) and `edie` (5) by **case
+  only**, with **zero asset overlap** — same subjects, different
+  photographs. The resolver's duplicate-name guard is exact-match, so
+  it would create a near-identical second album; awaiting a
+  merge-or-separate decision, and the guard should gain
+  case-insensitive detection.
 - **Immich: review resolution-duplicate stacks** — Amazon stored some
   photos at two resolutions, and they are now in Immich as separate
   assets. Confirmed case: `20160516_183350.jpg` exists at 259 KB and
