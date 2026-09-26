@@ -332,25 +332,57 @@ So the decision is Calvin's, the credential is Calvin's, and the
 default is "leave it on the MyCloud, which is already backed up
 weekly to TrueNAS."
 
-### What the hash is now for
+### Result, 2026-09-26 — Phase 2 is closed
 
-The overlap number is still worth having, but it answers a different
-question than when this phase was written. It is no longer "how much
-work is left" — it is:
+The hash pass ran (`/mnt/storage1/home/stecktf_a/mycloud-sha1.txt`,
+52,816 entries, 34,595 distinct — so ~18,000 files are duplicated
+within the MyCloud itself). Compared against all 33,037 Immich
+checksums:
 
-> **Did Calvin's photographs already end up in Tom's library?**
+```
+share                    files   distinct   in Immich   NOT in Immich
+cgsteck_a                42,080     24,054         278          41,802
+cgsteck                  10,595     10,405           0          10,595
+shawna-laptop-backup        141        136          73              68
+overall                  52,816                    351 (0.7%)
+```
 
-A high overlap would mean an earlier import swept them in under the
-wrong owner, which is a correctness problem to fix rather than a
-migration to run. A near-zero overlap means the libraries are cleanly
-separate and Tom's side needs nothing here.
+**Calvin's photographs never entered Tom's library.** 0.7% overlap
+overall, and `cgsteck` is a flat zero. That was the question this
+pass existed to answer, and the answer is clean separation — no
+wrong-owner problem to fix.
 
-Because the hash output carries full paths, split the comparison by
-top-level share (`cgsteck`, `cgsteck_a`, `shawna-laptop-backup`)
-rather than reporting one aggregate — the per-share split is the
-answer, the total is not.
+**The 52,816 was badly inflated by the `-iname '*.png'` term.**
+68% of the matches (35,982) sit under software and system
+directories — Steam, EasyDiffusion, Xbox games, Windows Kits,
+Eclipse/Capella plugin icons. By extension:
 
-### Do the cheap thing first: checksum before copying anything
+```
+png 39,941   cr2 10,445   jpg 2,311   mp4 106   jpeg 9   mov 4
+```
+
+Strip the software paths and roughly **12,900 files** are plausibly
+photographic, dominated by **10,445 Canon CR2 raws** — which is
+exactly the horse-show shoot output Tom described, not a family
+archive. Any future survey of this kind should drop `*.png` or
+exclude `node_modules|Program Files|AppData|configuration|plugins`
+and friends, or the headline number is meaningless.
+
+**Nothing here belongs in Tom's library.** The only share that is
+not Calvin's, `shawna-laptop-backup`, is Mom's laptop image; its 68
+unmatched files are all from one `Downloads` folder and are business
+graphics (`Logo`, `Banner5`, `Business card(front)2`, `Advent 2025
+Front`), phone screenshots, `fairprints/img-N` print proofs, and a
+few crops of family photos already held at full size. Archive
+material it is not.
+
+**What remains is Calvin's decision, not a migration.** ~10,445 CR2
+raws of other people's horses, against a 107 GB quota, needing his
+own API key since `--admin-api-key` only manages server jobs. The
+default — leave it on the MyCloud, which already rsyncs weekly to
+TrueNAS — stands unless he asks otherwise.
+
+### How it was measured (kept for reuse)
 
 Do **not** start by staging 154 GB. Immich's `asset.checksum` is
 plain sha1 of the original bytes, so overlap can be measured without
@@ -375,7 +407,7 @@ could be large — but 52,816 files against a 31,682-asset library
 means it could equally be mostly new. The hash pass settles it in
 under an hour and decides whether this is a weekend or an afternoon.
 
-### Then, if there is real new content
+### If Calvin ever does want his imported
 
 - **Mount, do not copy.** `gsfarmctl` has 5.7 GB of RAM and an
   `immich-go` run indexes the whole server list first; it died at 53%

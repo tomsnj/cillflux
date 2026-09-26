@@ -338,6 +338,25 @@ for 6+ days as of 2026-09-05. Nothing currently open here.)*
   already get swept into Tom's library under the wrong owner?"
   rather than "how much work is left" — split the comparison by
   top-level share, not in aggregate.
+  **CLOSED 2026-09-26.** The hash pass compared all 52,816 MyCloud
+  entries against Immich's 33,037 checksums: **overall overlap 0.7%
+  (351 files)**, with `cgsteck` a flat **zero** — so Calvin's
+  photographs never entered Tom's library and there is no
+  wrong-owner problem. The 52,816 headline was badly inflated by the
+  `-iname '*.png'` term: **68% (35,982) sit under software/system
+  directories** (Steam, EasyDiffusion, Xbox games, Windows Kits,
+  Eclipse). By extension it is png 39,941 / cr2 10,445 / jpg 2,311 /
+  mp4 106, so the genuinely photographic content is ~12,900 files
+  dominated by **10,445 Canon CR2 raws** — the horse-show shoot
+  output, not a family archive. The one non-Calvin share,
+  `shawna-laptop-backup`, is Mom's laptop image: 141 files, 73
+  already in Immich, and the 68 remaining are one `Downloads`
+  folder of business graphics, screenshots and print proofs.
+  **Nothing here belongs in Tom's library.** What remains is
+  Calvin's decision, not a migration. Lesson for any future survey
+  of this kind: drop `*.png` or exclude
+  `node_modules|Program Files|AppData|configuration|plugins`, or the
+  file count is meaningless.
   Full approach in `docs/plan-immich-album-import.md` phase 2.
 - **Immich: album import** — only **562 of 31,938 assets (1.8%)** are
   in an album, and all 21 albums were created 2026-09-12/13 by the
