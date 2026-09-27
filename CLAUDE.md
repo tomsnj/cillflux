@@ -173,6 +173,44 @@ file covers working conventions, not the full reference.
   timestamp, and XMP sidecars do not help: immich-go v0.32.0 logs
   `discovered sidecar` but still reports `CaptureDate=0001-01-01`,
   under both the `IMG_1433.xmp` and `IMG_1433.JPG.xmp` conventions.
+- **An auto-updating mobile client will outrun a server pinned in git,
+  and the failure surfaces as a vague in-app error.** The Immich server
+  version lives in this repo; the Play Store moves the Android app on
+  its own schedule. On 2026-09-27 renaming an album from the phone gave
+  only "unable to change the title" — server v3.1.0, app
+  `immich-android/3.2.1`. v3.2.0 made `album.description` nullable and
+  the newer client duly sends `null`, which the older zod schema
+  rejected: `400 Invalid input: expected string, received null`. The
+  Immich server log showed **nothing** at the default `log` level, so
+  the diagnosis came from the ingress access log, which records method,
+  status, path and user-agent as JSON:
+  `kubectl logs -n network deploy/nginx-external-controller --since=24h | grep '"path": "/api/albums'`
+  Two things to know before reaching for that. The phones reach Immich
+  through the **external** ingress (Cloudflare tunnel) while browsers on
+  the LAN use the internal one — grepping only `nginx-internal` finds
+  nothing and looks like the request was never sent. And the log is JSON
+  with separate `method` and `path` fields, so the obvious
+  `grep '"PATCH /api/albums'` matches nothing either. Summarise client
+  versions in one pass by counting the `http_user_agent` field; that is
+  what showed all four household accounts were already on 3.2.1. Immich
+  does not support a split client/server pair, so treat app-version
+  drift as a reason to upgrade, not as an app bug.
+- **A HelmRelease that overrides only `image.tag` is invisible to
+  Renovate.** Its `helm-values` manager needs a `repository` + `tag`
+  pair to build a dependency name; with the repository coming from the
+  chart default there is nothing to match, no PR is ever opened, and
+  nothing reports the silence. Immich sat on a July release for seven
+  weeks that way and was found only when a client outran it (above).
+  Where the tag is shared you cannot simply add a repository: Immich's
+  `controllers.main.containers.main` is handed to both the server and
+  machine-learning sub-charts, so one repository there would drag
+  machine-learning onto the server image. Use the regex customManager in
+  `.github/renovate.json5` instead — and **quote the value**, because
+  its matchString captures `"(?<currentValue>.*)"`, so an unquoted tag
+  matches nothing while looking perfectly tracked. Test the regex
+  against both spellings before trusting it. Sweep for others by
+  comparing running images against tags Renovate has ever proposed:
+  `kubectl get deploy -A -o jsonpath='{range .items[*]}{.spec.template.spec.containers[*].image}{"\n"}{end}' | sort -u`
 - `home-operations` images aren't published with semver tags — pin by
   digest (`@sha256:...`), which Renovate's docker datasource handles fine.
 - Files with `600` permissions block reads as non-root UID in CI — sweep
