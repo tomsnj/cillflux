@@ -1,0 +1,384 @@
+{
+  "created": "2026-09-27T12:02:36.56021+00:00",
+  "note": "Pre-merge snapshot: Lake Ozark 2025 merged into Lake Ozark July 25, source album then deleted.",
+  "albums": [
+    {
+      "id": "af7538fb-2abe-4f01-884c-362fd0f18b51",
+      "albumName": "Lake Ozark July 25",
+      "description": "",
+      "order": "desc",
+      "isActivityEnabled": true,
+      "albumThumbnailAssetId": "7077b048-e663-4879-91dd-ec91e5a77cfa",
+      "createdAt": "2026-09-12T01:21:54.893853+00:00",
+      "assets": [
+        {
+          "assetId": "7077b048-e663-4879-91dd-ec91e5a77cfa",
+          "file": "PXL_20250705_022746174.RAW-01.COVER.jpg"
+        },
+        {
+          "assetId": "447e6b88-da06-4027-92e3-caf3a87ee750",
+          "file": "PXL_20250706_180134895.RAW-01.COVER.jpg"
+        },
+        {
+          "assetId": "8a28db06-3066-490d-a7cc-1e2d9c884802",
+          "file": "PXL_20250705_002817999.RAW-01.COVER.jpg"
+        },
+        {
+          "assetId": "36034b33-8ff2-474d-b7ed-94855715a34a",
+          "file": "PXL_20250705_023307969.RAW-01.COVER.jpg"
+        },
+        {
+          "assetId": "9332bdbc-2fa5-4485-acd6-c3c2bd97e032",
+          "file": "PXL_20250705_024323436.mp4"
+        },
+        {
+          "assetId": "e260532b-0fb6-40a9-a346-a44de665aef0",
+          "file": "PXL_20250705_222335639.RAW-01.COVER.jpg"
+        },
+        {
+          "assetId": "362ed1bf-02a0-4af3-bd30-0bbc0baf6b62",
+          "file": "PXL_20250706_180144256.RAW-01.COVER.jpg"
+        },
+        {
+          "assetId": "adb31cac-fa91-4c8c-ac32-cd6d4d9b91da",
+          "file": "PXL_20250704_201116779.RAW-01.COVER.jpg"
+        },
+        {
+          "assetId": "8efe9913-0891-4e0c-ad7d-6adc938774aa",
+          "file": "PXL_20250705_015823751.RAW-01.COVER.jpg"
+        },
+        {
+          "assetId": "a02faa11-1fd0-4c3d-bb48-088c5ae2cccc",
+          "file": "PXL_20250706_182645315.RAW-01.COVER.jpg"
+        },
+        {
+          "assetId": "46aef4ac-301e-4fae-986a-6bcc95dc3260",
+          "file": "PXL_20250706_182647453.RAW-01.COVER.jpg"
+        },
+        {
+          "assetId": "7af6a58c-b20a-4d34-830b-21c88861f42e",
+          "file": "PXL_20250706_193750862.RAW-01.COVER.jpg"
+        },
+        {
+          "assetId": "21045a62-fbc1-42d2-8c28-42e03d2dc098",
+          "file": "PXL_20250705_013506328.RAW-01.COVER.jpg"
+        },
+        {
+          "assetId": "a2f765d2-291a-49a2-be83-336471f83c92",
+          "file": "PXL_20250705_022338538.mp4"
+        },
+        {
+          "assetId": "d11e4206-5c0c-471d-a6a9-17525fe11fe3",
+          "file": "PXL_20250705_022743709.RAW-01.COVER.jpg"
+        },
+        {
+          "assetId": "051f3d14-9923-4c5c-b15b-5c755c97a1f5",
+          "file": "PXL_20250705_020617168.mp4"
+        },
+        {
+          "assetId": "915df76c-894f-449f-88eb-ccee56f0c6d3",
+          "file": "PXL_20250706_011408757.RAW-01.COVER.jpg"
+        },
+        {
+          "assetId": "b47088fa-2de6-40a6-9547-304418a7ff2d",
+          "file": "PXL_20250707_000135384.NIGHT.RAW-01.COVER.jpg"
+        },
+        {
+          "assetId": "5bcc0de0-c72d-440f-8ae3-712533d31bfd",
+          "file": "PXL_20250705_021524779.mp4"
+        },
+        {
+          "assetId": "608b9a2a-6018-4f1c-8954-30ebceb23312",
+          "file": "PXL_20250705_022350645.mp4"
+        },
+        {
+          "assetId": "c82f0a77-e3ef-4ae2-aafa-17a75d0ffec2",
+          "file": "PXL_20250705_023440961.RAW-01.COVER.jpg"
+        },
+        {
+          "assetId": "50c34909-4bb4-4535-8b91-f8519e994715",
+          "file": "PXL_20250705_024345534.RAW-01.COVER.jpg"
+        },
+        {
+          "assetId": "67ece42e-1847-41d7-8bd0-0f959de321ef",
+          "file": "PXL_20250705_222332429.RAW-01.COVER.jpg"
+        },
+        {
+          "assetId": "a5ba9717-3e1e-4b5e-b41f-428bed3af69c",
+          "file": "PXL_20250706_191744974.RAW-01.COVER.jpg"
+        },
+        {
+          "assetId": "612b87e8-456d-45ce-bff8-1064f250f38a",
+          "file": "PXL_20250705_023931830.RAW-01.COVER.jpg"
+        },
+        {
+          "assetId": "cc6e7863-cbb2-46c9-b28e-13ab758e2083",
+          "file": "PXL_20250705_024030098.mp4"
+        },
+        {
+          "assetId": "3eab427b-bca6-40bc-a208-3818669a1847",
+          "file": "PXL_20250705_023025481.mp4"
+        },
+        {
+          "assetId": "2551c06b-e4f6-446e-b66f-5479fdedce4f",
+          "file": "PXL_20250706_192741799.RAW-01.COVER.jpg"
+        },
+        {
+          "assetId": "9740c122-48c3-483a-9da9-43f5a3bb36d1",
+          "file": "PXL_20250705_014722416.RAW-01.COVER.jpg"
+        },
+        {
+          "assetId": "8291756c-61ff-452d-847a-3b1c702eaa66",
+          "file": "PXL_20250705_020250867.RAW-01.COVER.jpg"
+        },
+        {
+          "assetId": "efa911d7-f29c-49e3-97fd-94862c8e4e5d",
+          "file": "PXL_20250705_022749553.RAW-01.COVER.jpg"
+        },
+        {
+          "assetId": "e2bd0217-49e9-4166-a8a7-eb19b2e3608d",
+          "file": "PXL_20250705_022752233.RAW-01.COVER.jpg"
+        },
+        {
+          "assetId": "1b70c896-cbcb-4f7c-b2eb-87f934ccd28e",
+          "file": "PXL_20250705_024327752.mp4"
+        },
+        {
+          "assetId": "ccc37e1a-d1c5-4f42-a314-28701ebe4b75",
+          "file": "PXL_20250705_023357655.mp4"
+        },
+        {
+          "assetId": "48af689d-02a6-44ac-acc3-cc5751154699",
+          "file": "PXL_20250706_011613086.RAW-01.COVER.jpg"
+        },
+        {
+          "assetId": "0a545cbb-e428-42b5-9fed-bc0dfc8ebb2f",
+          "file": "PXL_20250706_193753619.RAW-01.COVER.jpg"
+        },
+        {
+          "assetId": "3b2c83fe-5a14-44ca-8eb1-f2a386d197e5",
+          "file": "PXL_20250707_000122012.NIGHT.RAW-01.COVER.jpg"
+        },
+        {
+          "assetId": "4e8ab0f9-35bb-459b-a923-1eaa3e29f9cd",
+          "file": "PXL_20250704_201121399.RAW-01.COVER.jpg"
+        },
+        {
+          "assetId": "4f138213-1fb1-4e95-b991-cd8bf15ac0b8",
+          "file": "PXL_20250705_025259528.mp4"
+        },
+        {
+          "assetId": "8e3d588f-d99d-4321-99df-646a0147296a",
+          "file": "PXL_20250706_191805882.RAW-01.COVER.jpg"
+        },
+        {
+          "assetId": "b923998f-7151-4653-9185-02ecd5a95e75",
+          "file": "PXL_20250707_132010758.RAW-01.COVER.jpg"
+        },
+        {
+          "assetId": "83bbb873-b922-4cd5-9d5d-de8b6049b23e",
+          "file": "PXL_20250706_171353719.jpg"
+        }
+      ]
+    },
+    {
+      "id": "ff7eb18a-ba87-4c8d-a9f1-7a94a559863a",
+      "albumName": "Lake Ozark 2025",
+      "description": "",
+      "order": "desc",
+      "isActivityEnabled": true,
+      "albumThumbnailAssetId": "521d1d60-8c48-4c22-b167-7655421ffbf7",
+      "createdAt": "2026-09-12T01:21:58.249689+00:00",
+      "assets": [
+        {
+          "assetId": "521d1d60-8c48-4c22-b167-7655421ffbf7",
+          "file": "PXL_20250517_193209404.mp4"
+        },
+        {
+          "assetId": "55c56c2c-8092-4b3b-8ed8-491fa0904a80",
+          "file": "PXL_20250517_193733145.mp4"
+        },
+        {
+          "assetId": "f7d9013f-848d-430d-ab25-1ad16dfe48cf",
+          "file": "PXL_20250517_194346011.mp4"
+        },
+        {
+          "assetId": "add6a079-0404-4706-85b9-6fdab5a8d768",
+          "file": "PXL_20250517_194510115.mp4"
+        },
+        {
+          "assetId": "8c739ee3-471d-4148-952a-7a7ab8af0559",
+          "file": "PXL_20250517_183221302.mp4"
+        },
+        {
+          "assetId": "7077b048-e663-4879-91dd-ec91e5a77cfa",
+          "file": "PXL_20250705_022746174.RAW-01.COVER.jpg"
+        },
+        {
+          "assetId": "447e6b88-da06-4027-92e3-caf3a87ee750",
+          "file": "PXL_20250706_180134895.RAW-01.COVER.jpg"
+        },
+        {
+          "assetId": "8a28db06-3066-490d-a7cc-1e2d9c884802",
+          "file": "PXL_20250705_002817999.RAW-01.COVER.jpg"
+        },
+        {
+          "assetId": "36034b33-8ff2-474d-b7ed-94855715a34a",
+          "file": "PXL_20250705_023307969.RAW-01.COVER.jpg"
+        },
+        {
+          "assetId": "9332bdbc-2fa5-4485-acd6-c3c2bd97e032",
+          "file": "PXL_20250705_024323436.mp4"
+        },
+        {
+          "assetId": "e260532b-0fb6-40a9-a346-a44de665aef0",
+          "file": "PXL_20250705_222335639.RAW-01.COVER.jpg"
+        },
+        {
+          "assetId": "362ed1bf-02a0-4af3-bd30-0bbc0baf6b62",
+          "file": "PXL_20250706_180144256.RAW-01.COVER.jpg"
+        },
+        {
+          "assetId": "adb31cac-fa91-4c8c-ac32-cd6d4d9b91da",
+          "file": "PXL_20250704_201116779.RAW-01.COVER.jpg"
+        },
+        {
+          "assetId": "8efe9913-0891-4e0c-ad7d-6adc938774aa",
+          "file": "PXL_20250705_015823751.RAW-01.COVER.jpg"
+        },
+        {
+          "assetId": "a02faa11-1fd0-4c3d-bb48-088c5ae2cccc",
+          "file": "PXL_20250706_182645315.RAW-01.COVER.jpg"
+        },
+        {
+          "assetId": "46aef4ac-301e-4fae-986a-6bcc95dc3260",
+          "file": "PXL_20250706_182647453.RAW-01.COVER.jpg"
+        },
+        {
+          "assetId": "7af6a58c-b20a-4d34-830b-21c88861f42e",
+          "file": "PXL_20250706_193750862.RAW-01.COVER.jpg"
+        },
+        {
+          "assetId": "21045a62-fbc1-42d2-8c28-42e03d2dc098",
+          "file": "PXL_20250705_013506328.RAW-01.COVER.jpg"
+        },
+        {
+          "assetId": "a2f765d2-291a-49a2-be83-336471f83c92",
+          "file": "PXL_20250705_022338538.mp4"
+        },
+        {
+          "assetId": "d11e4206-5c0c-471d-a6a9-17525fe11fe3",
+          "file": "PXL_20250705_022743709.RAW-01.COVER.jpg"
+        },
+        {
+          "assetId": "051f3d14-9923-4c5c-b15b-5c755c97a1f5",
+          "file": "PXL_20250705_020617168.mp4"
+        },
+        {
+          "assetId": "915df76c-894f-449f-88eb-ccee56f0c6d3",
+          "file": "PXL_20250706_011408757.RAW-01.COVER.jpg"
+        },
+        {
+          "assetId": "b47088fa-2de6-40a6-9547-304418a7ff2d",
+          "file": "PXL_20250707_000135384.NIGHT.RAW-01.COVER.jpg"
+        },
+        {
+          "assetId": "5bcc0de0-c72d-440f-8ae3-712533d31bfd",
+          "file": "PXL_20250705_021524779.mp4"
+        },
+        {
+          "assetId": "608b9a2a-6018-4f1c-8954-30ebceb23312",
+          "file": "PXL_20250705_022350645.mp4"
+        },
+        {
+          "assetId": "c82f0a77-e3ef-4ae2-aafa-17a75d0ffec2",
+          "file": "PXL_20250705_023440961.RAW-01.COVER.jpg"
+        },
+        {
+          "assetId": "50c34909-4bb4-4535-8b91-f8519e994715",
+          "file": "PXL_20250705_024345534.RAW-01.COVER.jpg"
+        },
+        {
+          "assetId": "67ece42e-1847-41d7-8bd0-0f959de321ef",
+          "file": "PXL_20250705_222332429.RAW-01.COVER.jpg"
+        },
+        {
+          "assetId": "a5ba9717-3e1e-4b5e-b41f-428bed3af69c",
+          "file": "PXL_20250706_191744974.RAW-01.COVER.jpg"
+        },
+        {
+          "assetId": "612b87e8-456d-45ce-bff8-1064f250f38a",
+          "file": "PXL_20250705_023931830.RAW-01.COVER.jpg"
+        },
+        {
+          "assetId": "cc6e7863-cbb2-46c9-b28e-13ab758e2083",
+          "file": "PXL_20250705_024030098.mp4"
+        },
+        {
+          "assetId": "3eab427b-bca6-40bc-a208-3818669a1847",
+          "file": "PXL_20250705_023025481.mp4"
+        },
+        {
+          "assetId": "2551c06b-e4f6-446e-b66f-5479fdedce4f",
+          "file": "PXL_20250706_192741799.RAW-01.COVER.jpg"
+        },
+        {
+          "assetId": "9740c122-48c3-483a-9da9-43f5a3bb36d1",
+          "file": "PXL_20250705_014722416.RAW-01.COVER.jpg"
+        },
+        {
+          "assetId": "8291756c-61ff-452d-847a-3b1c702eaa66",
+          "file": "PXL_20250705_020250867.RAW-01.COVER.jpg"
+        },
+        {
+          "assetId": "efa911d7-f29c-49e3-97fd-94862c8e4e5d",
+          "file": "PXL_20250705_022749553.RAW-01.COVER.jpg"
+        },
+        {
+          "assetId": "e2bd0217-49e9-4166-a8a7-eb19b2e3608d",
+          "file": "PXL_20250705_022752233.RAW-01.COVER.jpg"
+        },
+        {
+          "assetId": "1b70c896-cbcb-4f7c-b2eb-87f934ccd28e",
+          "file": "PXL_20250705_024327752.mp4"
+        },
+        {
+          "assetId": "ccc37e1a-d1c5-4f42-a314-28701ebe4b75",
+          "file": "PXL_20250705_023357655.mp4"
+        },
+        {
+          "assetId": "48af689d-02a6-44ac-acc3-cc5751154699",
+          "file": "PXL_20250706_011613086.RAW-01.COVER.jpg"
+        },
+        {
+          "assetId": "0a545cbb-e428-42b5-9fed-bc0dfc8ebb2f",
+          "file": "PXL_20250706_193753619.RAW-01.COVER.jpg"
+        },
+        {
+          "assetId": "3b2c83fe-5a14-44ca-8eb1-f2a386d197e5",
+          "file": "PXL_20250707_000122012.NIGHT.RAW-01.COVER.jpg"
+        },
+        {
+          "assetId": "4e8ab0f9-35bb-459b-a923-1eaa3e29f9cd",
+          "file": "PXL_20250704_201121399.RAW-01.COVER.jpg"
+        },
+        {
+          "assetId": "4f138213-1fb1-4e95-b991-cd8bf15ac0b8",
+          "file": "PXL_20250705_025259528.mp4"
+        },
+        {
+          "assetId": "8e3d588f-d99d-4321-99df-646a0147296a",
+          "file": "PXL_20250706_191805882.RAW-01.COVER.jpg"
+        },
+        {
+          "assetId": "b923998f-7151-4653-9185-02ecd5a95e75",
+          "file": "PXL_20250707_132010758.RAW-01.COVER.jpg"
+        },
+        {
+          "assetId": "83bbb873-b922-4cd5-9d5d-de8b6049b23e",
+          "file": "PXL_20250706_171353719.jpg"
+        }
+      ]
+    }
+  ]
+}

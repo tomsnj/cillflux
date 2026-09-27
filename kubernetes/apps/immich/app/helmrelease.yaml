@@ -30,6 +30,16 @@ spec:
     # already the post-migration target image, so no image swap was needed -
     # just the app version bump, with a fresh Volsync backup taken first.
     #
+    # Upgraded v3.1.0 -> v3.2.2 on 2026-09-27, forced by client drift: the
+    # Play Store had moved every phone in the house to immich-android 3.2.1
+    # while the server stayed on a July release, and renaming an album from
+    # the app returned 400 "expected string, received null" - v3.2.0 made
+    # album.description nullable and the new client sends null. Postgres image
+    # unchanged: VECTORCHORD_VERSION_RANGE and VECTOR_VERSION_RANGE are
+    # identical in both releases. 8 migrations ran; the only ones touching data
+    # were AlbumDescriptionNullable (31 empty-string descriptions -> NULL, and
+    # it has a real down()) and DeleteMismatchedMemoryAssets (0 rows here).
+    #
     # DB env vars point at the standalone Postgres in ../postgres/, not PGO -
     # see postgres.yaml for why.
     controllers:
@@ -37,7 +47,21 @@ spec:
         containers:
           main:
             image:
-              tag: v3.1.0
+              # This one tag feeds BOTH images - the chart hands
+              # controllers.main.containers.main down to the server and
+              # machine-learning sub-charts alike, which is what we want:
+              # immich releases them in lockstep and running a split pair is
+              # unsupported. That is also why there is no repository: here -
+              # adding one would force machine-learning onto the server image.
+              #
+              # Renovate cannot infer a depName from a bare tag, so this image
+              # was invisible to it from 2026-09-08 until 2026-09-27 and sat on
+              # v3.1.0 while v3.2.0/.1/.2 shipped. The comment below feeds the
+              # regex customManager in .github/renovate.json5. The quotes on the
+              # value are load-bearing: that manager matches `"(?<currentValue>.*)"`,
+              # so an unquoted tag silently matches nothing and looks tracked.
+              # renovate: datasource=docker depName=ghcr.io/immich-app/immich-server
+              tag: "v3.2.2"
             env:
               DB_HOSTNAME: immich-postgres.immich.svc.cluster.local
               DB_USERNAME:
