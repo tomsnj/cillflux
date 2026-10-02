@@ -49,6 +49,17 @@ spec:
               period: 24h
       rulerConfig:
         alertmanager_url: http://kube-prometheus-stack-alertmanager:9093
+        # Required for the ruler to read rule groups at all -- the chart's
+        # own default is `storage: {type: local}` with no directory, and
+        # Loki's own default for that is "" (empty), which makes the
+        # ruler scan nothing. Must match singleBinary.extraVolumeMounts
+        # below. Loki's local ruler storage expects
+        # <directory>/<tenant>/<file>.yaml, and auth_enabled: false above
+        # means tenant is always "fake" (-auth.no-auth-tenant default).
+        storage:
+          type: local
+          local:
+            directory: /rules
       ingester:
         chunk_encoding: snappy
       tracing:
@@ -83,6 +94,22 @@ spec:
       persistence:
         enabled: true
         storageClass: "gsks0"
+      # Mounts the alerting rule groups from cm-ruler-rules.yaml so the
+      # ruler (running in-process in SingleBinary mode) can read them.
+      # The chart's own sidecar.rules mechanism (k8s-sidecar watching
+      # labelled ConfigMaps) writes flat into one folder with no
+      # per-tenant subdirectory, which doesn't match the
+      # <directory>/<tenant>/<file> layout the local ruler storage
+      # backend requires -- mounting directly at /rules/fake sidesteps
+      # that ambiguity.
+      extraVolumes:
+        - name: ruler-rules
+          configMap:
+            name: loki-ruler-rules
+      extraVolumeMounts:
+        - name: ruler-rules
+          mountPath: /rules/fake
+          readOnly: true
     monitoring:
       self-monitoring:
         enabled: false

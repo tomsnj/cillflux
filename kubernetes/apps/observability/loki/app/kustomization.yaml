@@ -4,4 +4,5 @@ kind: Kustomization
 resources:
   - ./cm-dashboard.yaml
   - ./cm-datasource.yaml
+  - ./cm-ruler-rules.yaml
   - ./helmrelease.yaml
