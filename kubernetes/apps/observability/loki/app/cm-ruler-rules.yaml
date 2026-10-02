@@ -9,16 +9,22 @@ data:
   # BusyBox v..." is NOT a once-per-boot marker as first assumed -- it
   # appeared TWICE in a single clean boot (once during airOS's early
   # provmode init, again after the real init takes over), which would
-  # have false-fired this alert on every single reboot. "system: Start"
-  # appeared exactly once, right at the point init takes over for good,
-  # so that's the marker used instead.
+  # have false-fired this alert on every single reboot. The "system"
+  # tag's "Start" message appeared exactly once, right at the point
+  # init takes over for good, so that's the marker used instead.
+  #
+  # Matches on the app="system" label (promoted from the syslog TAG
+  # field in config.alloy's loki.relabel), not a "system: Start"
+  # substring -- confirmed live that Alloy's RFC3164 parser strips the
+  # "TAG: " prefix from the stored line text, so that substring can
+  # never appear in the message body.
   nanostation.yaml: |
     groups:
       - name: nanostation
         rules:
           - alert: NanoStationRepeatedReboots
             expr: |
-              sum(count_over_time({job="nanostation"} |= "system: Start" [24h])) > 1
+              sum(count_over_time({job="nanostation", app="system"} |= "Start" [24h])) > 1
             labels:
               severity: warning
             annotations:

@@ -171,6 +171,19 @@ loki.relabel "nanostation_syslog" {
     target_label  = "facility"
   }
 
+  // airOS's "TAG: message" syslog lines have the TAG (e.g. "system",
+  // "httpd", "wireless") stripped from the stored line text by the
+  // parser -- it only survives as this internal label. Without
+  // promoting it, that information is gone entirely: confirmed
+  // 2026-10-02 when a replayed "system: Start" line landed in Loki as
+  // the bare text "Start", making the alert's tag-qualified match
+  // string unmatchable against real data.
+  rule {
+    source_labels = ["__syslog_message_app_name"]
+    action        = "replace"
+    target_label  = "app"
+  }
+
   rule {
     source_labels = ["__syslog_connection_ip_address"]
     action        = "replace"
