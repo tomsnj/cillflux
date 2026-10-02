@@ -462,6 +462,27 @@ file covers working conventions, not the full reference.
   unaided. Don't do it mid-migration or during a backup window.
   Patches live in `~/talos-config/` and are tracked in `talos/patches/`;
   the machine config itself is deliberately not in git.
+- Loki's `deploymentMode: SingleBinary` here means the ruler runs
+  in-process, and two chart defaults combine to make it load nothing
+  silently. First, `loki.rulerConfig.storage` defaults to
+  `{type: local}` with no directory, and Loki's own default for an
+  unset local directory is `""` — the ruler scans nothing, with no
+  error anywhere. Set `storage.local.directory` explicitly (`/rules`
+  here). Second, the chart's own `sidecar.rules` mechanism (a
+  k8s-sidecar watching ConfigMaps labelled `loki_rule`, enabled by
+  default) writes matched files **flat** into one folder — but Loki's
+  local ruler storage requires `<directory>/<tenant-id>/<file>.yaml`,
+  and with `auth_enabled: false` the tenant is always `fake`
+  (`-auth.no-auth-tenant` default). A flat `/rules/nanostation.yaml`
+  is therefore invisible to the ruler; it needs to land at
+  `/rules/fake/nanostation.yaml`. Sidestepped here by mounting a
+  plain ConfigMap directly via `singleBinary.extraVolumes` +
+  `extraVolumeMounts` at `/rules/fake`, bypassing the sidecar/label
+  mechanism entirely. Verify any Loki alerting rule actually loaded
+  with `curl .../loki/api/v1/rules` (lists rule groups by file) and
+  `curl .../prometheus/api/v1/rules` (shows `health`/`lastError` per
+  rule) rather than trusting that the ConfigMap/HelmRelease applied
+  cleanly — added 2026-10-02 for the NanoStation reboot alert.
 
 ## Where things live
 
