@@ -483,6 +483,27 @@ file covers working conventions, not the full reference.
   `curl .../prometheus/api/v1/rules` (shows `health`/`lastError` per
   rule) rather than trusting that the ConfigMap/HelmRelease applied
   cleanly — added 2026-10-02 for the NanoStation reboot alert.
+- Alloy's `loki.source.syslog` has two traps that only show up against
+  a real device, not synthetic test lines — both hit building the
+  NanoStation ingestion on 2026-10-02. First, `use_incoming_timestamp:
+  true` makes ingestion depend entirely on the sending device's clock
+  being right; a device with no battery-backed RTC (the NanoStation)
+  resets to its firmware build date on every power cycle, and every
+  resulting entry silently vanishes at `loki.write` once it's older
+  than Loki's `reject_old_samples_max_age` (168h here) — visible only
+  in Alloy's own pod logs, nowhere else. Leave it `false` unless the
+  source's clock is known-good; Alloy's own receipt time is almost
+  always the better choice for a remote device. Second, for a BSD/
+  RFC3164 `"TAG: message"` line, the parser strips `"TAG: "` from the
+  stored line text entirely — it survives only as the internal
+  `__syslog_message_app_name` label, which `loki.relabel` must
+  explicitly promote (to `app` here) or that information is gone for
+  good. A match expression written against the *literal* tag text
+  (e.g. `|= "system: Start"`) will never match anything real, even
+  though it looks reasonable and will happily pass against a
+  hand-crafted test line that doesn't go through the real parser path.
+  Check what label a value actually landed under — don't assume text
+  survives a parser you haven't read the source of.
 
 ## Where things live
 
