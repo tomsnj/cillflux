@@ -183,13 +183,23 @@ loki.relabel "nanostation_syslog" {
 // 10.0.10.7:514/udp -> this container's 51514/udp (see helmrelease.yaml
 // alloy.extraPorts + extraObjects; port 514 needs root, which the Alloy
 // container doesn't run as).
+//
+// use_incoming_timestamp is deliberately false. The device has no
+// battery-backed RTC: a 2026-10-02 power cycle reset its clock to its
+// firmware build date ("Jul 30", no year), and with this true, every
+// resulting entry landed dated 2026-07-30 and was silently dropped by
+// Loki's reject_old_samples_max_age (168h) -- confirmed live, an
+// entire real boot sequence rejected with zero visible error except
+// in Alloy's own logs. Using Alloy's receipt time instead means
+// ingestion survives a wrong device clock; it only costs the (usually
+// sub-second) gap between the device logging a line and Alloy
+// receiving it.
 loki.source.syslog "nanostation" {
   listener {
-    address                         = "0.0.0.0:51514"
-    protocol                        = "udp"
-    syslog_format                   = "rfc3164"
-    use_incoming_timestamp          = true
-    rfc3164_default_to_current_year = true
+    address                = "0.0.0.0:51514"
+    protocol               = "udp"
+    syslog_format          = "rfc3164"
+    use_incoming_timestamp = false
     labels = {
       job = "nanostation",
     }

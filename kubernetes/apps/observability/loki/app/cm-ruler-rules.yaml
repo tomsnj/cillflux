@@ -4,28 +4,28 @@ kind: ConfigMap
 metadata:
   name: loki-ruler-rules
 data:
-  # airOS (BusyBox-based) logs "syslogd started: BusyBox v..." exactly
-  # once per boot, since syslogd itself restarts fresh every time the
-  # device powers on -- so each occurrence is a reboot. Provisional:
-  # written before any real NanoStation log reached Loki, verified only
-  # against a synthetic test line and a known airOS community log
-  # sample, not this specific device's own output. Re-check the match
-  # string against {job="nanostation"} in Loki once a real reboot has
-  # been logged.
+  # Confirmed 2026-10-02 against a real boot log pulled directly off the
+  # device (interactively, not via this pipeline). "syslogd started:
+  # BusyBox v..." is NOT a once-per-boot marker as first assumed -- it
+  # appeared TWICE in a single clean boot (once during airOS's early
+  # provmode init, again after the real init takes over), which would
+  # have false-fired this alert on every single reboot. "system: Start"
+  # appeared exactly once, right at the point init takes over for good,
+  # so that's the marker used instead.
   nanostation.yaml: |
     groups:
       - name: nanostation
         rules:
           - alert: NanoStationRepeatedReboots
             expr: |
-              sum(count_over_time({job="nanostation"} |= "syslogd started" [24h])) > 1
+              sum(count_over_time({job="nanostation"} |= "system: Start" [24h])) > 1
             labels:
               severity: warning
             annotations:
               summary: "NanoStation 5AC has rebooted {{ $value }} times in the last 24h."
               description: >-
-                {{ $value }} syslogd-start events from the NanoStation
-                5AC syslog stream in the last 24 hours -- each one is the
+                {{ $value }} boot events from the NanoStation 5AC
+                syslog stream in the last 24 hours -- each one is the
                 device rebooting, so this fires from the second reboot
                 onward. That matches the pattern that has needed a
                 manual power cycle. Check {job="nanostation"} in Loki
