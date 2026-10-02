@@ -147,6 +147,68 @@ loki.process "cluster_events" {
   }
 }
 
+// loki.relabel promotes the internal __syslog_* labels that
+// loki.source.syslog strips before forwarding. Its forward_to is unused --
+// this component only exists to export .rules for loki.source.syslog below.
+loki.relabel "nanostation_syslog" {
+  forward_to = []
+
+  rule {
+    source_labels = ["__syslog_message_hostname"]
+    action        = "replace"
+    target_label  = "host"
+  }
+
+  rule {
+    source_labels = ["__syslog_message_severity"]
+    action        = "replace"
+    target_label  = "severity"
+  }
+
+  rule {
+    source_labels = ["__syslog_message_facility"]
+    action        = "replace"
+    target_label  = "facility"
+  }
+
+  rule {
+    source_labels = ["__syslog_connection_ip_address"]
+    action        = "replace"
+    target_label  = "source_ip"
+  }
+}
+
+// Receives syslog from the Ubiquiti NanoStation 5AC (airOS, BSD/RFC3164
+// format, no year in the timestamp). Service/LoadBalancer IP is
+// 10.0.10.7:514/udp -> this container's 51514/udp (see helmrelease.yaml
+// alloy.extraPorts + extraObjects; port 514 needs root, which the Alloy
+// container doesn't run as).
+loki.source.syslog "nanostation" {
+  listener {
+    address                         = "0.0.0.0:51514"
+    protocol                        = "udp"
+    syslog_format                   = "rfc3164"
+    use_incoming_timestamp          = true
+    rfc3164_default_to_current_year = true
+    labels = {
+      job = "nanostation",
+    }
+  }
+
+  relabel_rules = loki.relabel.nanostation_syslog.rules
+  forward_to    = [loki.process.nanostation_syslog.receiver]
+}
+
+loki.process "nanostation_syslog" {
+  stage.static_labels {
+    values = {
+      cluster = "main",
+    }
+  }
+
+  forward_to = [loki.write.default.receiver]
+}
+
 loki.write "default" {
   endpoint {
     url = "http://loki:3100/loki/api/v1/push"

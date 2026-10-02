@@ -52,6 +52,15 @@ spec:
         name: alloy-config
         key: config.alloy
 
+      # Container-side port for loki.source.syslog. Unprivileged because the
+      # container runs as UID 65534 (can't bind <1024) -- the LAN-facing
+      # alloy-syslog Service below maps the standard 514/udp to this.
+      extraPorts:
+        - name: syslog-udp
+          port: 51514
+          targetPort: 51514
+          protocol: "UDP"
+
     rbac:
       create: true
       rules:
@@ -466,7 +475,31 @@ spec:
       #      - chart-example.local
     
     # -- Extra k8s manifests to deploy
-    extraObjects: []
+    # LAN-facing Service for syslog from the Ubiquiti NanoStation 5AC.
+    # Cilium L2-announces 10.0.10.7 (pool is 10.0.10.1-20; .1-.6 already
+    # used -- see kubernetes/apps/kube-system/cilium/app/cilium-l2.yaml).
+    # Selector/namespace are hardcoded to the chart's actual pod labels
+    # (app.kubernetes.io/name=alloy, app.kubernetes.io/instance=alloy,
+    # verified live) rather than templated, since extraObjects here isn't
+    # run through Helm's include/tpl helpers reliably.
+    extraObjects:
+      - apiVersion: v1
+        kind: Service
+        metadata:
+          name: alloy-syslog
+          namespace: observability
+          annotations:
+            io.cilium/lb-ipam-ips: 10.0.10.7
+        spec:
+          type: LoadBalancer
+          selector:
+            app.kubernetes.io/name: alloy
+            app.kubernetes.io/instance: alloy
+          ports:
+            - name: syslog-udp
+              port: 514
+              targetPort: 51514
+              protocol: UDP
     # - apiVersion: v1
     #   kind: Secret
     #   metadata:
