@@ -37,3 +37,32 @@ data:
                 manual power cycle. Check {job="nanostation"} in Loki
                 Explore around each event for what preceded it (kernel
                 panic, watchdog, DFS radar detection, etc).
+          # Added 2026-10-03: a direct query of Loki's last 48h showed
+          # eth1 (the wired/PoE uplink to the switch) flapping ~188
+          # times/24h, alternating negotiated speed (100Mbps/1000Mbps)
+          # on successive reconnects -- the signature of an unstable
+          # autonegotiation (bad cable/connector/PoE), not a device
+          # reboot. NanoStationRepeatedReboots never fires for this
+          # because there's no second "system: Start" -- the link
+          # recovers in 1-4s on its own. This is what's actually been
+          # showing up as the switches/APs behind it "disappearing" on
+          # UnifiOS. Threshold is deliberately low: this is already
+          # happening continuously, so the alert is expected to fire
+          # immediately and stay active until the physical layer issue
+          # is fixed -- that's an accurate reflection of reality, not a
+          # false positive.
+          - alert: NanoStationLinkFlapping
+            expr: |
+              sum(count_over_time({job="nanostation", app="ulogger"} |= "eth1" |= "link=DOWN" [15m])) > 10
+            labels:
+              severity: warning
+            annotations:
+              summary: "NanoStation 5AC's eth1 uplink has flapped {{ $value }} times in 15m."
+              description: >-
+                {{ $value }} eth1 link=DOWN events from the NanoStation
+                5AC syslog stream in the last 15 minutes. This is the
+                wired/PoE uplink to the switch flapping, not a device
+                reboot -- check negotiated speed in the surrounding
+                log lines (alternating 100Mbps/1000Mbps points at an
+                autonegotiation problem: cable, connector, or PoE
+                injector) and the switch port's own link history.
