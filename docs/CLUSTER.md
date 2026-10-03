@@ -245,11 +245,6 @@ Services needing internal LAN access require **both** an `external` and `interna
   `--dry-run` first: zero planned changes), and Keycloak 26.8.0
   (one-way schema migration; pgBackRest full `20261003-145402F` taken
   first, SSO re-verified for all four apps).
-- **Open, 2026-10-03:** brute-force protection is **off in all five
-  Keycloak realms** on an internet-facing Keycloak; each realm also
-  holds its own `stecktf` password (per-app realm pattern) and none
-  has SMTP, so "forgot password" does not work. See
-  `CLUSTER-doc-updates-2026-10-03.md`.
 
 ### 🔴 High Priority
 
@@ -259,6 +254,14 @@ or are no longer reproducing — Postgres and MinIO have been stable
 for 6+ days as of 2026-09-05. Nothing currently open here.)*
 
 ### 🟡 Medium Priority
+
+**Keycloak brute-force protection is off (2026-10-03)**
+- Off in all five realms, and Keycloak (`elvis.gs-farm.net`) is
+  internet-facing — unlimited password guessing is possible.
+- Related: each realm holds its own `stecktf` password (per-app realm
+  pattern), and no realm has SMTP, so "forgot password" does not
+  work. Reset through `auth-console.gs-farm.net` instead.
+- See `CLUSTER-doc-updates-2026-10-03.md`.
 
 **Keycloak / SSO — live for Vaultwarden (2026-09-06) and Grafana (2026-09-07)**
 - Keycloak itself is healthy: HelmRelease `Ready`, pod running
