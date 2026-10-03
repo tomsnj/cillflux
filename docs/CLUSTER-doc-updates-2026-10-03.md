@@ -42,6 +42,7 @@ before and after, both `GitRepository` sources reconciled):
   prefixes — a safer migration path off the
   `--annotation-prefix=external-dns.alpha.kubernetes.io/` pin than the
   flag-day that pin currently implies. Recommend `--dry-run` first.
+  *Merged later the same day, after a dry-run — see below.*
 - **#985 Keycloak 26.7.4 → 26.8.0.** Guarded path. Large feature
   release: automatic database index creation (a schema change on
   startup) and new `delegation:user` / `delegation:client` client
@@ -217,7 +218,61 @@ The general lessons, both worth a `CLAUDE.md` gotcha:
   second deletes them outright, so the first must be force-reconciled
   straight after.
 
+## external-dns v0.23.0, rolled out through `--dry-run`
+
+Merged on Tom's go-ahead, with one condition: let v0.23.0 compute its
+first sync plan without writing anything. external-dns is the one
+component here with a record of deleting live DNS (2026-09-23), and it
+deletes before it creates, so a bad first cycle is not self-healing.
+
+Checked before merging:
+
+- `helm template` of 1.22.0 vs 1.23.0 against the live `spec.values`:
+  the only rendered change is the image tag.
+- The Cloudflare `providerSpecific` rename (#6731) needs a
+  `providerSpecific` block on a `DNSEndpoint`; ours
+  (`cloudflared/app/dnsendpoint.yaml`, a single CNAME to the tunnel) has
+  none.
+- The live args confirm `--registry=txt`, so the `crd`-registry
+  breaking change does not apply.
+- A baseline of public DNS (`dig @1.1.1.1`) for all nine external
+  names — every `ingressClassName: external` host plus the
+  `DNSEndpoint` — so "nothing changed" could be shown, not inferred.
+
+The rollout was three commits:
+
+1. `da103d77` on the Renovate branch itself, adding `--dry-run` to
+   `extraArgs` beside the version bump. Because the branch moved,
+   `weekly-renovate-review.sh check 987` was re-run to record the new
+   head before `merge` would accept it — the 2026-09-26 guard doing
+   its job on a deliberate change.
+2. The PR merge. v0.23.0 started with `running in dry-run mode. No
+   changes to DNS records will be made.` and `Using custom annotation
+   prefix: external-dns.alpha.kubernetes.io/` (the pin still honoured),
+   then logged four consecutive cycles of `All records are already up
+   to date` and nothing else — no planned creates or deletes, no
+   warnings, no errors.
+3. `9f75c858` on `main`, removing the flag. Live, three further cycles
+   reported `up to date`, all nine names resolved exactly as in the
+   baseline, and `major`, `susan` and `frigate` answered 200 through
+   Cloudflare.
+
+Two notes for next time. Dry-run is cheap — about five minutes for a
+plan from the real controller against the real zone, which a `helm
+template` or `flux diff` cannot give. And when waiting on log output,
+match the exact message: a loose `CREATE|UPDATE` grep matched `Created
+Kubernetes client` and the startup config dump here, and briefly looked
+like planned changes.
+
+Still open, and now possible: v0.23.0's
+`--enable-legacy-annotation-prefix` reads both
+`external-dns.alpha.kubernetes.io/` and `external-dns.kubernetes.io/`,
+so the annotation pin can be retired by migrating annotations
+gradually rather than in one flag-day commit.
+
 ## Suggested `CLUSTER.md` edits
+
+*(Applied in `e84bc184`.)*
 
 - **Line 774, the `gitops.gs-farm.net returns 504` item** — resolve it,
   and correct it: the claim that an in-cluster probe returned 200 does

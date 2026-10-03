@@ -241,7 +241,9 @@ Services needing internal LAN access require **both** an `external` and `interna
 - **Renovate, 2026-10-03:** CoreDNS chart 1.48.2 (now runs as non-root
   UID 65532, app 1.14.7), Flux v2.9.6, kube-prometheus-stack 91.9.0,
   Grafana 13.2.7, Pi-hole chart 2.0.14, Reloader 2.2.18, Immich
-  v3.2.4. external-dns 1.23.0 and Keycloak 26.8.0 left for review.
+  v3.2.4, and external-dns chart 1.23.0 (app v0.23.0, rolled out via
+  `--dry-run` first: zero planned changes). Keycloak 26.8.0 left for
+  review.
 
 ### 🔴 High Priority
 
