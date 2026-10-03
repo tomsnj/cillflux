@@ -120,8 +120,10 @@ from 2026-09-26, the day after the handover.
 The pod stayed `1/1` with 0 restarts throughout because its probes —
 `httpGet /` with a 1s timeout — come from the kubelet, i.e. host
 traffic, which Cilium does not subject to these policies. That is also
-the likely reason the earlier probe read 200: a `kubectl port-forward`
-arrives via the kubelet too. **Any test of reachability through a
+why the earlier probe read 200: a `kubectl port-forward` arrives via
+the kubelet too. Confirmed after the fix, with only nginx admitted — a
+port-forward to the Service still returns 200 while a `kube-system`
+pod is refused. **Any test of reachability through a
 NetworkPolicy has to come from a pod in another namespace**, not from
 `port-forward` or the probes.
 

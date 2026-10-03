@@ -32,12 +32,16 @@ Single-node Talos Linux Kubernetes cluster managed via GitOps (Flux CD). Migrate
 
 ### Tool Versions
 
-| Tool         | Version  |
-|--------------|----------|
-| `talosctl`   | v1.12.6  |
-| `kubectl`    | v1.35.3  |
-| `flux`       | v2.8.3   |
-| Cilium CNI   | 1.19.2   |
+| Tool                   | Version  |
+|------------------------|----------|
+| `talosctl`             | v1.12.6  |
+| `kubectl` (client)     | v1.35.3  |
+| `flux` (CLI)           | v2.8.3   |
+| Flux (in-cluster)      | v2.9.6   |
+| Cilium CNI             | 1.20.2   |
+
+*(Client rows are the binaries on `gsfarmctl`; in-cluster rows are
+what is actually running. Re-checked 2026-10-03.)*
 
 ---
 
@@ -87,7 +91,7 @@ Services needing internal LAN access require **both** an `external` and `interna
 | Service           | Notes                                                       |
 |-------------------|-------------------------------------------------------------|
 | CrunchyData PGO   | PostgreSQL operator                                         |
-| Keycloak          | Deployed and healthy (26.7.3); SSO live for Vaultwarden (2026-09-06), Grafana (2026-09-07), Forgejo (2026-09-07), see below |
+| Keycloak          | Deployed and healthy (26.7.4); SSO live for Vaultwarden (2026-09-06), Grafana (2026-09-07), Forgejo (2026-09-07), see below |
 | Vaultwarden       | Password manager — Keycloak SSO enabled (`vaultwarden` realm), local email/password login still available as fallback (`SSO_ONLY` not set) |
 | Grafana           | Observability dashboards                                    |
 | Prometheus        | Metrics                                                     |
@@ -180,6 +184,11 @@ Services needing internal LAN access require **both** an `external` and `interna
   safety net. Verified live: `/api/server/version` reports
   `3.1.0`, clean startup logs, zero errors, zero new restarts.
   Caught and fixed a real YAML bug while editing — see gotcha below.
+  Since moved to **v3.2.2** (2026-09-27, Postgres image again
+  unchanged — both vector version ranges identical; see
+  `CLUSTER-doc-updates-2026-09-27.md`) and **v3.2.4** (2026-10-03,
+  Renovate #980). The image is now tracked by Renovate through the
+  regex customManager comment, with the tag quoted on purpose.
 - Keycloak SSO enabled for Immich, 2026-09-08 — native OAuth support
   (unlike Forgejo/Frigate, no CLI or forward-auth proxy needed).
   Dedicated `immich` realm + client, config delivered via a SOPS
@@ -212,6 +221,27 @@ Services needing internal LAN access require **both** an `external` and `interna
   external-dns treated it as a no-op (record already matched the
   annotation's target, no change attempted) and `susan.gs-farm.net`
   kept resolving/responding throughout.
+- **`gitops.gs-farm.net` 504 fixed, 2026-10-03** (commit `ec3874a7`).
+  Not the app: Flux's upstream `allow-scraping` NetworkPolicy, applied
+  by the `flux` Kustomization since the 2026-09-25 handover, selects
+  every pod in `flux-system` and admits only TCP 8080, so nginx →
+  weave-gitops :9001 was dropped. The earlier note that an in-cluster
+  probe returned 200 was misleading — from a pod outside `flux-system` both
+  Service and pod IP time out; probes and `port-forward` arrive via the
+  kubelet, which Cilium exempts. New policy
+  `allow-weave-gitops-ingress` admits only `nginx-internal` on 9001.
+  See `CLUSTER-doc-updates-2026-10-03.md`.
+- **Stray Loki stack in `default` removed, 2026-10-03.** A hand-applied
+  copy of the Loki app (no `-n`, no `postBuild`) from the 2026-10-02
+  session had installed a full second Loki with a 10Gi PVC, and taken
+  over the shared `loki-clusterrole`/`loki-clusterrolebinding` —
+  production Loki's rules sidecar logged ~5,700 `403 Forbidden` in 6h.
+  Uninstalled, production RBAC restored with a forced reconcile, three
+  duplicate ConfigMaps (incl. a Grafana datasource) deleted.
+- **Renovate, 2026-10-03:** CoreDNS chart 1.48.2 (now runs as non-root
+  UID 65532, app 1.14.7), Flux v2.9.6, kube-prometheus-stack 91.9.0,
+  Grafana 13.2.7, Pi-hole chart 2.0.14, Reloader 2.2.18, Immich
+  v3.2.4. external-dns 1.23.0 and Keycloak 26.8.0 left for review.
 
 ### 🔴 High Priority
 
@@ -222,14 +252,9 @@ for 6+ days as of 2026-09-05. Nothing currently open here.)*
 
 ### 🟡 Medium Priority
 
-**CoreDNS HelmRelease**
-- Stuck in `Unknown / reconciliation in progress`
-- Pod itself is healthy (`1/1 Running`)
-- Fix: resume the suspended HelmRelease to let Flux retry
-
 **Keycloak / SSO — live for Vaultwarden (2026-09-06) and Grafana (2026-09-07)**
 - Keycloak itself is healthy: HelmRelease `Ready`, pod running
-  (`26.7.3`), no crash-loop. The Postgres instance it depends on has
+  (`26.7.4`), no crash-loop. The Postgres instance it depends on has
   also been stable for 6+ days.
 - Vaultwarden SSO is enabled and confirmed working end-to-end
   (Keycloak auth → Vaultwarden token exchange → vault master password
@@ -771,17 +796,6 @@ for 6+ days as of 2026-09-05. Nothing currently open here.)*
   `postgres.yaml` and consuming 40 Gi. Remove them from git only after
   a week of normal use — Flux prunes by inventory diff, so deleting
   the block deletes the volume.
-- **`gitops.gs-farm.net` returns 504** (low priority, 2026-09-25) — the
-  Weave GitOps UI. The app is fine: an in-cluster probe against
-  `weave-gitops.flux-system.svc:9001` returns 200 immediately, the pod
-  is 1/1, and the ingress carries no unusual annotations. nginx reaches
-  the backend and gets nothing, timing out at ~15s. Not investigated
-  further. Note Weave GitOps OSS was sunset upstream, so removing the
-  ingress (or the release) may be a better answer than fixing it —
-  Flux's actual state is already covered by `flux get`, the weekly
-  health pass, and the Flux dashboards in Grafana. This was the last
-  survivor of the 2026-09-25 internal-ingress sweep; the other
-  thirteen answer 200/302/403.
 
 ---
 
@@ -1124,6 +1138,38 @@ When bootstrapping, the ISO USB and install target must be separate physical dev
 
 **Pre-cleanup checklist**  
 Before removing HelmReleases: verify no ConfigMaps/Secrets reference the service hostnames via `kubectl` grep. Suspend active releases (`flux suspend`) before destructive operations.
+
+**Anything in `flux-system` needs its own ingress NetworkPolicy, and looks healthy without one**  
+Flux's upstream `allow-scraping` policy has an empty `podSelector`, so
+it isolates every pod in the namespace and admits only TCP 8080. Since
+the 2026-09-25 handover it is applied deliberately by the `flux`
+Kustomization. Weave GitOps sat behind it returning 504 for a week
+while `1/1 Running` with zero restarts: its probes, like `kubectl
+port-forward`, come from the kubelet as host traffic, which Cilium does
+not police. Test reachability through a NetworkPolicy from a **pod in
+another namespace** (`kubectl run -n kube-system ... curl`), never from
+`port-forward` or probe status.
+
+**Hand-applying a Flux app folder gets it wrong twice, silently**  
+Kustomizations here set the namespace with `targetNamespace`, so the
+manifests carry none: `kubectl apply -f kubernetes/apps/<app>/app/`
+without `-n` installs into `default`. And Flux's `postBuild`
+substitution never runs, leaving literal `${SECRET_DOMAIN}` values. On
+2026-10-02 this produced a complete second Loki in `default` that ran
+for ten hours, reported only as a "failed" HelmRelease because its
+Ingress alone was rejected. If something must be applied by hand, start
+from `flux build kustomization <name> --path ...`, which does both.
+
+**A second install of a chart steals the first one's cluster-scoped objects**  
+ClusterRoles, ClusterRoleBindings and webhooks are named per release
+name, not per namespace. The stray `default/loki` re-created
+`loki-clusterrole`/`loki-clusterrolebinding` with the binding pointed at
+its own ServiceAccount, and production Loki's rules sidecar went
+`403 Forbidden` (~5,700 times in 6h) with no alert, because the ruler
+reads its rules from a direct mount. Uninstalling the stray then
+**deletes** those objects, leaving production with nothing — so follow
+it immediately with `flux reconcile helmrelease <name> -n <real-ns>
+--force`, and confirm the binding's subject namespace afterwards.
 
 ---
 

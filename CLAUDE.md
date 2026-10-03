@@ -504,6 +504,39 @@ file covers working conventions, not the full reference.
   hand-crafted test line that doesn't go through the real parser path.
   Check what label a value actually landed under — don't assume text
   survives a parser you haven't read the source of.
+- **Every pod in `flux-system` is ingress-isolated.** Flux's upstream
+  `allow-scraping` NetworkPolicy (applied on purpose by the `flux`
+  Kustomization since 2026-09-25) has an empty `podSelector` and admits
+  only TCP 8080. Anything else placed in that namespace needs its own
+  ingress policy — Weave GitOps 504'd for a week without one
+  (`allow-weave-gitops-ingress`, added 2026-10-03). It will look
+  healthy while broken: kubelet probes and `kubectl port-forward` are
+  host traffic, which Cilium exempts, so the pod stays `1/1` with zero
+  restarts and a port-forward test returns 200. Test from a pod in
+  another namespace instead:
+  `kubectl run -n kube-system t --rm -i --restart=Never --image=curlimages/curl:8.11.1 --command -- curl -sm8 -o /dev/null -w '%{http_code}' http://<svc>.<ns>.svc:<port>/`
+- **Never `kubectl apply` an app folder from `kubernetes/apps/` by
+  hand.** The manifests carry no namespace (Kustomizations set
+  `targetNamespace`) and no substituted variables (`postBuild` is
+  Flux's), so a plain apply lands in `default` with literal
+  `${SECRET_DOMAIN}`s — and can still install most of a working
+  release. On 2026-10-02 that left a full second Loki in `default` for
+  ten hours (10Gi PVC included), visible only as a "failed"
+  HelmRelease because the Ingress alone was rejected. If something
+  must be applied by hand, render it with
+  `flux build kustomization <name> --path <dir>`. Sweep for strays:
+  `kubectl get hr -A -o json | jq -r '.items[] | select(.metadata.labels["kustomize.toolkit.fluxcd.io/name"]==null) | .metadata.namespace+"/"+.metadata.name'`
+- **A second install of a chart steals the first one's cluster-scoped
+  objects** — ClusterRoles, ClusterRoleBindings and webhooks are named
+  per release, not per namespace. The stray Loki above re-created
+  `loki-clusterrole`/`loki-clusterrolebinding` bound to *its*
+  ServiceAccount, and production Loki's rules sidecar went
+  `403 Forbidden` ~5,700 times in 6h with nothing alerting. Removing
+  the stray **deletes** those shared objects outright, so follow it
+  immediately with
+  `flux reconcile helmrelease <name> -n <real-ns> --force` and check
+  `kubectl get clusterrolebinding <name> -o jsonpath='{.subjects}'`
+  names the real namespace.
 
 ## Where things live
 
