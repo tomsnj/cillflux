@@ -1,0 +1,28 @@
+---
+# Flux's upstream `allow-scraping` policy (applied by the `flux` Kustomization
+# since 2026-09-25) selects every pod in flux-system, so weave-gitops is
+# ingress-isolated and only port 8080 is admitted. Without this, the
+# internal ingress times out (504) while the kubelet probes -- host traffic,
+# which Cilium exempts -- keep the pod looking healthy.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-weave-gitops-ingress
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: weave-gitops
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: network
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: ingress-nginx
+              app.kubernetes.io/instance: nginx-internal
+      ports:
+        - port: 9001
+          protocol: TCP
