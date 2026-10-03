@@ -91,7 +91,7 @@ Services needing internal LAN access require **both** an `external` and `interna
 | Service           | Notes                                                       |
 |-------------------|-------------------------------------------------------------|
 | CrunchyData PGO   | PostgreSQL operator                                         |
-| Keycloak          | Deployed and healthy (26.7.4); SSO live for Vaultwarden (2026-09-06), Grafana (2026-09-07), Forgejo (2026-09-07), see below |
+| Keycloak          | Deployed and healthy (26.8.0); SSO live for Vaultwarden (2026-09-06), Grafana (2026-09-07), Forgejo (2026-09-07), see below |
 | Vaultwarden       | Password manager — Keycloak SSO enabled (`vaultwarden` realm), local email/password login still available as fallback (`SSO_ONLY` not set) |
 | Grafana           | Observability dashboards                                    |
 | Prometheus        | Metrics                                                     |
@@ -242,8 +242,14 @@ Services needing internal LAN access require **both** an `external` and `interna
   UID 65532, app 1.14.7), Flux v2.9.6, kube-prometheus-stack 91.9.0,
   Grafana 13.2.7, Pi-hole chart 2.0.14, Reloader 2.2.18, Immich
   v3.2.4, and external-dns chart 1.23.0 (app v0.23.0, rolled out via
-  `--dry-run` first: zero planned changes). Keycloak 26.8.0 left for
-  review.
+  `--dry-run` first: zero planned changes), and Keycloak 26.8.0
+  (one-way schema migration; pgBackRest full `20261003-145402F` taken
+  first, SSO re-verified for all four apps).
+- **Open, 2026-10-03:** brute-force protection is **off in all five
+  Keycloak realms** on an internet-facing Keycloak; each realm also
+  holds its own `stecktf` password (per-app realm pattern) and none
+  has SMTP, so "forgot password" does not work. See
+  `CLUSTER-doc-updates-2026-10-03.md`.
 
 ### 🔴 High Priority
 
@@ -256,7 +262,7 @@ for 6+ days as of 2026-09-05. Nothing currently open here.)*
 
 **Keycloak / SSO — live for Vaultwarden (2026-09-06) and Grafana (2026-09-07)**
 - Keycloak itself is healthy: HelmRelease `Ready`, pod running
-  (`26.7.4`), no crash-loop. The Postgres instance it depends on has
+  (`26.8.0`), no crash-loop. The Postgres instance it depends on has
   also been stable for 6+ days.
 - Vaultwarden SSO is enabled and confirmed working end-to-end
   (Keycloak auth → Vaultwarden token exchange → vault master password

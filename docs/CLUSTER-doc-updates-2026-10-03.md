@@ -48,6 +48,7 @@ before and after, both `GitRepository` sources reconciled):
   startup) and new `delegation:user` / `delegation:client` client
   scopes auto-created as Optional in **every realm**. Needs the
   upgrading guide read before merging.
+  *Reviewed and merged later the same day — see below.*
 
 ### What was verified beyond the changelogs
 
@@ -269,6 +270,140 @@ Still open, and now possible: v0.23.0's
 `external-dns.alpha.kubernetes.io/` and `external-dns.kubernetes.io/`,
 so the annotation pin can be retired by migrating annotations
 gradually rather than in one flag-day commit.
+
+## Keycloak 26.7.4 → 26.8.0
+
+The one guarded-path PR this week, reviewed in full and merged on Tom's
+go-ahead. The upgrade itself was uneventful; the interesting part was
+afterwards, when Forgejo would not take a password.
+
+### Review
+
+The 26.8.0 upgrading guide lists seven breaking changes. Each was
+checked against the live realms with read-only `kcadm` queries (run in
+the pod, authenticating from the pod's own env, nothing printed):
+
+| 26.8.0 change | Exposure here |
+|---|---|
+| IdP mappers can't grant admin roles; `initiating_idp` ignored | no identity providers in any realm |
+| Organizations → many-to-many (`IDENTITY_PROVIDER.ORGANIZATION_ID` dropped) | no organizations |
+| Authorization Services URI normalisation, bare group names | not enabled on any client |
+| X509 authenticator requires CA subject DN | no X509 in any flow |
+| Disabled clients excluded from `aud` | all app clients enabled |
+| `view-clients` no longer sees client secrets | admin account only |
+
+None applied. What does change:
+
+- **Full Scope Allowed is deprecated** and Keycloak now logs a `WARN`
+  on every token issued to a client with it on — which is all four app
+  clients (`forgejo`, `grafana`, `immich`, `vaultwarden`). Noise, not
+  breakage. Turning it off needs explicit role-scope mappings first.
+  Grafana is not at risk either way: its `role_attribute_path` is the
+  constant `'Editor'`, not a token claim.
+- **SCIM API and client-secret rotation are now on by default.** SCIM
+  is new surface on `elvis.gs-farm.net`, which is internet-facing; it
+  requires authentication. Tom chose to leave it on.
+- `delegation:user` / `delegation:client` scopes appear in every realm
+  as *Optional* — only granted to clients that ask.
+- Brute-force login failures move from Infinispan into the database.
+
+The real risk was operational. 26.8.0's migration is **one-way** (new
+`ORG_IDENTITY_PROVIDER` table, a dropped column, a new
+offline-session column), and the HelmRelease has
+`upgrade.remediation.strategy: rollback` with a 5m timeout. A first
+start that hung past 5m would have had Helm roll back to 26.7.4 onto an
+already-migrated schema, which Keycloak refuses to run against. The
+margin was measured rather than assumed: the running 26.7.4 pod went
+from start to Ready in about 45s.
+
+26.7.5 (2026-09-30) was offered as the conservative alternative — 14 CVE
+fixes on the current line, rollback-safe. Renovate only ever proposed
+26.8.0, so the patch release would otherwise have gone unnoticed.
+
+### Rollout
+
+1. An on-demand pgBackRest **full** backup of `postgres-infra-local`
+   immediately before, by PGO annotation (`spec.backups.pgbackrest.manual`
+   was already configured as `--type=full` on `repo1`):
+
+   ```bash
+   kubectl annotate postgrescluster -n infrastructure postgres-infra-local \
+     --overwrite postgres-operator.crunchydata.com/pgbackrest-backup="$(date -u +%FT%TZ)"
+   ```
+
+   Result: `20261003-145402F`, 67 MiB, 19 seconds. Completion shows in
+   `.status.pgbackrest.manualBackup` (match on the `id`) and in
+   `pgbackrest info`. The previous manual backup was 2026-05-02.
+2. The merge needed `merge 985 --force`, because the script refuses
+   guarded paths outright. Claude Code's auto-mode permission check
+   blocked that command, so Tom ran it himself with `!`. The head was
+   re-`check`ed first and still matched the reviewed `f0f674f40`.
+3. Keycloak 26.8.0 was up in 8s; the Liquibase update and realm
+   migration took another ~8s (`migrated realm … to 26.8.0` for all
+   five), 0 errors, 0 restarts. The HelmRelease history shows
+   `deployed`/`superseded` and no rollback. Four startup deprecation
+   WARNs, none actionable (default features, `shouldAttachRoute`,
+   `requireResidentKey`).
+4. Discovery for all five realms returned 200 with the correct
+   `issuer`, admin console 200, full health pass clean.
+
+### Checking real logins
+
+Event storage is off in every realm (`eventsEnabled=false`), and a
+successful login is only logged at DEBUG, so there was no direct record
+of who had signed in. Two indirect sources did the job:
+
+- The new **Full Scope WARN is emitted only when a token is issued**, so
+  for these four clients it is a de facto success log. It confirmed
+  Vaultwarden, Immich and Grafana within minutes of the upgrade.
+- The **ingress access log** showed whether a login reached the cluster
+  at all. The first apparent Forgejo login had not: the only request
+  to `susan.gs-farm.net` was the health pass's own `curl` from
+  gsfarmctl (`10.0.100.240`).
+
+### "It's not taking my password"
+
+When Tom then tried Forgejo for real, the wiring was fine — Forgejo
+redirected to Keycloak (`307 /user/oauth2/Keycloak`) — and Keycloak
+rejected six attempts in the `forgejo` realm with
+`invalid_user_credentials`.
+
+The cause is the per-app realm pattern. Each app has its own realm and
+so its **own copy of `stecktf` with its own password**, set when that
+realm was created:
+
+| Realm | `stecktf` password set |
+|---|---|
+| vaultwarden | 2026-09-06 |
+| forgejo | 2026-09-07 |
+| grafana | 2026-09-07 |
+| immich | 2026-09-08 |
+
+Four passwords for one username, which also explains why the Immich and
+Grafana passwords seemed to differ. No credential dates had changed, so
+the upgrade was ruled out.
+
+Before advising a retry, lockout was ruled out: Keycloak returns the
+same "invalid username or password" for a temporarily locked account
+even when the password is right. The brute-force status for
+`forgejo/stecktf` showed 0 failures and no lockout — because
+**brute-force protection is off in all five realms**. Tom reset the
+Forgejo password through `auth-console.gs-farm.net` (realm → Users →
+Credentials, *Temporary* on), and Keycloak issued a Forgejo token at
+15:10:51. "Forgot password" would not have helped: no realm has SMTP
+configured.
+
+### Left open
+
+- **Brute-force protection is off in every realm**, on an internet-facing
+  Keycloak. Unlimited guessing is possible. A per-realm setting, not
+  yet decided.
+- Full Scope Allowed on the four app clients (WARN per token).
+- Event storage off in every realm, which is why login verification
+  had to be indirect.
+- Four separate passwords is a property of the per-app realm design. A
+  shared realm would remove it, but would mean rewiring every app's
+  SSO.
 
 ## Suggested `CLUSTER.md` edits
 
