@@ -22,14 +22,10 @@ spec:
         # storage1-node-exporter job in helmvalues.yaml.
         #
         # Thresholds assume every backup_job runs at least daily, which
-        # matches observed values (0-1 days) for every job EXCEPT
-        # maxwell-image, which is Veeam on a Mon/Wed 23:00 schedule -
-        # normal gaps run up to 5 days (Wed->Mon), so it is excluded
-        # here and given its own pair below sized to that cadence
-        # (found firing falsely 2026-09-28: backup_last_success_days=5
-        # on a Monday morning, tripping the generic >2 threshold for a
-        # backup that was not actually late). If another weekly/non-
-        # daily job is added, do the same rather than loosening these.
+        # matches observed values (0-1 days) for every job EXCEPT the
+        # two excluded below, each with its own cadence-sized pair
+        # further down. If another weekly/non-daily job is added, do
+        # the same rather than loosening these.
         - alert: BackupJobFailed
           annotations:
             summary: "Backup job {{ $labels.backup_job }} reported failure."
@@ -47,7 +43,7 @@ spec:
             description: >-
               No successful {{ $labels.backup_job }} backup for more than
               two days. The job may be failing silently or not running.
-          expr: backup_last_success_days{backup_job!="maxwell-image"} > 2
+          expr: backup_last_success_days{backup_job!="maxwell-image",backup_job!="mycloud-photos"} > 2
           for: 1h
           labels:
             severity: warning
@@ -58,7 +54,7 @@ spec:
             description: >-
               {{ $labels.backup_job }} has had no successful backup for
               over a week. Treat the data as unprotected.
-          expr: backup_last_success_days{backup_job!="maxwell-image"} > 7
+          expr: backup_last_success_days{backup_job!="maxwell-image",backup_job!="mycloud-photos"} > 7
           for: 1h
           labels:
             severity: critical
@@ -87,6 +83,41 @@ spec:
               days - two consecutive Mon/Wed runs missed. Treat the
               data as unprotected.
           expr: backup_last_success_days{backup_job="maxwell-image"} > 10
+          for: 1h
+          labels:
+            severity: critical
+
+        # mycloud-photos (rsync from the WD MyCloud, Sun 04:00 only):
+        # normal gap is up to 7 days. >8 matches check-backups.sh's own
+        # internal staleness threshold for this job and catches a
+        # genuinely missed Sunday run without firing on the routine
+        # weekly gap (found firing falsely 2026-10-04: the Sun 04:00
+        # sync had actually succeeded hours earlier, but
+        # backup_last_success_days=6 still tripped the generic >2
+        # rule because check-backups.sh's once-daily 09:00 metric
+        # refresh hadn't run again yet to pick up the new success -
+        # same class of bug as maxwell-image above). >14 means two
+        # consecutive Sundays were missed.
+        - alert: MycloudPhotosStale
+          annotations:
+            summary: "mycloud-photos backup last succeeded {{ $value }} days ago."
+            description: >-
+              mycloud-photos syncs from the MyCloud Sun 04:00 only, so a
+              gap of up to 7 days is normal. No successful sync for
+              more than 8 days means a scheduled run was actually missed.
+          expr: backup_last_success_days{backup_job="mycloud-photos"} > 8
+          for: 1h
+          labels:
+            severity: warning
+
+        - alert: MycloudPhotosVeryStale
+          annotations:
+            summary: "mycloud-photos backup last succeeded {{ $value }} days ago."
+            description: >-
+              mycloud-photos has had no successful sync for over 14
+              days - two consecutive Sunday runs missed. Treat the
+              data as unprotected.
+          expr: backup_last_success_days{backup_job="mycloud-photos"} > 14
           for: 1h
           labels:
             severity: critical
