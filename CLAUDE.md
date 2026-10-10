@@ -538,6 +538,27 @@ file covers working conventions, not the full reference.
   `kubectl get clusterrolebinding <name> -o jsonpath='{.subjects}'`
   names the real namespace.
 
+- **A Helm chart that changes a Deployment's `spec.selector` cannot
+  upgrade — or roll back — over the existing Deployment, whatever the
+  size of the version bump.** `spec.selector` is immutable. On
+  2026-10-10 a *patch* bump of csi-driver-nfs (4.13.4 → 4.13.5) failed
+  with `snapshot-controller ... spec.selector ... field is immutable`:
+  the live Deployment selected on `app.kubernetes.io/instance` +
+  `app.kubernetes.io/name`, the chart now rendered `app:
+  snapshot-controller`. Helm's automatic rollback hit the same wall, so
+  the HelmRelease sat `RollbackFailed` and everything that `dependsOn`
+  it (Pi-hole) was blocked — while the workload kept running on its old
+  pods, every pod stayed `1/1`, and a pod-readiness check passed. Only
+  the HelmRelease/Kustomization checks in `weekly-renovate-review.sh
+  health` showed it. The release notes said nothing. Fix: ask first,
+  then `kubectl delete deploy <name> -n <ns>` and
+  `flux reconcile helmrelease <name> -n <ns> --force` (done here for
+  `snapshot-controller`; snapshot handling, which Volsync uses, was
+  unavailable for a few seconds, PVCs untouched). Safe for stateless
+  controllers; check PVC ownership before doing it to anything stateful.
+  To catch it before merging, `helm template` both versions against the
+  live values and diff the `selector:` blocks.
+
 ## Where things live
 
 - Repo root: `~/cillflux`
