@@ -1,7 +1,7 @@
 # Cluster Doc Update — 2026-10-10
 
-Weekly Renovate review. Five merges, three queued (later: two of the
-three merged on Tom's go-ahead, see the addendum). One of the merges —
+Weekly Renovate review. Five merges, three queued (later: all three
+merged on Tom's go-ahead, see the addendum). One of the merges —
 a *patch* bump of csi-driver-nfs — failed to deploy and failed to roll
 back, and had to be unstuck by hand. Nothing was down at any point.
 
@@ -96,14 +96,14 @@ ingresses reachable.
 
 ## Addendum — queued PRs merged later the same day
 
-Two of the three queued PRs were merged after Tom's go-ahead. #989
-(vaultwarden v1.37.4) is still queued: it touches the guarded
-`kubernetes/apps/vaultwarden/**` path.
+All three queued PRs were merged after Tom's go-ahead, #989
+(vaultwarden) last — see its section below.
 
 | PR   | Change                                      | Type  |
 |------|---------------------------------------------|-------|
 | #991 | cloudflared 2026.9.3 → 2026.10.0            | minor |
 | #995 | kube-prometheus-stack 91.9.0 → 92.3.0       | major |
+| #989 | vaultwarden 1.37.3 → 1.37.4                 | patch |
 
 ### cloudflared #991
 
@@ -156,3 +156,32 @@ observability`.
 
 The restart cost a short gap in monitoring data while Prometheus came
 back; nothing alerted.
+
+### vaultwarden #989 (1.37.3 → 1.37.4)
+
+A patch bump, but it touches the guarded `kubernetes/apps/vaultwarden/**`
+path, so the script refuses it without `--force`. The v1.37.4 release
+fixes seven private advisories (one High, 8.1: organization member
+revocation) and carries a long upgrade-notes list, which was checked
+against our setup before merging:
+
+- `IP_HEADER=X-Forwarded-For` now takes the *rightmost* untrusted
+  address. Not affected: live `ip_header` is `X-Real-IP`.
+- Removed client feature flags, `DUO_USE_IFRAME` and the MariaDB/MySQL
+  TLS note: none set; the database is SQLite.
+- Diff was the image tag and digest only.
+
+Volsync `vaultwarden-config` and `vaultwarden-data` had both completed
+`Successful` at ~03:00 UTC that day, about ten hours before the merge.
+
+The merge was run by Tom directly: the `--force` invocation was denied
+by the session's permission classifier as a protected-scope change, and
+was not retried another way. After it, `flux reconcile` of both
+`GitRepository` sources and the HelmRelease. **Verified:** new pod `1/1`,
+0 restarts, image `1.37.4@sha256:efb3cde9…`, startup banner
+`Version 1.37.4`, `https://kumar.gs-farm.net/alive` returned 200,
+every Kustomization Ready, all pods ready. The startup `[WARNING]`
+lists the same `config.json` overrides as before (`DOMAIN`,
+`ADMIN_TOKEN`, SSO settings), nothing new. Not tested: an interactive
+login or SSO login. If any org admin is not fully trusted, the release
+notes advise rotating the organization API key after updating.
