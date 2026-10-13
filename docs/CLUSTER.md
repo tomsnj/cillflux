@@ -292,6 +292,21 @@ for 6+ days as of 2026-09-05. Nothing currently open here.)*
 ### 🔵 On the Horizon
 
 - Evaluate k8s-gateway as longer-term replacement for per-host Pi-hole DNS overrides
+- **Remove the unused `harbor` and `woodpecker` users/databases from
+  `postgres-infra-local`** (added 2026-10-13, not urgent). Both are
+  patched into the cluster by `kubernetes/apps/infrastructure/postgres-infra/ks.yaml`,
+  but neither app is deployed: no namespace or pods, and on 2026-10-13
+  both databases were 7.6 MB (a freshly created database) with zero
+  connections. Only Keycloak actually uses this cluster. Two traps when
+  doing it: the patch addresses users by array index
+  (`/spec/users/N`), so removing entries means renumbering the rest;
+  and dropping a user from the `PostgresCluster` spec does **not**
+  drop the role or database in Postgres — those need an explicit
+  `DROP DATABASE`/`DROP ROLE` (ask first), plus the leftover
+  `postgres-infra-local-pguser-<name>` Secrets. The `forgejo` entry
+  there is also dead (Forgejo uses its own `postgres-forgejo`), and
+  `vaultwarden` looks unused too (probably SQLite, 0 connections) —
+  confirm before touching either.
 - **Frigate SSO** — Frigate has no native OIDC/OAuth2 client, unlike
   Vaultwarden/Grafana/Forgejo. It only supports proxy-based header
   auth (trusts `X-Forwarded-User`/`Remote-User`-style headers from an
