@@ -30,5 +30,7 @@ spec:
           targetLabel: instance
   selector:
     matchLabels:
-      postgres-operator.crunchydata.com/cluster: ${APP}
+      # The cluster is named ${APP}-local (cluster.yaml), not ${APP}; this
+      # selector matched nothing until 2026-10-14.
+      postgres-operator.crunchydata.com/cluster: ${APP}-local
       postgres-operator.crunchydata.com/crunchy-postgres-exporter: "true"

@@ -1,0 +1,93 @@
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: postgres
+  labels:
+    # See the note in prometheusrule.yaml - kept for consistency.
+    release: kube-prometheus-stack
+spec:
+  groups:
+    - name: postgres.rules
+      rules:
+        # Metrics come from the postgres-exporter sidecar on each PGO
+        # cluster (postgres-forgejo, postgres-infra-local), scraped via the
+        # cpgo-* PodMonitors. Immich runs standalone Postgres outside PGO
+        # and is NOT covered here - its protection is the nightly pg_dump
+        # CronJob plus Volsync.
+        #
+        # Deliberately NOT used:
+        #   ccp_archive_command_status_seconds_since_last_fail - reads 0
+        #     an hour after the last real failure, so it cannot be trusted.
+        #   pg_stat_archiver_last_archive_age - grows on an idle database
+        #     that is simply not producing WAL.
+
+        # forgejo's archive_command failed 840 times before anyone knew
+        # (pgBackRest 2.52.1 vs 2.59.0 mismatch). This is the alert that
+        # would have caught it. increase() copes with counter resets.
+        - alert: PostgresWALArchiveFailing
+          annotations:
+            summary: "WAL archiving is failing on {{ $labels.pg_cluster }}."
+            description: >-
+              archive_command has failed {{ $value | humanize }} times in
+              the last 15m on {{ $labels.pod }}. WAL is accumulating on the
+              data volume (it can fill it) and point-in-time recovery is
+              broken. Check `pgbackrest` versions across the database and
+              pgbackrest containers first.
+          expr: increase(pg_stat_archiver_failed_count[15m]) > 0
+          for: 15m
+          labels:
+            severity: critical
+
+        - alert: PostgresBackupFailed
+          annotations:
+            summary: "pgBackRest reports the last {{ $labels.backup_type }} backup of {{ $labels.pg_cluster }} failed."
+            description: >-
+              ccp_backrest_last_info_backup_error is 1 for stanza
+              {{ $labels.stanza }}.
+          expr: ccp_backrest_last_info_backup_error == 1
+          for: 15m
+          labels:
+            severity: warning
+
+        # Both clusters run a daily full at 01:30 UTC; 36h allows one
+        # missed run before alerting.
+        - alert: PostgresFullBackupStale
+          annotations:
+            summary: "No pgBackRest full backup of {{ $labels.pg_cluster }} for {{ $value | humanizeDuration }}."
+            description: >-
+              The daily full backup (01:30 UTC) has not completed for over
+              36h. The schedule CronJob may be failing or suspended.
+          expr: ccp_backrest_last_full_backup_time_since_completion_seconds > 129600
+          for: 1h
+          labels:
+            severity: warning
+
+        # Hourly incrementals. This series counts a full backup as the
+        # latest incremental, so it only fires when ALL backups stop.
+        - alert: PostgresIncrBackupStale
+          annotations:
+            summary: "No pgBackRest backup of {{ $labels.pg_cluster }} for {{ $value | humanizeDuration }}."
+            description: >-
+              Hourly incrementals have stopped (nothing in over 4h).
+          expr: ccp_backrest_last_incr_backup_time_since_completion_seconds > 14400
+          for: 30m
+          labels:
+            severity: warning
+
+        # No series means none of the alerts above can fire. Namespaces
+        # are listed explicitly because absent() cannot enumerate
+        # clusters; add new PGO clusters here.
+        - alert: PostgresExporterAbsent
+          annotations:
+            summary: "No Postgres exporter metrics from namespace {{ $labels.namespace }}."
+            description: >-
+              ccp_archive_command_status_failed_count is missing, so WAL
+              and backup alerts for that PGO cluster are blind. Check the
+              exporter sidecar and the cpgo-* PodMonitor selector.
+          expr: |
+            absent(ccp_archive_command_status_failed_count{namespace="forgejo"})
+            or absent(ccp_archive_command_status_failed_count{namespace="infrastructure"})
+          for: 15m
+          labels:
+            severity: warning

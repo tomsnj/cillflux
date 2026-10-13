@@ -6,4 +6,5 @@ resources:
   - ./helmrelease.yaml
   - ./pvc.yaml
   - ./prometheusrule.yaml
+  - ./prometheusrule-postgres.yaml
   - ./secret.sops.yaml
