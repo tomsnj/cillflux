@@ -3,6 +3,7 @@ apiVersion: monitoring.coreos.com/v1
 kind: PodMonitor
 metadata:
   name: cpgo-postgres-forgejo
+  namespace: forgejo
 spec:
   jobLabel: cpgo-postgres-forgejo
   podMetricsEndpoints:
