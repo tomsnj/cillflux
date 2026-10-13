@@ -74,6 +74,13 @@ spec:
 
   postgresVersion: 18
 
+  # Adds the postgres-exporter sidecar (default operator image, port
+  # "exporter"); scraped by podmonitor.yaml. Without this block there
+  # are no Postgres metrics at all.
+  monitoring:
+    pgmonitor:
+      exporter: {}
+
   metadata:
     labels:
       crunchy-userinit.drummyfloyd.github.com/enabled: "true"
