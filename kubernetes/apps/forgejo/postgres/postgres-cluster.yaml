@@ -20,8 +20,14 @@ spec:
 
   backups:
     pgbackrest:
+      global:
+        repo1-retention-full: "7"
+        repo1-retention-full-type: count
       repos:
         - name: repo1
+          schedules:
+            full: "30 1 * * *"
+            incremental: "10 * * * *"
           volume:
             volumeClaimSpec:
               accessModes:
