@@ -48,7 +48,3 @@ spec:
       databases:
         - forgejo
       options: "SUPERUSER"
-
-  databaseInitSQL:
-    name: forgejo-init-sql
-    key: init.sql
