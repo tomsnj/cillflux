@@ -11,8 +11,9 @@ spec:
     - name: postgres.rules
       rules:
         # Metrics come from the postgres-exporter sidecar on each PGO
-        # cluster (postgres-forgejo, postgres-infra-local), scraped via the
-        # cpgo-* PodMonitors. Immich runs standalone Postgres outside PGO
+        # cluster (postgres-forgejo only - see PostgresExporterAbsent for why
+        # postgres-infra-local, on PG 18, is not covered), via the cpgo-*
+        # PodMonitors. Immich runs standalone Postgres outside PGO
         # and is NOT covered here - its protection is the nightly pg_dump
         # CronJob plus Volsync.
         #
@@ -78,6 +79,11 @@ spec:
         # No series means none of the alerts above can fire. Namespaces
         # are listed explicitly because absent() cannot enumerate
         # clusters; add new PGO clusters here.
+        #
+        # infrastructure (postgres-infra-local) is deliberately NOT listed:
+        # it runs Postgres 18, which postgres_exporter does not support, so
+        # it has no metrics and none of these alerts cover it yet. Add it
+        # back once OTel instrumentation is in place.
         - alert: PostgresExporterAbsent
           annotations:
             summary: "No Postgres exporter metrics from namespace {{ $labels.namespace }}."
@@ -85,9 +91,7 @@ spec:
               ccp_archive_command_status_failed_count is missing, so WAL
               and backup alerts for that PGO cluster are blind. Check the
               exporter sidecar and the cpgo-* PodMonitor selector.
-          expr: |
-            absent(ccp_archive_command_status_failed_count{namespace="forgejo"})
-            or absent(ccp_archive_command_status_failed_count{namespace="infrastructure"})
+          expr: absent(ccp_archive_command_status_failed_count{namespace="forgejo"})
           for: 15m
           labels:
             severity: warning

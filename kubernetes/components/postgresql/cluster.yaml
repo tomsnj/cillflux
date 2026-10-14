@@ -74,12 +74,12 @@ spec:
 
   postgresVersion: 18
 
-  # Adds the postgres-exporter sidecar (default operator image, port
-  # "exporter"); scraped by podmonitor.yaml. Without this block there
-  # are no Postgres metrics at all.
-  monitoring:
-    pgmonitor:
-      exporter: {}
+  # NO `monitoring.pgmonitor.exporter` here, on purpose: PGO 6.0.3 does not
+  # support postgres_exporter on Postgres 18 ("use OTel for postgres 18 and
+  # later"). Enabling it (#1001) left the exporter unable to log in
+  # (ccp_monitoring never created) and the operator reconcile failing every
+  # ~11s at the pgMonitor step. Metrics for this cluster need
+  # `spec.instrumentation` (OTel) instead - not set up yet.
 
   metadata:
     labels:
