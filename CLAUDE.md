@@ -311,7 +311,12 @@ file covers working conventions, not the full reference.
   refuses if the branch has moved since, printing both. A `merge` with
   no recorded `check` is also refused. `--force` overrides both — and
   skips the changelog criterion with them. The hint that day was in
-  the first `git pull`: `renovate/… (forced update)`.
+  the first `git pull`: `renovate/… (forced update)`. It happened again on
+  2026-10-17: #1013's head moved (`c17095e70` to `0d6c877bd`) after #1011
+  merged, so it was re-reviewed before merging. A merge done outside the
+  script (see "PRs the script refuses") should be **pinned to the reviewed
+  head**, `-f sha=<head>` on the merge API call, which fails if the branch
+  was rewritten after review.
 - The Alloy chart's ingress backend port is `faroPort`, its only knob
   for that, defaulting to `12347` (the Faro browser-telemetry
   receiver). Faro is not enabled here, so the Service opens only
@@ -605,6 +610,86 @@ file covers working conventions, not the full reference.
   database **and `template1`**. Refreshing first only silences the
   warning. A cluster whose image was built on the newer glibc from the
   start (`postgres-infra-local`, PG18) has no mismatch and needs nothing.
+- **Two Helm releases can own the same object, and the release you are
+  about to bump may not be the owner.** On 2026-10-17 the review of the
+  piraeus `snapshot-controller` bump (#1012) found that
+  `storage/snapshot-controller` was deployed by that chart *and* by
+  csi-driver-nfs (`externalSnapshotter.enabled`); the live Deployment
+  belonged to csi-driver-nfs (selector `app: snapshot-controller`) since
+  the 10-10 fix. Bumping the other release would very likely have hit the
+  immutable selector and ended `RollbackFailed` (predicted, never run).
+  Both HelmReleases sat `Ready` meanwhile: nothing happens until one is
+  bumped. Before merging a chart bump, compare the live object's
+  `meta.helm.sh/release-name` annotation with the release being upgraded,
+  and compare `helm get manifest <release>` kind/name lists between
+  releases for overlap.
+  To retire one without a Helm uninstall (which, from understanding of
+  Helm and not tested, deletes by the recorded manifest and could take the
+  shared Deployment, ServiceAccount and CRDs): re-point anything that
+  `dependsOn` it; add `kustomize.toolkit.fluxcd.io/prune: disabled` to its
+  HelmRelease in git; remove the Kustomization that manages it (the
+  kustomize-controller log then shows `garbage collection completed` and
+  the event `HelmRelease/... skipped`); then `flux suspend` the
+  HelmRelease, patch `metadata.finalizers` to null **and read it back
+  before deleting**, delete it, and delete its `sh.helm.release.v1.<name>.vN`
+  secrets. Export the shared objects read-only first. Done as #1020-#1022;
+  the live Deployment kept its UID and a throwaway PVC + VolumeSnapshot
+  reached `readyToUse` afterwards.
+- **A `helm template` diff can mislead three ways.** (a) Normalising
+  `helm.sh/chart` hides a rollout: Grafana's chart puts
+  `helm.sh/chart: grafana-<version>` on the **pod template**, so a chart
+  bump alone replaces the pod (2026-10-17, 14.0.1, after the render was
+  described as "identical"); app-template does not, so its 5.3.0 bump
+  rolled nothing. Check `.spec.template.metadata.labels` before saying "no
+  restart". (b) A selector block can differ only in label order
+  (app-template 5.3.0 swaps `name` and `instance`): compare sorted
+  key/value pairs before calling it a selector change. (c) Some charts
+  regenerate secrets on every render (cilium's CA/TLS secrets; Pi-hole's
+  admin Secret, which a real upgrade keeps via `lookup`): filter those
+  lines and never print them. Render with the live values piped in
+  (`-f <(kubectl get hr ... -o jsonpath='{.spec.values}')`), not saved to
+  a file: in-cluster values are already substituted and can hold secrets
+  (the Pi-hole admin password did).
+- **Judging a Renovate bump takes more than the changelog.** A "major"
+  chart bump can be chart-level only (Grafana 14.0.0 added a values schema;
+  `appVersion` unchanged): render the new chart against the live values (a
+  schema rejection fails `helm template`) and compare `appVersion`. When a
+  GitHub release body is only checksums (cloudflared), the notes are in the
+  repo: `gh api repos/cloudflare/cloudflared/contents/RELEASE_NOTES`. When
+  an image bundles components (Pi-hole's names FTL, Web and Core), read
+  *their* releases too: the `/` behaviour change and the `gravity.db`
+  migration were described there, not in the image notes.
+- **Pre-test in a throwaway pod rather than triggering the real thing.** A
+  CronJob script on a new interpreter: run the same logic against a temp
+  database (Python 3.14 to 3.15 for the Frigate backup); triggering the
+  CronJob writes a real backup and uses one of its retained copies. A
+  DNS-critical image: run the new image with the chart's exact env and
+  securityContext, a scratch volume, **no Service labels**, and a copy of
+  the real database (Pi-hole 2026.10.0: `gravity.db` migrated 20 to 21,
+  FTL answered on 53). It cannot reproduce the real volume's permissions
+  (NFS): say so and check those live afterwards.
+- **Pi-hole FTL 6.8 answers 404 at `/`** (it was 403) because `/` now
+  honours `webserver.serve_all=false`; the admin UI is fine. The ingress
+  check reads 404 as a broken route, so confirm against the web LB
+  directly (`curl http://10.0.10.5/`) before concluding. Fixed with
+  `nginx.ingress.kubernetes.io/app-root: /admin/` on the ingress (#1019).
+  FTL 6.8 also logs `CAP_*` "not available" warnings that 6.7.1 never did;
+  port 53 still binds, so they are informational.
+- **`git commit` without `-a` leaves edits behind, and a render of the
+  working tree still passes.** #1022 shipped its file deletions without the
+  `kustomization.yaml` edit and failed `flux-diff`; merged, `cluster-apps`
+  would not have built. Validate what was *committed*, in a clean worktree
+  (`git worktree add <dir> HEAD`), with `flux build kustomization
+  cluster-apps --path ./kubernetes/apps --kustomization-file
+  ./kubernetes/flux/apps.yaml --dry-run`. `kubernetes/apps` has no
+  `kustomization.yaml` (Flux generates one), so a plain `kustomize build`
+  does not mirror CI. Check `git status` is clean before pushing.
+- **Flux reacts to a merge within seconds** (there is a `flux-webhook`
+  ingress), so a "before" snapshot taken after merging may already be
+  post-event: the snapshot-controller Kustomization was gone before the
+  "baseline" ran. Capture baselines or read-only exports *before* the
+  merge, and use `kubectl logs -n flux-system deploy/kustomize-controller`
+  and `kubectl get events -n flux-system` for the real sequence.
 
 ## Where things live
 
@@ -721,6 +806,19 @@ If any of these is false, it's "Needs Tom" — no exceptions, even if the
 diff looks trivial. The namespace list above is deliberately broader
 than "things that are currently stateful," because misjudging that
 boundary is exactly the failure mode this guardrail exists to prevent.
+
+### PRs the script refuses (guarded path, major)
+
+These stay "Needs Tom". When Tom approves one, he merges it on GitHub, or
+explicitly tells Claude to. `merge <n> --force` is the script's override,
+and the permission system refused it as a CI bypass on 2026-10-17 (#1006):
+do not retry it or look for a way round the refusal; say what was refused
+and let Tom choose. If Tom explicitly instructs a merge, re-check the
+head and CI first (Renovate rewrites branches), merge pinned to that head
+SHA, then reconcile and verify against a baseline captured **before** the
+merge. Done that way on 2026-10-17 for #1010 and #1013. #1006 was merged
+by Tom, and #1014 (which passed the script's criteria) through the script
+after Tom's go-ahead; both were verified against a baseline too.
 
 ### Post-merge investigation
 
