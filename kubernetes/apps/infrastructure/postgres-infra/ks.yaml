@@ -39,26 +39,12 @@ spec:
         - op: add
           path: /spec/users/2
           value:
-            name: harbor
-            databases:
-              - harbor
-            password: *password
-        - op: add
-          path: /spec/users/3
-          value:
             name: keycloak
             databases:
               - keycloak
             password: *password
         - op: add
-          path: /spec/users/4
-          value:
-            name: woodpecker
-            databases:
-              - woodpecker
-            password: *password
-        - op: add
-          path: /spec/users/5
+          path: /spec/users/3
           value:
             name: vaultwarden
             databases:
