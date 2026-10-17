@@ -301,6 +301,17 @@ for 6+ days as of 2026-09-05. Nothing currently open here.)*
   Traps: the patch addresses users by array index (`/spec/users/N`), so
   renumber the rest; and dropping a user from the spec does **not** drop
   the role or database, so those need an explicit `DROP` (ask first).
+- **Disable "Full scope allowed" on the Keycloak OIDC clients** (not
+  urgent). Keycloak 26.8.1 logs a deprecation warning on every token
+  request: the switch "is deprecated and will be removed in the future".
+  Seen on 2026-10-17 for `grafana` (realm `grafana`) and `vaultwarden`
+  (realm `vaultwarden`); `forgejo` very likely has it too, but it had no
+  token traffic to show it. Per client: turn the switch off, then grant
+  the client the roles it actually needs through its client scope. Test a
+  sign-in on each afterwards, since a token without the expected claims
+  can fail in confusing ways (Vaultwarden SSO and Grafana role mapping
+  are the likeliest to notice). Client settings are live Keycloak state,
+  not in git, so note the change in a doc update.
 - **Frigate SSO** — Frigate has no native OIDC/OAuth2 client, unlike
   Vaultwarden/Grafana/Forgejo. It only supports proxy-based header
   auth (trusts `X-Forwarded-User`/`Remote-User`-style headers from an
