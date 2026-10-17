@@ -24,7 +24,11 @@ spec:
   uninstall:
     keepHistory: false
   dependsOn:
-    - name: snapshot-controller
+    # The snapshot controller that Volsync's Snapshot copyMethod needs is
+    # the one csi-driver-nfs deploys (externalSnapshotter.enabled). This used
+    # to name the separate piraeus `snapshot-controller` release, which is
+    # being retired because both releases deploy the same Deployment.
+    - name: csi-driver-nfs
       namespace: storage
   values:
     manageCRDs: true
