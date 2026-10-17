@@ -13,7 +13,7 @@ spec:
         kind: HelmRepository
         name: bjw-s-labs
         namespace: flux-system
-      version: 5.2.1
+      version: 5.3.0
   interval: 12h
   install:
     remediation:
