@@ -558,6 +558,53 @@ file covers working conventions, not the full reference.
   controllers; check PVC ownership before doing it to anything stateful.
   To catch it before merging, `helm template` both versions against the
   live values and diff the `selector:` blocks.
+- **A PGO `image:` pin that does not match the operator's pgBackRest
+  fails silently.** `postgres-forgejo` pinned
+  `crunchy-postgres:ubi8-16.4-0` (pgBackRest 2.52.1) while the
+  operator's sidecars and repo host run 2.59.0, so stanza-create exited
+  39 (`expected value '2.52.1' ... got '2.59.0'`), `stanzaCreated` stayed
+  `false`, and `pg_stat_archiver` logged 801 failed archives with nothing
+  alerting. Found 2026-10-13, fixed by dropping the pin so the operator
+  picks a matching image (`postgres-infra-local` already worked that
+  way). After any PGO image change check
+  `kubectl get postgrescluster -n <ns> <name> -o jsonpath='{.status.pgbackrest.repos}'`
+  for `stanzaCreated: true`, and `pg_stat_archiver` for a `failed_count`
+  that stops rising.
+- **PGO 6.0.3 cannot run `postgres_exporter` against Postgres 18.**
+  Enabling `monitoring.pgmonitor.exporter` on `postgres-infra-local`
+  (PG18) left the sidecar unable to log in (`password authentication
+  failed for user "ccp_monitoring"` — the role is never created), the
+  operator logged `use OTel for postgres 18 and later`, and its
+  reconcile failed about every 11s. The Prometheus target still showed
+  `up`, because that is the exporter's HTTP port, not its database
+  connection. Check `pg_exporter_last_scrape_error` (0 is healthy), not
+  `up`. The exporter works on Postgres 16 (`postgres-forgejo`). Metrics
+  for an 18 cluster need `spec.instrumentation` (OTel), which is not set
+  up here — see the `CLUSTER-doc-updates-2026-10-14.md` follow-ups.
+- **A `PodMonitor` (or any namespaced object) with no
+  `metadata.namespace` breaks the whole apply when its Kustomization has
+  no `targetNamespace`.** Flux rejects it with `namespace not specified`
+  and applies nothing from that Kustomization, so a dependent one
+  (`forgejo` dependsOn `postgres-forgejo`) goes `not ready` while the
+  workloads keep running. `kubectl apply --dry-run=server` will not catch
+  it: `kubectl` falls back to the kubeconfig's default namespace, Flux has
+  none. Render with `kubectl kustomize <path>` and check every namespaced
+  object carries a namespace. Hit 2026-10-13 (#999, fixed in #1000).
+- **`REINDEX DATABASE <db>` only works while connected to that database.**
+  From any other it fails with `can only reindex the currently open
+  database`, so run it as `psql -d <db> -c 'REINDEX DATABASE <db>;'`.
+  It takes exclusive locks table by table, so the app is unavailable for
+  the duration (about 55s for the 16 MB Forgejo database).
+- **A Postgres `collation version mismatch` is a warning, not an error,
+  and it means text indexes may be out of order.** It appears when the OS
+  glibc changes under an existing database (Forgejo: created on 2.28, new
+  image on 2.34). Compare
+  `datcollversion` with `pg_database_collation_actual_version(oid)` in
+  `pg_database`. The fix is in this order: take a backup, `REINDEX`, then
+  `ALTER DATABASE <db> REFRESH COLLATION VERSION` on each affected
+  database **and `template1`**. Refreshing first only silences the
+  warning. A cluster whose image was built on the newer glibc from the
+  start (`postgres-infra-local`, PG18) has no mismatch and needs nothing.
 
 ## Where things live
 
