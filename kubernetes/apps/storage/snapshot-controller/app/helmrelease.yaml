@@ -3,6 +3,13 @@ apiVersion: helm.toolkit.fluxcd.io/v2
 kind: HelmRelease
 metadata:
   name: snapshot-controller
+  annotations:
+    # Step 2a of retiring this release (csi-driver-nfs is the real owner of
+    # storage/snapshot-controller; both releases claim the same Deployment,
+    # ServiceAccount and core CRDs). With this set, Flux's garbage collection
+    # skips this HelmRelease when its Kustomization is removed, so deleting
+    # the Kustomization does not trigger a Helm uninstall of shared objects.
+    kustomize.toolkit.fluxcd.io/prune: disabled
 spec:
   interval: 30m
   chart:
