@@ -469,3 +469,97 @@ leftover `Error` pod. The Pi-hole pass is where the `pihole.gs-farm.net`
 404 showed up (13 of 14 reachable until #1019); after #1019 it was 14 of
 14. Helm's view of `storage` now lists `csi-driver-nfs`,
 `local-path-provisioner` and `volsync`, with no `snapshot-controller`.
+
+## Addendum — #1010 and #1013 merged (supersedes "Still queued" above)
+
+Tom approved both later the same day. This replaces the "Still queued for
+Tom" list and the open item "#1010 and #1013 — waiting on Tom": the weekly
+queue is empty. Both were merged through GitHub's API, not the review
+script, which refuses a guarded-path or major PR without `--force` (and a
+`--force` merge of #1006 had already been refused by the permission system
+as a CI bypass). Each merge was **pinned to the head SHA that had been
+reviewed** (`gh api -X PUT repos/<repo>/pulls/<n>/merge -f merge_method=squash
+-f sha=<head>`), so it would have failed had Renovate rewritten the branch
+in between.
+
+| PR    | Change                                  | Merged as  | Reviewed head |
+|-------|-----------------------------------------|------------|---------------|
+| #1010 | app-template chart 5.2.1 → 5.3.0        | `820940e6` | `63e6d03a8` (unchanged at merge) |
+| #1013 | grafana chart 13.7.0 → 14.0.1           | `bd9a308e` | `0d6c877bd` (re-reviewed, see below) |
+
+### #1010 app-template 5.3.0 (keycloak, minio, cloudflared, vaultwarden)
+
+Re-verified just before merging: head unchanged, CI green (Labeler, both
+Flux Diff checks, GitGuardian), diff exactly four `version: 5.2.1 → 5.3.0`
+lines. Baseline taken before the merge, compared after:
+
+| Release              | Before | After | Pod(s)                                   |
+|----------------------|--------|-------|------------------------------------------|
+| infrastructure/keycloak | v430 | v431 | `keycloak-56cd8664-9ftsk`, same, 0 restarts |
+| minio/minio          | v406   | v407  | `minio-78bd798cf6-b5k5x`, same, 0 restarts |
+| network/cloudflared  | v19    | v20   | both pods same, 0 restarts |
+| vaultwarden/vaultwarden | v19 | v20   | `vaultwarden-687cf68c69-z6b94`, same, 0 restarts |
+
+Every release moved up exactly one revision and nothing rolled, as the
+render comparison had predicted (the only difference between 5.2.1 and
+5.3.0 for these four is two selector labels listed in a different order).
+Endpoints before and after: Keycloak realm discovery 200 and Vaultwarden
+`/alive` 200 (both unchanged); `elvis` and `major` 200 via the public
+Cloudflare IP; MinIO's `:9000/minio/health/live` answered **400 both before
+and after**, so it is not a regression, though the 400 itself is not
+explained (likely the wrong path or Host header for that endpoint).
+
+### #1013 grafana 14.0.1 (major)
+
+Renovate rebased the PR after #1011 merged, so its head moved
+(`c17095e70` → `0d6c877bd`) and the review was redone: CI green, diff a
+single `13.7.0 → 14.0.1` line. The 13.7.0 and 14.0.1 charts were rendered
+against the live values (piped straight into `helm`, not saved to disk);
+the new values schema accepted them, the chart's `appVersion` is still
+13.2.4, the selectors are identical, and the renders were identical after
+normalising version labels.
+
+After merge: release v2647 → **v2648**, chart 14.0.1, `/api/health` 200,
+zero error log lines in the following five minutes, and the Grafana
+Keycloak realm still answers discovery with 200.
+
+**The Grafana pod rolled, and it should not have been a surprise.**
+`grafana-6f6954d98f-zcxhr` was replaced by `grafana-5b564bdc94-jsq2s`
+(`3/3`, 0 restarts). The render was described beforehand as identical and
+no restart was expected. The cause is that Grafana's chart puts
+`helm.sh/chart: grafana-<version>` on the **pod template**, so a chart
+version bump alone changes the template and triggers a rollout. The render
+diff had normalised that label away, which hid exactly the difference that
+mattered. app-template does not put the chart version on its pods, which
+is why #1010 did not roll anything. The rollout was a normal one and
+harmless here.
+
+**Not tested:** a sign-in to Grafana through Keycloak SSO, and dashboards or
+datasources through the API. Health and the realm's discovery endpoint
+were checked, not a login.
+
+### Health pass afterwards
+
+All Kustomizations and HelmReleases Ready, no charts floating on `*`,
+Talos patches match, no rollout churn, all 14 internal ingresses
+reachable. The only unready pod is still the leftover
+`forgejo/postgres-forgejo-backup-5j85-xptsm` (`Error`).
+
+### Open items, updated
+
+- Still open from above: the 03:00 UTC Volsync snapshot runs, the Frigate
+  backup on Python 3.15, a login through Keycloak, Forgejo retention expiry
+  (around 10-19), the nine piraeus orphans, the harbor/woodpecker cleanup,
+  and the leftover `Error` pod.
+- Closed by this addendum: #1010 and #1013.
+
+### Two more proposed CLAUDE.md gotchas
+
+- **Normalising `helm.sh/chart` in a render diff hides rollouts.** Before
+  saying "no restart", look at `.spec.template.metadata.labels` for a
+  chart-version label. Grafana's chart has one (a version bump alone rolls
+  the pod); app-template's does not.
+- **Pin a manual merge to the reviewed head SHA** (`-f sha=<head>`): it
+  fails if Renovate rewrites the branch after review, which is the same
+  protection the review script's recorded head gives, without needing the
+  script's `--force`.
