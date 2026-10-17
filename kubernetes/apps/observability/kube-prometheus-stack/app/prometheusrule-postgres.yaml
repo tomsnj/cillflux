@@ -12,7 +12,8 @@ spec:
       rules:
         # Metrics come from the postgres-exporter sidecar on each PGO
         # cluster (postgres-forgejo only - see PostgresExporterAbsent for why
-        # postgres-infra-local, on PG 18, is not covered), via the cpgo-*
+        # postgres-infra-local, on PG 18, has only the CronJob-based alerts
+        # at the bottom of this group), via the cpgo-*
         # PodMonitors. Immich runs standalone Postgres outside PGO
         # and is NOT covered here - its protection is the nightly pg_dump
         # CronJob plus Volsync.
@@ -82,8 +83,9 @@ spec:
         #
         # infrastructure (postgres-infra-local) is deliberately NOT listed:
         # it runs Postgres 18, which postgres_exporter does not support, so
-        # it has no metrics and none of these alerts cover it yet. Add it
-        # back once OTel instrumentation is in place.
+        # it has no metrics and none of these alerts cover it. Its backups
+        # are covered separately, by the PostgresInfra* CronJob alerts
+        # below. Add it back here once OTel instrumentation is in place.
         - alert: PostgresExporterAbsent
           annotations:
             summary: "No Postgres exporter metrics from namespace {{ $labels.namespace }}."
@@ -93,5 +95,94 @@ spec:
               exporter sidecar and the cpgo-* PodMonitor selector.
           expr: absent(ccp_archive_command_status_failed_count{namespace="forgejo"})
           for: 15m
+          labels:
+            severity: warning
+
+        # --- postgres-infra-local (Postgres 18, no exporter) -------------
+        #
+        # postgres_exporter does not support PG18 in PGO 6.0.3, so there are
+        # no ccp_*/pg_stat_archiver metrics here. These alerts instead use
+        # kube-state-metrics on the operator's backup CronJobs
+        # (postgres-infra-local-repo1-{full,diff,incr}).
+        #
+        # They watch kube_cronjob_status_last_successful_time rather than
+        # failed Jobs: the cluster sets jobs.ttlSecondsAfterFinished: 90, so a
+        # failed Job is deleted after 90s and a Job-failure alert would
+        # almost never be evaluated while one exists. A failed run simply
+        # does not advance the last-success time, so staleness catches it.
+        #
+        # What this does NOT cover: WAL archiving between backups. A broken
+        # archive_command shows up here only indirectly, when pgBackRest's
+        # archive check makes a scheduled backup fail, so expect detection
+        # within the incr threshold (a few hours), not within minutes.
+        # Schedules come from components/postgresql/cluster.yaml: full daily
+        # at 01:30 UTC, differential every 3h at :20, incremental hourly at
+        # :10. Thresholds below are three missed runs of each (the full
+        # alert allows 36h).
+
+        - alert: PostgresInfraIncrBackupStale
+          annotations:
+            summary: "No successful postgres-infra-local incremental backup for {{ $value | humanizeDuration }}."
+            description: >-
+              The hourly incremental CronJob has not succeeded for over 3h
+              (three missed runs). Check the Jobs/pods in the
+              infrastructure namespace, MinIO reachability (the repo is
+              S3 on minio.minio), and `pgbackrest` logs on the instance.
+              Keycloak's database is the only live consumer.
+          expr: time() - kube_cronjob_status_last_successful_time{namespace="infrastructure",cronjob="postgres-infra-local-repo1-incr"} > 10800
+          for: 15m
+          labels:
+            severity: warning
+
+        - alert: PostgresInfraDiffBackupStale
+          annotations:
+            summary: "No successful postgres-infra-local differential backup for {{ $value | humanizeDuration }}."
+            description: >-
+              The 3-hourly differential CronJob has not succeeded for over
+              9h (three missed runs).
+          expr: time() - kube_cronjob_status_last_successful_time{namespace="infrastructure",cronjob="postgres-infra-local-repo1-diff"} > 32400
+          for: 15m
+          labels:
+            severity: warning
+
+        - alert: PostgresInfraFullBackupStale
+          annotations:
+            summary: "No successful postgres-infra-local full backup for {{ $value | humanizeDuration }}."
+            description: >-
+              The daily full backup (01:30 UTC) has not succeeded for over
+              36h. A restore would have to replay a long chain of
+              differentials and WAL, or may be impossible if the archive
+              is also broken.
+          expr: time() - kube_cronjob_status_last_successful_time{namespace="infrastructure",cronjob="postgres-infra-local-repo1-full"} > 129600
+          for: 1h
+          labels:
+            severity: critical
+
+        # A suspended CronJob stops producing runs, so the stale alerts
+        # above would only fire hours later. This names the cause directly.
+        - alert: PostgresInfraBackupCronJobSuspended
+          annotations:
+            summary: "Backup CronJob {{ $labels.cronjob }} is suspended."
+            description: >-
+              spec.suspend is true, so no backups of postgres-infra-local
+              are being taken by this schedule.
+          expr: kube_cronjob_spec_suspend{namespace="infrastructure",cronjob=~"postgres-infra-local-repo1-(full|diff|incr)"} == 1
+          for: 15m
+          labels:
+            severity: warning
+
+        # If a CronJob is deleted or renamed its series vanish and none of
+        # the alerts above can fire. Only the full job is checked: if the
+        # operator is healthy the three come and go together.
+        - alert: PostgresInfraBackupCronJobMissing
+          annotations:
+            summary: "The postgres-infra-local full-backup CronJob has no metrics."
+            description: >-
+              kube_cronjob_status_last_successful_time for
+              postgres-infra-local-repo1-full is absent. The CronJob was
+              deleted or has never succeeded, or kube-state-metrics is not
+              scraping it. The stale alerts cannot fire without the series.
+          expr: absent(kube_cronjob_status_last_successful_time{namespace="infrastructure",cronjob="postgres-infra-local-repo1-full"})
+          for: 30m
           labels:
             severity: warning
