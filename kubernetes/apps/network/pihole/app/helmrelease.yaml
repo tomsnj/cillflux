@@ -58,6 +58,12 @@ spec:
       ingressClassName: internal
       annotations:
         hajimari.io/icon: simple-icons:pihole
+        # Pi-hole FTL 6.8 (image 2026.10.0) answers 404 at "/" (the review
+        # script's notes say it was 403 before); its release notes list "/"
+        # now honouring webserver.serve_all=false. Send bare "/" to the admin
+        # UI instead, which also keeps the ingress check in
+        # weekly-renovate-review.sh green (302 is accepted).
+        nginx.ingress.kubernetes.io/app-root: /admin/
       hosts:
         - host: "pihole.${SECRET_DOMAIN}"
       tls:
