@@ -1,0 +1,17 @@
+---
+# Node-local claim for Forgejo's git data (part of the node-local move,
+# docs/plan-forgejo-postgres-local.md). Created now, empty. The data is
+# copied from gitea-shared-storage (gsks1 NFS) during the cutover window,
+# then the HelmRelease points at this claim.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: gitea-shared-storage-local
+  namespace: forgejo
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: local-hostpath
+  resources:
+    requests:
+      storage: 20Gi
