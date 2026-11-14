@@ -5,7 +5,7 @@ metadata:
   name: gitea-shared-storage
   namespace: forgejo
 spec:
-  sourcePVC: gitea-shared-storage
+  sourcePVC: gitea-shared-storage-local
   trigger:
     schedule: "0 3 * * *"
   restic:
@@ -14,6 +14,10 @@ spec:
     repository: volsync-gitea-shared-storage
     storageClassName: gsks1
     cacheStorageClassName: local-hostpath
+    # Node-local source: the mover must read files owned by Forgejo's uid.
+    moverSecurityContext:
+      runAsUser: 1000
+      runAsGroup: 1000
     retain:
       daily: 7
       weekly: 4
@@ -25,7 +29,7 @@ metadata:
   name: postgres-forgejo-pgdata
   namespace: forgejo
 spec:
-  sourcePVC: postgres-forgejo-instance1-wz59-pgdata
+  sourcePVC: postgres-forgejo-local-instance1-gfzm-pgdata
   trigger:
     schedule: "0 3 * * *"
   restic:
@@ -34,6 +38,10 @@ spec:
     repository: volsync-postgres-forgejo-pgdata
     storageClassName: gsks1
     cacheStorageClassName: local-hostpath
+    # Node-local source: PGDATA is 0700 owned by PGO's postgres uid (26).
+    moverSecurityContext:
+      runAsUser: 26
+      runAsGroup: 26
     retain:
       daily: 7
       weekly: 4
@@ -45,7 +53,7 @@ metadata:
   name: postgres-forgejo-repo1
   namespace: forgejo
 spec:
-  sourcePVC: postgres-forgejo-repo1
+  sourcePVC: postgres-forgejo-local-repo1
   trigger:
     schedule: "0 3 * * *"
   restic:

@@ -31,9 +31,8 @@ spec:
         repo1-retention-full-type: count
       repos:
         - name: repo1
-          schedules:
-            full: "30 1 * * *"
-            incremental: "10 * * * *"
+          # Cutover: scheduled backups stopped. The old cluster is kept
+          # idle as the rollback target for 14 days (plan, phase 4).
           volume:
             volumeClaimSpec:
               accessModes:
