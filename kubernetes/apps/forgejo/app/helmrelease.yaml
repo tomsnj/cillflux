@@ -93,22 +93,22 @@ spec:
         - name: FORGEJO__DATABASE__HOST
           valueFrom:
             secretKeyRef:
-              name: postgres-forgejo-pguser-forgejo
+              name: postgres-forgejo-local-pguser-forgejo
               key: host
         - name: FORGEJO__DATABASE__NAME
           valueFrom:
             secretKeyRef:
-              name: postgres-forgejo-pguser-forgejo
+              name: postgres-forgejo-local-pguser-forgejo
               key: dbname
         - name: FORGEJO__DATABASE__USER
           valueFrom:
             secretKeyRef:
-              name: postgres-forgejo-pguser-forgejo
+              name: postgres-forgejo-local-pguser-forgejo
               key: user
         - name: FORGEJO__DATABASE__PASSWD
           valueFrom:
             secretKeyRef:
-              name: postgres-forgejo-pguser-forgejo
+              name: postgres-forgejo-local-pguser-forgejo
               key: password
         - name: FORGEJO__MAILER__PASSWD
           valueFrom:
@@ -119,10 +119,10 @@ spec:
     # ── Persistence ───────────────────────────────────────────────────────────
     persistence:
       enabled: true
-      storageClass: gsks1
-      size: 20Gi
-      accessModes:
-        - ReadWriteOnce
+      # Cutover: git data moved to node-local storage. The claim is created
+      # by pvc-gitea-shared-storage-local.yaml and filled by a copy job.
+      create: false
+      claimName: gitea-shared-storage-local
 
     # ── Disable built-in DB subcharts ─────────────────────────────────────────
     postgresql:
