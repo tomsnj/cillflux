@@ -1,0 +1,55 @@
+---
+# New cluster for the node-local move (docs/plan-forgejo-postgres-local.md).
+# Runs beside postgres-forgejo; the Forgejo app still points at the old
+# cluster until the cutover commit. Data on local-hostpath (node NVMe),
+# pgBackRest repo stays on the LAN NFS class gsks1 (decision recorded in
+# the plan).
+apiVersion: postgres-operator.crunchydata.com/v1beta1
+kind: PostgresCluster
+metadata:
+  name: postgres-forgejo-local
+  namespace: forgejo
+spec:
+  postgresVersion: 16
+
+  monitoring:
+    pgmonitor:
+      exporter: {}
+
+  instances:
+    - name: instance1
+      replicas: 1
+      dataVolumeClaimSpec:
+        accessModes:
+          - ReadWriteOnce
+        storageClassName: local-hostpath
+        resources:
+          requests:
+            storage: 20Gi
+
+  backups:
+    pgbackrest:
+      global:
+        repo1-retention-full: "7"
+        repo1-retention-full-type: count
+      repos:
+        - name: repo1
+          schedules:
+            # Offset from postgres-forgejo (01:30 / :10) so the two
+            # clusters never back up at the same time while both exist.
+            full: "30 2 * * *"
+            incremental: "40 * * * *"
+          volume:
+            volumeClaimSpec:
+              accessModes:
+                - ReadWriteOnce
+              storageClassName: gsks1
+              resources:
+                requests:
+                  storage: 5Gi
+
+  users:
+    - name: forgejo
+      databases:
+        - forgejo
+      options: "SUPERUSER"

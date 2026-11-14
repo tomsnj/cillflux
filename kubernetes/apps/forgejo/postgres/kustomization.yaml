@@ -4,4 +4,5 @@ kind: Kustomization
 resources:
   - namespace.yaml
   - postgres-cluster.yaml
+  - postgres-cluster-local.yaml
   - podmonitor.yaml
