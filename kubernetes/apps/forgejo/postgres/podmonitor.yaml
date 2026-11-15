@@ -29,7 +29,11 @@ spec:
           targetLabel: role
         - sourceLabels: [__meta_kubernetes_pod_name]
           targetLabel: instance
+  # Scrapes the node-local cluster only. The old postgres-forgejo is the idle
+  # rollback target until the 14-day soak ends (plan phase 4) and has no
+  # scheduled backups, so scraping it only fires PostgresIncrBackupStale.
+  # Point this back at it if the cutover is rolled back.
   selector:
     matchLabels:
-      postgres-operator.crunchydata.com/cluster: postgres-forgejo
+      postgres-operator.crunchydata.com/cluster: postgres-forgejo-local
       postgres-operator.crunchydata.com/crunchy-postgres-exporter: "true"
