@@ -121,6 +121,8 @@ incremental backups since cutover, and no regressions are reported.
 
 - **PodMonitor.** `podmonitor.yaml` still targets the old cluster. The new
   cluster needs its own, or its exporter metrics are not scraped.
+  **Resolved 2026-11-14** (`0962b8d5`, selector now `postgres-forgejo-local`);
+  see `CLUSTER-doc-updates-2026-11-14c.md`.
 - **Old-cluster rollback window.** After new writes land on the new
   cluster, rollback is a logical dump back into the old cluster inside a
   new window, not a revert.
