@@ -15,8 +15,9 @@ Written the same evening. Times are UTC unless marked. No data was lost.
   change the group of the live node-local PGDATA volume. Postgres (uid/gid
   26) was locked out, Patroni stopped it, and Forgejo went down.
 - Reverted (`37aa307a`) and recovered by restarting the Postgres pod. The
-  original Volsync problem is **not fixed**. A candidate fix is tested on a
-  throwaway pod and not applied.
+  original Volsync problem was fixed afterwards with `supplementalGroups: [0]`
+  (`7bf0eec8`), tested first on a throwaway pod. The 03:00 run on 2026-11-18
+  confirmed it (see "Outcome").
 
 ## The alert
 
@@ -124,10 +125,10 @@ Not tested: a login or a git clone, which need credentials.
   configuration. The PGDATA snapshot was taken while the data directory was
   inaccessible to Postgres, so do not rely on it; PGDATA copied this way is
   crash-consistent at best.
-- With `5d5a5773` reverted, the movers are back to the original cache error
-  and will fail again at 03:00. `VolSyncVolumeOutOfSync` can keep firing.
+- With `5d5a5773` reverted, the movers were back to the original cache error
+  until the fix below was applied (`7bf0eec8`).
 
-## Candidate fix (tested, not applied)
+## Fix (tested, then applied in `7bf0eec8`)
 
 Keep `runAsUser`/`runAsGroup` as they are, since PGDATA needs gid 26 to read
 `/pgdata`, and add `supplementalGroups: [0]` so the mover can also write the
@@ -143,8 +144,27 @@ PVCs, with no data PVC and no `fsGroup`:
 | uid 26, gid 26 | `26,0` | `drwxrws--- 0:0` | `WRITE-OK` |
 
 The pod and its test files were removed afterwards; `/pgdata` stayed `0:26`.
-Applying it to `kubernetes/apps/forgejo/app/volsync.yaml` and watching the next
-run is the remaining step, and needs a decision after this incident.
+Applied to both sources in `kubernetes/apps/forgejo/app/volsync.yaml`
+(`7bf0eec8`).
+
+## Outcome (2026-11-18 03:00 UTC run)
+
+Watched live from 02:59 to 03:00:30:
+
+| Source | Last sync | Result |
+|---|---|---|
+| `postgres-forgejo-pgdata` | 03:00:13 | Successful |
+| `postgres-forgejo-repo1` | 03:00:17 | Successful |
+| `gitea-shared-storage` | 03:00:23 | Successful |
+
+- `/pgdata` stayed `drwxrws--- 0:26` before, during and after the run, so
+  `supplementalGroups` did not change ownership.
+- Forgejo healthz stayed 200; Postgres accepting connections; Patroni
+  `Leader running`.
+- Alertmanager held only `Watchdog` afterwards, so `VolSyncVolumeOutOfSync`
+  has cleared.
+- First good Volsync backups of the new git data and PGDATA since
+  2026-11-14 03:00.
 
 ## Gotchas
 
@@ -173,8 +193,8 @@ run is the remaining step, and needs a decision after this incident.
 
 ## Open items
 
-- Decide whether to apply `supplementalGroups: [0]` to both sources, then
-  confirm the 03:00 run and that `VolSyncVolumeOutOfSync` clears.
+- ~~Apply `supplementalGroups: [0]` and confirm the 03:00 run~~ Done,
+  2026-11-18 (see "Outcome").
 - Try a Forgejo login and a git clone to close the verification gap.
 - Consider a check in `weekly-renovate-review.sh health` or an alert for a
   ReplicationSource whose `lastSyncTime` is older than its schedule allows;
