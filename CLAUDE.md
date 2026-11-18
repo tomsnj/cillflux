@@ -691,6 +691,36 @@ file covers working conventions, not the full reference.
   merge, and use `kubectl logs -n flux-system deploy/kustomize-controller`
   and `kubectl get events -n flux-system` for the real sequence.
 
+- **Never put `fsGroup` on a Volsync `moverSecurityContext` for a
+  node-local source.** The kubelet applies it to every volume the mover pod
+  mounts, including the **source**, and regroups it. On 2026-11-18
+  `fsGroup: 0` on the `postgres-forgejo-pgdata` mover changed `/pgdata` from
+  `0:26` to `0:0` mode 2770 (setgid + group rw is the kubelet's signature).
+  PGO's Postgres runs as uid/gid 26 and reaches `/pgdata` only through
+  group 26, so it was locked out. **Patroni then reports an unreadable
+  data dir as empty** (`released leader key voluntarily as data dir empty
+  and currently leader`, then `waiting for leader to bootstrap`), stops
+  Postgres, and Forgejo went down for about six minutes. The data was
+  intact the whole time. Check `kubectl exec -n <ns> <pg-pod> -c database
+  -- stat -c '%A %u:%g %n' /pgdata` before believing it is empty. Repair:
+  revert the mover change, then delete the stopped Postgres pod; PGO runs
+  it with `fsGroup: 26` and `fsGroupChangePolicy: OnRootMismatch`, so the
+  kubelet reapplies group 26 on the way up. It worked here (`/pgdata`
+  `0:26`, Patroni `Leader running`).
+  Why it was tried: the cause of the failing movers
+  (`open /cache/CACHEDIR.TAG: permission denied`) is real but different.
+  The `local-hostpath` **cache** dir is `drwxrws--- 0:0`, writable only by
+  group 0, so a non-root mover with primary group 1000 or 26 cannot write
+  it. Deleting the cache PVCs does not help (a fresh one is identical).
+  Give the mover group 0 with `supplementalGroups: [0]`, which adds the
+  group without changing ownership of any volume, and keep `runAsGroup` at
+  the source's group (PGDATA needs gid 26 to read `/pgdata`). Do **not**
+  copy `immich/postgres/volsync.yaml`'s `runAsGroup: 0` + `fsGroup: 0`: it
+  works only because Immich's data dir is already `999:0`. Test a mover
+  context on a throwaway pod that mounts **only the cache PVC** (no data
+  PVC, no `fsGroup`) and `touch`es a file, never against the live source.
+  Details in `docs/CLUSTER-doc-updates-2026-11-17.md`.
+
 ## Where things live
 
 - Repo root: `~/cillflux`
