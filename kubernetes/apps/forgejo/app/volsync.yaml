@@ -15,9 +15,14 @@ spec:
     storageClassName: gsks1
     cacheStorageClassName: local-hostpath
     # Node-local source: the mover must read files owned by Forgejo's uid.
+    # supplementalGroups: the local-hostpath cache dir is root:root 2770, so
+    # the mover needs group 0 to write it. NEVER add fsGroup here: it makes
+    # the kubelet regroup the node-local source volume, which locked
+    # postgres out of /pgdata on 2026-11-18 (CLUSTER-doc-updates-2026-11-17).
     moverSecurityContext:
       runAsUser: 1000
       runAsGroup: 1000
+      supplementalGroups: [0]
     retain:
       daily: 7
       weekly: 4
@@ -39,9 +44,14 @@ spec:
     storageClassName: gsks1
     cacheStorageClassName: local-hostpath
     # Node-local source: PGDATA is 0700 owned by PGO's postgres uid (26).
+    # supplementalGroups: the local-hostpath cache dir is root:root 2770, so
+    # the mover needs group 0 to write it. NEVER add fsGroup here: it makes
+    # the kubelet regroup the node-local source volume, which locked
+    # postgres out of /pgdata on 2026-11-18 (CLUSTER-doc-updates-2026-11-17).
     moverSecurityContext:
       runAsUser: 26
       runAsGroup: 26
+      supplementalGroups: [0]
     retain:
       daily: 7
       weekly: 4
