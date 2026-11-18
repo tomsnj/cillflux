@@ -15,13 +15,9 @@ spec:
     storageClassName: gsks1
     cacheStorageClassName: local-hostpath
     # Node-local source: the mover must read files owned by Forgejo's uid.
-    # Group 0 + fsGroup 0, as in immich/postgres: the local-hostpath cache
-    # dir is not writable by a non-root primary group, so runAsGroup: 1000
-    # failed with `open /cache/CACHEDIR.TAG: permission denied`.
     moverSecurityContext:
       runAsUser: 1000
-      runAsGroup: 0
-      fsGroup: 0
+      runAsGroup: 1000
     retain:
       daily: 7
       weekly: 4
@@ -43,11 +39,9 @@ spec:
     storageClassName: gsks1
     cacheStorageClassName: local-hostpath
     # Node-local source: PGDATA is 0700 owned by PGO's postgres uid (26).
-    # Group 0 + fsGroup 0 for the cache dir, as in immich/postgres.
     moverSecurityContext:
       runAsUser: 26
-      runAsGroup: 0
-      fsGroup: 0
+      runAsGroup: 26
     retain:
       daily: 7
       weekly: 4
