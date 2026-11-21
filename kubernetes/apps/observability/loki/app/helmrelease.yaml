@@ -33,6 +33,12 @@ spec:
     deploymentStrategy:
       type: Recreate
     loki:
+      # The chart pins the OSS Loki image to 3.6.11 itself, and its appVersion
+      # (3.6.20) does not apply to that image. The quotes on the value are
+      # load-bearing for the regex customManager in .github/renovate.json5.
+      image:
+        # renovate: datasource=docker depName=docker.io/grafana/loki
+        tag: "3.6.22"
       auth_enabled: false
       commonConfig:
         replication_factor: 1
